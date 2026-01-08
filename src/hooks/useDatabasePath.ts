@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { appDataDir, join } from '@tauri-apps/api/path';
-import { DATABASE_FILENAME, getDatabasePath, setDatabasePath } from '../db';
+import { DATABASE_FILENAME, getDatabasePath, isPortableMode, resolveDatabasePath, setDatabasePath } from '../db';
 
 type UseDatabasePathOptions = {
   onPathChange?: (path: string | null) => void;
@@ -39,15 +39,17 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
       } catch {
         resolvedDefault = DATABASE_FILENAME;
       }
-      const storedPath = getDatabasePath();
-      const nextPath = storedPath ?? resolvedDefault;
+      const resolvedPath = await resolveDatabasePath();
+      const portableActive = isPortableMode();
+      const storedPath = portableActive ? null : getDatabasePath();
+      const nextPath = resolvedPath ?? resolvedDefault;
       if (!active) {
         return;
       }
-      setDefaultPath(resolvedDefault);
+      setDefaultPath(portableActive ? nextPath : resolvedDefault);
       setCurrentPath(nextPath);
       setInputPath(nextPath);
-      setIsDefaultPath(!storedPath);
+      setIsDefaultPath(!storedPath && !portableActive);
       setLoading(false);
     };
     void resolvePaths();
@@ -87,8 +89,17 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
   }, []);
 
   const resetPath = useCallback(() => {
-    setDatabasePath(null);
     const nextPath = defaultPath || DATABASE_FILENAME;
+    if (isPortableMode()) {
+      setDatabasePath(nextPath, { persist: false, portable: true });
+      setCurrentPath(nextPath);
+      setInputPath(nextPath);
+      setIsDefaultPath(true);
+      setError(null);
+      onPathChange?.(nextPath);
+      return;
+    }
+    setDatabasePath(null);
     setCurrentPath(nextPath);
     setInputPath(nextPath);
     setIsDefaultPath(true);

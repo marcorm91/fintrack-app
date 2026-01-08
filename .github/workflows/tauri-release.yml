@@ -51,3 +51,28 @@ jobs:
           releaseName: 'Fintrack v__VERSION__'
           releaseBody: 'Automated release.'
           releaseDraft: true
+
+      - name: Create portable zip (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          if (-not $tag) { $tag = "v0.0.0" }
+          $version = $tag.TrimStart('v')
+          $portableDir = "portable"
+          if (Test-Path $portableDir) { Remove-Item $portableDir -Recurse -Force }
+          New-Item -ItemType Directory -Path $portableDir | Out-Null
+          Copy-Item "src-tauri/target/release/fintrack-app.exe" "$portableDir/fintrack-app.exe"
+          New-Item -ItemType File -Path "$portableDir/fintrack.portable" -Force | Out-Null
+          $zipName = "Fintrack_${version}_portable_windows.zip"
+          if (Test-Path $zipName) { Remove-Item $zipName -Force }
+          Compress-Archive -Path "$portableDir/*" -DestinationPath $zipName
+
+      - name: Upload portable zip
+        if: matrix.platform == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Fintrack_*_portable_windows.zip
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import schemaSql from './schema.sql?raw';
 
@@ -17,18 +18,79 @@ function loadStoredDatabasePath() {
 }
 
 let dbPath: string | null = loadStoredDatabasePath();
-let dbUrl = dbPath ? `sqlite:${dbPath}` : `sqlite:${DATABASE_FILENAME}`;
+let dbUrl: string | null = dbPath ? `sqlite:${dbPath}` : null;
+let dbUrlPromise: Promise<string> | null = null;
+let portableMode = false;
 
 export function getDatabasePath() {
   return dbPath;
 }
 
-export function setDatabasePath(path: string | null) {
+export function isPortableMode() {
+  return portableMode;
+}
+
+async function resolvePortableDatabasePath(): Promise<string | null> {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const portablePath = await invoke<string | null>('resolve_portable_db_path');
+    if (!portablePath) {
+      return null;
+    }
+    const trimmed = portablePath.trim();
+    return trimmed.length ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveDatabasePath(): Promise<string | null> {
+  if (dbPath) {
+    return dbPath;
+  }
+  const portablePath = await resolvePortableDatabasePath();
+  if (portablePath) {
+    portableMode = true;
+    dbPath = portablePath;
+    dbUrl = `sqlite:${portablePath}`;
+    return portablePath;
+  }
+  return null;
+}
+
+async function resolveDatabaseUrl(): Promise<string> {
+  if (dbUrl) {
+    return dbUrl;
+  }
+  if (!dbUrlPromise) {
+    dbUrlPromise = (async () => {
+      if (dbPath) {
+        return `sqlite:${dbPath}`;
+      }
+      const portablePath = await resolvePortableDatabasePath();
+      if (portablePath) {
+        portableMode = true;
+        dbPath = portablePath;
+        return `sqlite:${portablePath}`;
+      }
+      return `sqlite:${DATABASE_FILENAME}`;
+    })();
+  }
+  dbUrl = await dbUrlPromise;
+  return dbUrl;
+}
+
+export function setDatabasePath(path: string | null, options: { persist?: boolean; portable?: boolean } = {}) {
+  const { persist = true, portable = false } = options;
+  portableMode = portable;
   const trimmed = path ? path.trim() : '';
   dbPath = trimmed.length ? trimmed : null;
-  dbUrl = dbPath ? `sqlite:${dbPath}` : `sqlite:${DATABASE_FILENAME}`;
+  dbUrl = dbPath ? `sqlite:${dbPath}` : null;
+  dbUrlPromise = null;
   if (typeof window !== 'undefined') {
-    if (dbPath) {
+    if (persist && dbPath) {
       window.localStorage.setItem(DB_PATH_STORAGE_KEY, dbPath);
     } else {
       window.localStorage.removeItem(DB_PATH_STORAGE_KEY);
@@ -109,7 +171,8 @@ let initPromise: Promise<void> | null = null;
 
 async function getDb(): Promise<Database> {
   if (!dbPromise) {
-    dbPromise = Database.load(dbUrl);
+    const url = await resolveDatabaseUrl();
+    dbPromise = Database.load(url);
   }
   return dbPromise;
 }

@@ -153,10 +153,10 @@ export function YearView({
                 label={t('series.income')}
               />
             </div>
-            <strong className="mt-2 flex items-center gap-2 text-lg text-ink">
+            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
               <span className="h-2.5 w-2.5 rounded-full bg-income" />
               <span>{formatCents(yearTotals.incomeCents)} EUR</span>
-            </strong>
+            </div>
           </div>
           <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
             <div className="flex items-center justify-between">
@@ -167,10 +167,10 @@ export function YearView({
                 label={t('series.expense')}
               />
             </div>
-            <strong className="mt-2 flex items-center gap-2 text-lg text-ink">
+            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
               <span className="h-2.5 w-2.5 rounded-full bg-expense" />
               <span>{formatCents(yearTotals.expenseCents)} EUR</span>
-            </strong>
+            </div>
           </div>
           <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
             <div className="flex items-center justify-between">
@@ -181,10 +181,10 @@ export function YearView({
                 label={t('series.benefit')}
               />
             </div>
-            <strong className={`mt-2 flex items-center gap-2 text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
+            <div className={`mt-2 font-semibold flex items-center gap-2 text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
               <span className={`h-2.5 w-2.5 rounded-full ${yearBenefitDotClass}`} />
               <span>{formatCents(yearTotals.benefitCents)} EUR</span>
-            </strong>
+            </div>
           </div>
           <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
             <div className="flex items-center justify-between">
@@ -195,10 +195,10 @@ export function YearView({
                 label={t('series.balance')}
               />
             </div>
-            <strong className="mt-2 flex items-center gap-2 text-lg text-ink">
+            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
               <span className="h-2.5 w-2.5 rounded-full bg-balance" />
               <span>{formatCents(yearTotals.balanceCents)} EUR</span>
-            </strong>
+            </div>
           </div>
         </div>
         <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">

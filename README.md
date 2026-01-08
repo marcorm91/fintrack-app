@@ -15,6 +15,7 @@ Aplicacion para control mensual/anual de finanzas personales con graficas, tabla
 ## Descargas
 - Windows (instalador .exe): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_x64-setup.exe)
 - Windows (MSI): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_portable_windows.zip)
 - macOS (Apple Silicon, .dmg): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_aarch64.dmg)
 - Linux (AppImage): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_amd64.AppImage)
 - Linux (DEB): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_amd64.deb)
@@ -69,6 +70,14 @@ Ejemplo para generar checksum:
 ```bash
 Get-FileHash -Algorithm SHA256 .\src-tauri\target\release\fintrack-app.exe
 ```
+
+## Portable (Windows)
+Para usar la app sin instalar:
+1. Crea una carpeta y copia `fintrack-app.exe`.
+2. Crea un archivo vacio `fintrack.portable` en la misma carpeta (o copia `finanzas.db` ahi).
+3. Ejecuta la app. La base de datos se guardara en esa carpeta.
+
+Nota: requiere WebView2 (Windows 10/11 normalmente lo trae).
 
 ## Datos y ubicacion
 En Windows, la base de datos se guarda por defecto en:
