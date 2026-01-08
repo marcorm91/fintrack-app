@@ -1,0 +1,382 @@
+import { useEffect, useMemo, useState } from 'react';
+import type { BalanceTrend, ChartType, SeriesKey, SortDirection, AllTableSortKey } from '../../types';
+import type { ChartData, ChartOptions } from 'chart.js';
+import type { RefObject } from 'react';
+import { Bar, Line } from 'react-chartjs-2';
+import { useTranslation } from 'react-i18next';
+import { ChartTypeToggle } from '../../components/ChartTypeToggle';
+import { EyeToggle } from '../../components/EyeToggle';
+import { SortIndicator } from '../../components/SortIndicator';
+import { TrendIcon } from '../../components/icons';
+import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { BAR_TYPES } from '../../constants';
+import { formatCents, getBenefitClass } from '../../utils/format';
+
+type AllYearsPoint = {
+  year: string;
+  incomeCents: number;
+  expenseCents: number;
+  balanceCents: number;
+  benefitCents: number;
+};
+
+type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
+type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
+
+type HistoryViewProps = {
+  allYearsSeriesVisibility: Record<SeriesKey, boolean>;
+  toggleAllYearsSeries: (key: SeriesKey) => void;
+  hasAllYearsData: boolean;
+  allYearsChartData: SeriesChartData;
+  allYearsChartOptions: SeriesChartOptions;
+  allYearsChartType: ChartType;
+  setAllYearsChartType: (value: ChartType) => void;
+  sortedAllYears: AllYearsPoint[];
+  allYearsTableSort: { key: AllTableSortKey; direction: SortDirection };
+  handleAllYearsSort: (key: AllTableSortKey) => void;
+  allYearsTrendByYear: Map<string, BalanceTrend>;
+  isAllYearsLine: boolean;
+};
+
+export function HistoryView({
+  allYearsSeriesVisibility,
+  toggleAllYearsSeries,
+  hasAllYearsData,
+  allYearsChartData,
+  allYearsChartOptions,
+  allYearsChartType,
+  setAllYearsChartType,
+  sortedAllYears,
+  allYearsTableSort,
+  handleAllYearsSort,
+  allYearsTrendByYear,
+  isAllYearsLine
+}: HistoryViewProps) {
+  const { t } = useTranslation();
+  const { chartRef: historyChartRef, containerRef: historyChartContainerRef } = useChartResize();
+  const [rangeFrom, setRangeFrom] = useState('');
+  const [rangeTo, setRangeTo] = useState('');
+  const [pageSize, setPageSize] = useState<'5' | '10' | '15' | '20' | 'all'>('all');
+  const [page, setPage] = useState(1);
+  const chartLabels = useMemo(() => (allYearsChartData.labels ?? []) as string[], [allYearsChartData]);
+  const parsedFrom = rangeFrom.trim() ? Number(rangeFrom) : null;
+  const parsedTo = rangeTo.trim() ? Number(rangeTo) : null;
+  const minYearFilter =
+    parsedFrom !== null && parsedTo !== null ? Math.min(parsedFrom, parsedTo) : parsedFrom;
+  const maxYearFilter =
+    parsedFrom !== null && parsedTo !== null ? Math.max(parsedFrom, parsedTo) : parsedTo;
+  const hasRangeFilter = minYearFilter !== null || maxYearFilter !== null;
+  const filteredAllYears = useMemo(() => {
+    if (!hasRangeFilter) {
+      return sortedAllYears;
+    }
+    return sortedAllYears.filter((point) => {
+      const yearNumber = Number(point.year);
+      if (!Number.isFinite(yearNumber)) {
+        return false;
+      }
+      if (minYearFilter !== null && yearNumber < minYearFilter) {
+        return false;
+      }
+      if (maxYearFilter !== null && yearNumber > maxYearFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [hasRangeFilter, maxYearFilter, minYearFilter, sortedAllYears]);
+  const filteredChartLabels = useMemo(() => {
+    if (!hasRangeFilter) {
+      return chartLabels;
+    }
+    return chartLabels.filter((label) => {
+      const yearNumber = Number(label);
+      if (!Number.isFinite(yearNumber)) {
+        return false;
+      }
+      if (minYearFilter !== null && yearNumber < minYearFilter) {
+        return false;
+      }
+      if (maxYearFilter !== null && yearNumber > maxYearFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [chartLabels, hasRangeFilter, maxYearFilter, minYearFilter]);
+  const filteredChartData = useMemo<SeriesChartData>(() => {
+    const labelIndex = new Map(chartLabels.map((label, index) => [label, index]));
+    const datasets = (allYearsChartData.datasets ?? []).map((dataset) => {
+      const data = Array.isArray(dataset.data) ? dataset.data : [];
+      const nextData = filteredChartLabels.map((label) => {
+        const index = labelIndex.get(label);
+        return index === undefined ? null : data[index] ?? null;
+      });
+      return { ...dataset, data: nextData };
+    });
+    return {
+      ...allYearsChartData,
+      labels: filteredChartLabels,
+      datasets
+    };
+  }, [allYearsChartData, chartLabels, filteredChartLabels]);
+  const hasFilteredData = hasAllYearsData && filteredAllYears.length > 0;
+  const pageSizeValue = pageSize === 'all' ? filteredAllYears.length : Number(pageSize);
+  const totalPages =
+    pageSize === 'all' || filteredAllYears.length === 0
+      ? 1
+      : Math.max(1, Math.ceil(filteredAllYears.length / pageSizeValue));
+  const pagedAllYears = useMemo(() => {
+    if (pageSize === 'all') {
+      return filteredAllYears;
+    }
+    const start = (page - 1) * pageSizeValue;
+    return filteredAllYears.slice(start, start + pageSizeValue);
+  }, [filteredAllYears, page, pageSize, pageSizeValue]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [pageSize, rangeFrom, rangeTo]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+  const visibleColumns =
+    1 +
+    Number(allYearsSeriesVisibility.income) +
+    Number(allYearsSeriesVisibility.expense) +
+    Number(allYearsSeriesVisibility.balance) +
+    Number(allYearsSeriesVisibility.benefit);
+  return (
+    <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.historyTotal')}</p>
+          <h2 className="text-2xl font-semibold text-ink">{t('labels.allYears')}</h2>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
+        <div className="flex flex-wrap gap-8">
+          {BAR_TYPES.map((item) => {
+            const seriesKey = item.key as SeriesKey;
+            const label = t(item.labelKey);
+            return (
+              <span key={item.key} className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
+                {label}
+                <EyeToggle
+                  hidden={!allYearsSeriesVisibility[seriesKey]}
+                  onClick={() => toggleAllYearsSeries(seriesKey)}
+                  label={label}
+                />
+              </span>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] uppercase tracking-[0.18em]">{t('labels.yearRange')}</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t('labels.from')}
+            value={rangeFrom}
+            onChange={(event) => setRangeFrom(event.target.value)}
+            className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+          />
+          <span className="text-muted">-</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t('labels.to')}
+            value={rangeTo}
+            onChange={(event) => setRangeTo(event.target.value)}
+            className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+          />
+        </div>
+      </div>
+      <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.historyChart')}</p>
+          <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
+        </div>
+        <div className="mt-4">
+          {!hasFilteredData ? (
+            <p className="text-sm text-muted">{t('messages.noChartData')}</p>
+          ) : (
+            <div className="h-[360px]" ref={historyChartContainerRef}>
+              {isAllYearsLine ? (
+                <Line
+                  data={filteredChartData as ChartData<'line', number | null, string>}
+                  options={allYearsChartOptions as ChartOptions<'line'>}
+                  ref={historyChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
+                />
+              ) : (
+                <Bar
+                  data={filteredChartData as ChartData<'bar', number | null, string>}
+                  options={allYearsChartOptions as ChartOptions<'bar'>}
+                  ref={historyChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-ink/10 bg-white/90 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+          <label className="flex items-center gap-2">
+            {t('labels.showRows')}
+            <select
+              value={pageSize}
+              onChange={(event) => setPageSize(event.target.value as '5' | '10' | '15' | '20' | 'all')}
+              className="rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+              <option value="all">{t('actions.viewAll')}</option>
+            </select>
+          </label>
+        </div>
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs uppercase tracking-[0.14em] text-muted">
+            <tr className="border-b border-ink/10">
+              <th className="py-3 pr-4">
+                <button
+                  type="button"
+                  onClick={() => handleAllYearsSort('year')}
+                  className="inline-flex items-center gap-1"
+                >
+                  {t('labels.year')}
+                  <SortIndicator active={allYearsTableSort.key === 'year'} direction={allYearsTableSort.direction} />
+                </button>
+              </th>
+              {allYearsSeriesVisibility.income ? (
+                <th className="py-3 pr-4">
+                  <button
+                    type="button"
+                    onClick={() => handleAllYearsSort('income')}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {t('series.income')}
+                    <SortIndicator
+                      active={allYearsTableSort.key === 'income'}
+                      direction={allYearsTableSort.direction}
+                    />
+                  </button>
+                </th>
+              ) : null}
+              {allYearsSeriesVisibility.expense ? (
+                <th className="py-3 pr-4">
+                  <button
+                    type="button"
+                    onClick={() => handleAllYearsSort('expense')}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {t('series.expense')}
+                    <SortIndicator
+                      active={allYearsTableSort.key === 'expense'}
+                      direction={allYearsTableSort.direction}
+                    />
+                  </button>
+                </th>
+              ) : null}
+              {allYearsSeriesVisibility.balance ? (
+                <th className="py-3 pr-4">
+                  <button
+                    type="button"
+                    onClick={() => handleAllYearsSort('balance')}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {t('series.balance')}
+                    <SortIndicator
+                      active={allYearsTableSort.key === 'balance'}
+                      direction={allYearsTableSort.direction}
+                    />
+                  </button>
+                </th>
+              ) : null}
+              {allYearsSeriesVisibility.benefit ? (
+                <th className="py-3">
+                  <button
+                    type="button"
+                    onClick={() => handleAllYearsSort('benefit')}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {t('series.benefit')}
+                    <SortIndicator
+                      active={allYearsTableSort.key === 'benefit'}
+                      direction={allYearsTableSort.direction}
+                    />
+                  </button>
+                </th>
+              ) : null}
+            </tr>
+          </thead>
+          <tbody>
+            {!hasFilteredData ? (
+              <tr>
+                <td colSpan={visibleColumns} className="py-6 text-center text-sm text-muted">
+                  {t('messages.noTableData')}
+                </td>
+              </tr>
+            ) : (
+              pagedAllYears.map((point) => {
+                const trend = allYearsTrendByYear.get(point.year) ?? 'flat';
+                return (
+                  <tr key={point.year} className="border-b border-ink/5">
+                    <td className="py-3 pr-4 text-muted">{point.year}</td>
+                    {allYearsSeriesVisibility.income ? (
+                      <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
+                    ) : null}
+                    {allYearsSeriesVisibility.expense ? (
+                      <td className="py-3 pr-4 text-ink">{formatCents(point.expenseCents)} EUR</td>
+                    ) : null}
+                    {allYearsSeriesVisibility.balance ? (
+                      <td className="py-3 pr-4 text-ink">
+                        <div className="flex items-center gap-2">
+                          <span>{formatCents(point.balanceCents)} EUR</span>
+                          <TrendIcon trend={trend} />
+                        </div>
+                      </td>
+                    ) : null}
+                    {allYearsSeriesVisibility.benefit ? (
+                      <td className={`py-3 ${getBenefitClass(point.benefitCents)}`}>
+                        {formatCents(point.benefitCents)} EUR
+                      </td>
+                    ) : null}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-xs text-muted">
+          {pageSize !== 'all' && totalPages > 1 ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page === 1}
+                className="rounded-full border border-ink/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t('actions.previous')}
+              </button>
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                {t('labels.page')} {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page === totalPages}
+                className="rounded-full border border-ink/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t('actions.next')}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,212 @@
+{
+  "app": {
+    "tagline": "Tu resumen mensual",
+    "title": "Fintrack"
+  },
+  "language": {
+    "label": "Idioma",
+    "es": "ES",
+    "en": "EN"
+  },
+  "tabs": {
+    "month": "Mes actual",
+    "year": "Vista anual",
+    "all": "Histórico"
+  },
+  "actions": {
+    "importOptions": "Opciones de importación",
+    "importCsv": "Importar CSV",
+    "pasteData": "Pegar datos",
+    "info": "Info",
+    "deleting": "Eliminando...",
+    "deleteMonth": "Eliminar datos mes",
+    "deleteYear": "Eliminar datos año",
+    "deleteAll": "Eliminar datos",
+    "confirm": "Confirmar",
+    "import": "Importar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "settings": "Config",
+    "prepareImport": "Preparar import",
+    "show": "Mostrar {{label}}",
+    "hide": "Ocultar {{label}}",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "gotoCurrentMonth": "Ir al mes actual",
+    "previousYear": "Año anterior",
+    "nextYear": "Año siguiente",
+    "gotoCurrentYear": "Ir al año actual",
+    "saveMonth": "Guardar mes",
+    "saving": "Guardando...",
+    "all": "Todos",
+    "viewAll": "Ver todos",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "settings": {
+    "title": "Configuracion de datos",
+    "description": "La base de datos se guarda en este archivo:",
+    "currentPath": "Ruta actual",
+    "defaultPath": "Ruta por defecto",
+    "defaultBadge": "por defecto",
+    "unknownPath": "Ruta desconocida",
+    "inputLabel": "Nueva ruta o carpeta",
+    "inputPlaceholder": "C:\\Users\\usuario\\Documentos\\finanzas.db",
+    "inputHelp": "Pega una carpeta o una ruta .db.",
+    "browse": "Buscar",
+    "useDefault": "Usar por defecto",
+    "savePath": "Guardar ubicacion",
+    "invalidDbPath": "Indica una ruta valida para la base de datos.",
+    "dialogUnavailable": "El selector de carpetas no esta disponible en esta version."
+  },
+  "labels": {
+    "summary": "Resumen",
+    "monthSummary": "Resumen del mes",
+    "monthChart": "Gráfica del mes",
+    "yearChart": "Gráfica anual",
+    "historyChart": "Gráfica histórica",
+    "monthDetail": "Detalle por mes",
+    "historyTotal": "Histórico total",
+    "allYears": "Todos los años",
+    "totalIncome": "Total ingresos",
+    "totalExpense": "Total gastos",
+    "totalBenefit": "Total beneficio",
+    "finalBalance": "Saldo al cierre final",
+    "month": "Mes",
+    "year": "Año",
+    "currentMonth": "Mes actual",
+    "currentYear": "Año actual",
+    "saveMonth": "Guardar mes",
+    "quickFilter": "Filtro rápido",
+    "yearRange": "Rango de años",
+    "years": "años",
+    "showRows": "Mostrar",
+    "from": "Desde",
+    "to": "Hasta",
+    "page": "Pagina"
+  },
+  "series": {
+    "income": "Ingresos",
+    "expense": "Gastos",
+    "balance": "Saldo al cierre",
+    "benefit": "Beneficio"
+  },
+  "descriptions": {
+    "monthSave": "Introduce ingresos, gastos y saldo al cierre según tu banco."
+  },
+  "messages": {
+    "noChartData": "Sin datos para mostrar gráfica.",
+    "noTableData": "No hay datos para mostrar.",
+    "seriesHidden": "Series ocultas.",
+    "benefitHidden": "Beneficio oculto.",
+    "imported": "Importados {{count}} registros.",
+    "deletedMonth": "Datos del mes {{month}} eliminados.",
+    "deletedYear": "Datos del año {{year}} eliminados.",
+    "deletedAll": "Todos los datos fueron eliminados."
+  },
+  "status": {
+    "loading": "Cargando",
+    "ready": "Listo",
+    "noData": "Sin datos",
+    "inProgress": "En progreso"
+  },
+  "placeholders": {
+    "amount": "0.00"
+  },
+  "chartTypes": {
+    "bar": "Barras",
+    "line": "Línea"
+  },
+  "dialogs": {
+    "confirmImportTitle": "Confirmar importación",
+    "confirmImportMessage": "Se importaran {{count}} registros ({{scope}}) desde {{fileName}}. Esto puede sobrescribir meses existentes.",
+    "confirmDeleteMonthTitle": "Eliminar datos del mes",
+    "confirmDeleteMonthMessage": "Se eliminaran los datos del mes {{month}}. Esta acción no se puede deshacer.",
+    "confirmDeleteMonthCta": "Eliminar mes",
+    "confirmDeleteYearTitle": "Eliminar datos del año",
+    "confirmDeleteYearMessage": "Se eliminaran todos los registros del año {{year}}. Esta acción no se puede deshacer.",
+    "confirmDeleteYearCta": "Eliminar año",
+    "confirmDeleteAllTitle": "Eliminar todos los datos",
+    "confirmDeleteAllMessage": "Se eliminaran todos los registros guardados. Esta acción no se puede deshacer.",
+    "confirmDeleteAllCta": "Eliminar todo"
+  },
+  "importScopes": {
+    "month": "mes {{month}}",
+    "year": "año {{year}}",
+    "all": "todos los años"
+  },
+  "imports": {
+    "pastedLabel": "texto pegado",
+    "text": {
+      "month": {
+        "title": "Importar mes actual",
+        "description": "Pega una sola fila del mes actual o un CSV con cabecera.",
+        "placeholder": "ingresos;gastos;saldo al cierre\n2288,65;2187,92;3463,50"
+      },
+      "year": {
+        "title": "Importar año {{year}}",
+        "description": "Pega un CSV con meses del año seleccionado.",
+        "placeholder": "mes;ingresos;gastos;saldo al cierre\n2025-01;2288,65;2187,92;3463,50"
+      },
+      "all": {
+        "title": "Importar histórico",
+        "description": "Pega un CSV con meses de varios años.",
+        "placeholder": "mes;ingresos;gastos;saldo al cierre\n2024-12;2100,00;2000,00;3500,00"
+      }
+    }
+  },
+  "info": {
+    "month": {
+      "title": "Formato CSV (mes actual)",
+      "line1": "Una sola fila con ingresos, gastos y saldo al cierre.",
+      "line2": "Delimitador ; o , y decimales con coma.",
+      "exampleHeader": "ingresos;gastos;saldo al cierre",
+      "exampleRow": "2288,65;2187,92;3463,50"
+    },
+    "year": {
+      "title": "Formato CSV (año actual)",
+      "line1": "Una fila por mes. Columna mes en formato 2025-01 o ene 2025.",
+      "line2": "Delimitador ; o , y decimales con coma.",
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre",
+      "exampleRow": "2025-01;2288,65;2187,92;3463,50"
+    },
+    "all": {
+      "title": "Formato CSV (todos los años)",
+      "line1": "Múltiples años en un solo archivo, una fila por mes.",
+      "line2": "Delimitador ; o , y decimales con coma.",
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre",
+      "exampleRow1": "2024-12;2100,00;2000,00;3500,00",
+      "exampleRow2": "2025-01;2288,65;2187,92;3463,50"
+    }
+  },
+  "errors": {
+    "loadData": "Error cargando datos",
+    "invalidIncome": "Ingresos inválidos",
+    "invalidExpense": "Gastos inválidos",
+    "invalidBalance": "Saldo al cierre invalido",
+    "saveSummary": "Error guardando resumen",
+    "importType": "No se pudo determinar el tipo de importación.",
+    "importFile": "Error importando archivo",
+    "importText": "Error importando texto",
+    "deleteMonth": "Error eliminando datos del mes",
+    "deleteYear": "Error eliminando datos del año",
+    "deleteAll": "Error eliminando datos",
+    "emptyFile": "Archivo vacío",
+    "missingColumns": "El archivo necesita columnas mes, ingresos, gastos y saldo al cierre.",
+    "missingColumnsMonth": "El archivo necesita columnas ingresos, gastos y saldo al cierre.",
+    "invalidMonthLine": "Mes invalido en la línea {{line}}.",
+    "invalidValuesLine": "Valores inválidos en la línea {{line}}.",
+    "noRowsImport": "No hay filas para importar.",
+    "monthImportSingleRow": "El import del mes actual solo acepta una fila.",
+    "monthImportMismatch": "Este import es solo para el mes actual.",
+    "monthImportSingleRowRequired": "El import del mes actual debe tener una única fila."
+  },
+  "tooltips": {
+    "benefit": "Beneficio: {{value}} EUR"
+  },
+  "footer": {
+    "openSource": "Open source · codigo libre"
+  }
+}
+
+

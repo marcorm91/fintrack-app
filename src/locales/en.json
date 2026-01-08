@@ -1,0 +1,210 @@
+{
+  "app": {
+    "tagline": "Your monthly summary",
+    "title": "Fintrack"
+  },
+  "language": {
+    "label": "Language",
+    "es": "ES",
+    "en": "EN"
+  },
+  "tabs": {
+    "month": "Current month",
+    "year": "Annual view",
+    "all": "History"
+  },
+  "actions": {
+    "importOptions": "Import options",
+    "importCsv": "Import CSV",
+    "pasteData": "Paste data",
+    "info": "Info",
+    "deleting": "Deleting...",
+    "deleteMonth": "Delete month data",
+    "deleteYear": "Delete year data",
+    "deleteAll": "Delete data",
+    "confirm": "Confirm",
+    "import": "Import",
+    "cancel": "Cancel",
+    "close": "Close",
+    "settings": "Settings",
+    "prepareImport": "Prepare import",
+    "show": "Show {{label}}",
+    "hide": "Hide {{label}}",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "gotoCurrentMonth": "Go to current month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "gotoCurrentYear": "Go to current year",
+    "saveMonth": "Save month",
+    "saving": "Saving...",
+    "all": "All",
+    "viewAll": "View all",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "settings": {
+    "title": "Database settings",
+    "description": "The database is stored in this file:",
+    "currentPath": "Current path",
+    "defaultPath": "Default path",
+    "defaultBadge": "default",
+    "unknownPath": "Unknown path",
+    "inputLabel": "New path or folder",
+    "inputPlaceholder": "C:\\Users\\name\\Documents\\finanzas.db",
+    "inputHelp": "Paste a folder or a .db file path.",
+    "browse": "Browse",
+    "useDefault": "Use default",
+    "savePath": "Save location",
+    "invalidDbPath": "Enter a valid database path.",
+    "dialogUnavailable": "Folder picker is unavailable in this build."
+  },
+  "labels": {
+    "summary": "Summary",
+    "monthSummary": "Monthly summary",
+    "monthChart": "Monthly chart",
+    "yearChart": "Annual chart",
+    "historyChart": "History chart",
+    "monthDetail": "Detail by month",
+    "historyTotal": "Total history",
+    "allYears": "All years",
+    "totalIncome": "Total income",
+    "totalExpense": "Total expenses",
+    "totalBenefit": "Total profit",
+    "finalBalance": "Final closing balance",
+    "month": "Month",
+    "year": "Year",
+    "currentMonth": "Current month",
+    "currentYear": "Current year",
+    "saveMonth": "Save month",
+    "quickFilter": "Quick filter",
+    "yearRange": "Year range",
+    "years": "years",
+    "showRows": "Show",
+    "from": "From",
+    "to": "To",
+    "page": "Page"
+  },
+  "series": {
+    "income": "Income",
+    "expense": "Expenses",
+    "balance": "Closing balance",
+    "benefit": "Profit"
+  },
+  "descriptions": {
+    "monthSave": "Enter income, expenses, and closing balance from your bank."
+  },
+  "messages": {
+    "noChartData": "No data to chart.",
+    "noTableData": "No data to display.",
+    "seriesHidden": "Series hidden.",
+    "benefitHidden": "Profit hidden.",
+    "imported": "Imported {{count}} records.",
+    "deletedMonth": "Month {{month}} data deleted.",
+    "deletedYear": "Year {{year}} data deleted.",
+    "deletedAll": "All data has been deleted."
+  },
+  "status": {
+    "loading": "Loading",
+    "ready": "Ready",
+    "noData": "No data",
+    "inProgress": "In progress"
+  },
+  "placeholders": {
+    "amount": "0.00"
+  },
+  "chartTypes": {
+    "bar": "Bars",
+    "line": "Line"
+  },
+  "dialogs": {
+    "confirmImportTitle": "Confirm import",
+    "confirmImportMessage": "Import {{count}} records ({{scope}}) from {{fileName}}. This may overwrite existing months.",
+    "confirmDeleteMonthTitle": "Delete month data",
+    "confirmDeleteMonthMessage": "This will delete data for month {{month}}. This action cannot be undone.",
+    "confirmDeleteMonthCta": "Delete month",
+    "confirmDeleteYearTitle": "Delete year data",
+    "confirmDeleteYearMessage": "This will delete all records for year {{year}}. This action cannot be undone.",
+    "confirmDeleteYearCta": "Delete year",
+    "confirmDeleteAllTitle": "Delete all data",
+    "confirmDeleteAllMessage": "This will delete all saved records. This action cannot be undone.",
+    "confirmDeleteAllCta": "Delete all"
+  },
+  "importScopes": {
+    "month": "month {{month}}",
+    "year": "year {{year}}",
+    "all": "all years"
+  },
+  "imports": {
+    "pastedLabel": "pasted text",
+    "text": {
+      "month": {
+        "title": "Import current month",
+        "description": "Paste a single row for the current month or a CSV with headers.",
+        "placeholder": "income;expenses;closing balance\n2288.65;2187.92;3463.50"
+      },
+      "year": {
+        "title": "Import year {{year}}",
+        "description": "Paste a CSV with months for the selected year.",
+        "placeholder": "month;income;expenses;closing balance\n2025-01;2288.65;2187.92;3463.50"
+      },
+      "all": {
+        "title": "Import history",
+        "description": "Paste a CSV with months from multiple years.",
+        "placeholder": "month;income;expenses;closing balance\n2024-12;2100.00;2000.00;3500.00"
+      }
+    }
+  },
+  "info": {
+    "month": {
+      "title": "CSV format (current month)",
+      "line1": "Single row with income, expenses, and closing balance.",
+      "line2": "Delimiter ; or , and decimals with comma.",
+      "exampleHeader": "income;expenses;closing balance",
+      "exampleRow": "2288.65;2187.92;3463.50"
+    },
+    "year": {
+      "title": "CSV format (current year)",
+      "line1": "One row per month. Month column in format 2025-01 or Jan 2025.",
+      "line2": "Delimiter ; or , and decimals with comma.",
+      "exampleHeader": "month;income;expenses;closing balance",
+      "exampleRow": "2025-01;2288.65;2187.92;3463.50"
+    },
+    "all": {
+      "title": "CSV format (all years)",
+      "line1": "Multiple years in a single file, one row per month.",
+      "line2": "Delimiter ; or , and decimals with comma.",
+      "exampleHeader": "month;income;expenses;closing balance",
+      "exampleRow1": "2024-12;2100.00;2000.00;3500.00",
+      "exampleRow2": "2025-01;2288.65;2187.92;3463.50"
+    }
+  },
+  "errors": {
+    "loadData": "Error loading data",
+    "invalidIncome": "Invalid income",
+    "invalidExpense": "Invalid expenses",
+    "invalidBalance": "Invalid closing balance",
+    "saveSummary": "Error saving summary",
+    "importType": "Could not determine the import type.",
+    "importFile": "Error importing file",
+    "importText": "Error importing text",
+    "deleteMonth": "Error deleting month data",
+    "deleteYear": "Error deleting year data",
+    "deleteAll": "Error deleting data",
+    "emptyFile": "Empty file",
+    "missingColumns": "The file needs columns month, income, expenses, and closing balance.",
+    "missingColumnsMonth": "The file needs columns income, expenses, and closing balance.",
+    "invalidMonthLine": "Invalid month on line {{line}}.",
+    "invalidValuesLine": "Invalid values on line {{line}}.",
+    "noRowsImport": "No rows to import.",
+    "monthImportSingleRow": "Current month import only accepts one row.",
+    "monthImportMismatch": "This import is only for the current month.",
+    "monthImportSingleRowRequired": "Current month import must have a single row."
+  },
+  "tooltips": {
+    "benefit": "Profit: {{value}} EUR"
+  },
+  "footer": {
+    "openSource": "Open source · free code"
+  }
+}
