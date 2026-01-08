@@ -70,6 +70,7 @@ export function MonthView({
   const locale = i18n.language;
   const { chartRef: monthChartRef, containerRef: monthChartContainerRef } = useChartResize();
   const { chartRef: benefitChartRef, containerRef: benefitChartContainerRef } = useChartResize();
+  const showMonthBenefitSection = !isCurrentMonth || hasMonthData;
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
       <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
@@ -118,7 +119,9 @@ export function MonthView({
           <div aria-hidden="true">
           </div>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div
+          className={`mt-6 grid gap-4 md:grid-cols-2 ${showMonthBenefitSection ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
+        >
           <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.income')}</p>
@@ -161,20 +164,22 @@ export function MonthView({
               <span>{formatCents(displaySummary.balanceCents)} EUR</span>
             </div>
           </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.benefit')}</p>
-              <EyeToggle
-                hidden={!monthSeriesVisibility.benefit}
-                onClick={() => toggleMonthSeries('benefit')}
-                label={t('series.benefit')}
-              />
+          {showMonthBenefitSection ? (
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.benefit')}</p>
+                <EyeToggle
+                  hidden={!monthSeriesVisibility.benefit}
+                  onClick={() => toggleMonthSeries('benefit')}
+                  label={t('series.benefit')}
+                />
+              </div>
+              <div className={`mt-2 flex items-center gap-2 text-2xl font-semibold ${getBenefitClass(displaySummary.benefitCents)}`}>
+                <span className={`h-2.5 w-2.5 rounded-full ${monthBenefitDotClass}`} />
+                <span>{formatCents(displaySummary.benefitCents)} EUR</span>
+              </div>
             </div>
-            <div className={`mt-2 flex items-center gap-2 text-2xl font-semibold ${getBenefitClass(displaySummary.benefitCents)}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${monthBenefitDotClass}`} />
-              <span>{formatCents(displaySummary.benefitCents)} EUR</span>
-            </div>
-          </div>
+          ) : null}
         </div>
         <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -186,7 +191,9 @@ export function MonthView({
               </span>
             </div>
           </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_220px]">
+          <div
+            className={`mt-4 grid gap-4 ${showMonthBenefitSection ? 'lg:grid-cols-[1fr_220px]' : 'lg:grid-cols-1'}`}
+          >
             <div className="h-[220px]" ref={monthChartContainerRef}>
               {hasMonthData ? (
                 hasVisibleMonthBars ? (
@@ -214,41 +221,43 @@ export function MonthView({
                 </div>
               )}
             </div>
-            <div className="flex h-[220px] flex-col rounded-xl border border-ink/10 bg-white/80 p-3">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted">
-                {t('series.benefit')}
-                <span className={getBenefitClass(displaySummary.benefitCents)}>
-                  {formatCents(displaySummary.benefitCents)} EUR
-                </span>
-              </div>
-              <div className="mt-2 flex-1" ref={benefitChartContainerRef}>
-                {hasMonthData ? (
-                  showMonthBenefit ? (
-                    isMonthLine ? (
-                      <Line
-                        data={benefitChartData as ChartData<'line', number | null, string>}
-                        options={benefitChartOptions as ChartOptions<'line'>}
-                        ref={benefitChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
-                      />
+            {showMonthBenefitSection ? (
+              <div className="flex h-[220px] flex-col rounded-xl border border-ink/10 bg-white/80 p-3">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted">
+                  {t('series.benefit')}
+                  <span className={getBenefitClass(displaySummary.benefitCents)}>
+                    {formatCents(displaySummary.benefitCents)} EUR
+                  </span>
+                </div>
+                <div className="mt-2 flex-1" ref={benefitChartContainerRef}>
+                  {hasMonthData ? (
+                    showMonthBenefit ? (
+                      isMonthLine ? (
+                        <Line
+                          data={benefitChartData as ChartData<'line', number | null, string>}
+                          options={benefitChartOptions as ChartOptions<'line'>}
+                          ref={benefitChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
+                        />
+                      ) : (
+                        <Bar
+                          data={benefitChartData as ChartData<'bar', number | null, string>}
+                          options={benefitChartOptions as ChartOptions<'bar'>}
+                          ref={benefitChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
+                        />
+                      )
                     ) : (
-                      <Bar
-                        data={benefitChartData as ChartData<'bar', number | null, string>}
-                        options={benefitChartOptions as ChartOptions<'bar'>}
-                        ref={benefitChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
-                      />
+                      <div className="flex h-full items-center justify-center text-sm text-muted">
+                        {t('messages.benefitHidden')}
+                      </div>
                     )
                   ) : (
                     <div className="flex h-full items-center justify-center text-sm text-muted">
-                      {t('messages.benefitHidden')}
+                      {t('messages.noChartData')}
                     </div>
-                  )
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-muted">
-                    {t('messages.noChartData')}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       </section>

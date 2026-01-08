@@ -12,6 +12,14 @@ Aplicacion para control mensual/anual de finanzas personales con graficas, tabla
 - Filtros por rango y paginacion en historico.
 - Configuracion de ruta de base de datos desde la app.
 
+## Descargas
+- Windows (instalador .exe): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0_x64-setup.exe)
+- Windows (MSI): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0_x64_en-US.msi)
+- macOS (Apple Silicon, .dmg): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0_aarch64.dmg)
+- Linux (AppImage): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0_amd64.AppImage)
+- Linux (DEB): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0_amd64.deb)
+- Linux (RPM): [Fintrack 0.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_0.1.0-1.x86_64.rpm)
+
 ## Stack
 - React + Vite + TypeScript
 - Tailwind CSS
@@ -95,4 +103,4 @@ Notas:
 Al subir un tag `v*` (por ejemplo `v0.1.0`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Licencia
-Pendiente de definir.
+MIT. Ver `LICENSE`.
