@@ -13,13 +13,13 @@ Aplicacion para control mensual/anual de finanzas personales con graficas, tabla
 - Configuracion de ruta de base de datos desde la app.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_x64-setup.exe)
-- Windows (MSI): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_aarch64.dmg)
-- Linux (AppImage): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_amd64.AppImage)
-- Linux (DEB): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0_amd64.deb)
-- Linux (RPM): [Fintrack 1.0.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.0-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_x64-setup.exe)
+- Windows (MSI): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_aarch64.dmg)
+- Linux (AppImage): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_amd64.AppImage)
+- Linux (DEB): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1_amd64.deb)
+- Linux (RPM): [Fintrack 1.0.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.1-1.x86_64.rpm)
 
 ## Stack
 - React + Vite + TypeScript
