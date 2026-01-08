@@ -64,6 +64,7 @@ jobs:
           New-Item -ItemType Directory -Path $portableDir | Out-Null
           Copy-Item "src-tauri/target/release/fintrack-app.exe" "$portableDir/fintrack-app.exe"
           New-Item -ItemType File -Path "$portableDir/fintrack.portable" -Force | Out-Null
+          New-Item -ItemType File -Path "$portableDir/finanzas.db" -Force | Out-Null
           $zipName = "Fintrack_${version}_portable_windows.zip"
           if (Test-Path $zipName) { Remove-Item $zipName -Force }
           Compress-Archive -Path "$portableDir/*" -DestinationPath $zipName
