@@ -2,6 +2,10 @@
 
 Aplicacion para control mensual/anual de finanzas personales con graficas, tablas e importacion de datos.
 
+> **Motivación**  
+> Este proyecto nace de una necesidad personal: dejar de gestionar mis finanzas en hojas de Excel que con el tiempo se volvieron difíciles de mantener, propensas a errores y poco prácticas para analizar el histórico.  
+> Fintrack surge como una alternativa local, sencilla y mantenible para controlar ingresos, gastos y saldo acumulado sin depender de herramientas externas.
+
 ## Caracteristicas
 - Vista mensual, anual e historico.
 - Importacion desde CSV o pegado de texto.
@@ -110,6 +114,67 @@ Notas:
 
 ## CI / Releases
 Al subir un tag `v*` (por ejemplo `v1.0.2`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+
+## Ejemplo de uso
+
+### Resumen mensual (Vista)
+
+<img width="1919" height="1079" alt="imagen" src="https://github.com/user-attachments/assets/b9fe34a7-1258-42ef-b44b-dcc6b78cdd95" />
+Vista principal de la aplicación.
+Permite registrar ingresos, gastos y saldo al cierre de cada mes, mostrando gráficas y métricas clave para validar los datos sin depender de hojas de cálculo.
+
+### Resumen anual (Vista)
+
+<img width="1891" height="884" alt="imagen" src="https://github.com/user-attachments/assets/4d95e332-ce02-49a1-b195-40fdd2bbee3c" />
+<img width="1881" height="765" alt="imagen" src="https://github.com/user-attachments/assets/2beba6ee-9298-43de-bacd-e3f7646773ed" />
+Resumen global del año seleccionado, con agregados de ingresos, gastos, beneficio y saldo final, junto con una gráfica comparativa mes a mes.
+
+### Histórico (Vista)
+
+<img width="1884" height="797" alt="imagen" src="https://github.com/user-attachments/assets/6e36fbfe-7867-49b6-89f8-f67d50636391" />
+Vista global de todos los años registrados, con agregados anuales de ingresos, gastos, beneficio y saldo al cierre.
+
+### Explicación de los campos de entrada
+
+Introduce los importes tal y como aparecen en tu banco al final de cada mes:
+
+- Ingresos: todo lo que ha entrado en el mes.
+- Gastos: todo lo que ha salido en el mes.
+- Saldo al cierre: el dinero total que queda en la cuenta al finalizar el mes.
+
+El beneficio se calcula automáticamente.
+
+### Extra
+
+**Importar CSV** <br/>
+Puedes importar un archivo CSV con tus datos históricos.
+El importador detecta automáticamente el delimitador (coma o punto y coma) y reconoce cabeceras en español o inglés.
+
+**Pegar datos** <br/>
+También puedes pegar directamente los datos como texto, tal y como se muestran en el ejemplo del campo.
+El formato de los datos depende de la vista desde la que se realiza la importación (mensual, anual o histórico).
+Cada vista muestra un ejemplo de formato en el campo de texto, que debe respetarse al pegar los datos.
+
+**Importación/exportación .db** <br/>
+Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  
+Este archivo es el origen de todos los datos de la aplicación: meses, histórico y saldo acumulado.
+
+Es importante que la aplicación esté **apuntando al archivo `.db` correcto** para poder ver, guardar o recuperar tu información.  
+Cambiar de archivo implica cambiar de conjunto de datos.
+
+No existe sincronización automática ni copias ocultas.
+
+<img width="1282" height="710" alt="imagen" src="https://github.com/user-attachments/assets/21637a76-1dd8-44d4-bbd9-14e0e7504304" />
+
+Para enlazar o cambiar el archivo de datos:
+
+1. Abre **Ajustes** desde el icono de configuración.
+2. Selecciona una carpeta o un archivo `.db`.
+3. Guarda la nueva ubicación.
+
+A partir de ese momento, Fintrack utilizará ese archivo como fuente de datos.
+
+> Los datos utilizados en las capturas y ejemplos son datos simulados con fines demostrativos.
 
 ## Licencia
 MIT. Ver `LICENSE`.
