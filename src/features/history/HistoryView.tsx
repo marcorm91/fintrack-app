@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BalanceTrend, ChartType, SeriesKey, SortDirection, AllTableSortKey } from '../../types';
-import type { ChartData, ChartOptions } from 'chart.js';
+import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +26,7 @@ type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 type HistoryViewProps = {
   allYearsSeriesVisibility: Record<SeriesKey, boolean>;
   toggleAllYearsSeries: (key: SeriesKey) => void;
+  showOnlyAllYearsSeries: (key: SeriesKey) => void;
   hasAllYearsData: boolean;
   allYearsChartData: SeriesChartData;
   allYearsChartOptions: SeriesChartOptions;
@@ -41,6 +42,7 @@ type HistoryViewProps = {
 export function HistoryView({
   allYearsSeriesVisibility,
   toggleAllYearsSeries,
+  showOnlyAllYearsSeries,
   hasAllYearsData,
   allYearsChartData,
   allYearsChartOptions,
@@ -147,6 +149,21 @@ export function HistoryView({
     Number(allYearsSeriesVisibility.expense) +
     Number(allYearsSeriesVisibility.balance) +
     Number(allYearsSeriesVisibility.benefit);
+  const handleHistoryChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+    const element = elements[0];
+    if (!element) {
+      return;
+    }
+    const seriesKey = BAR_TYPES[element.datasetIndex]?.key;
+    if (!seriesKey) {
+      return;
+    }
+    showOnlyAllYearsSeries(seriesKey);
+  };
+  const historyChartOptionsWithClick: SeriesChartOptions = {
+    ...allYearsChartOptions,
+    onClick: handleHistoryChartClick
+  };
   return (
     <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -207,13 +224,13 @@ export function HistoryView({
               {isAllYearsLine ? (
                 <Line
                   data={filteredChartData as ChartData<'line', number | null, string>}
-                  options={allYearsChartOptions as ChartOptions<'line'>}
+                  options={historyChartOptionsWithClick as ChartOptions<'line'>}
                   ref={historyChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
                 />
               ) : (
                 <Bar
                   data={filteredChartData as ChartData<'bar', number | null, string>}
-                  options={allYearsChartOptions as ChartOptions<'bar'>}
+                  options={historyChartOptionsWithClick as ChartOptions<'bar'>}
                   ref={historyChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
                 />
               )}

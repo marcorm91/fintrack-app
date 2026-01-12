@@ -1,6 +1,6 @@
 import type { BalanceTrend, ChartType, SeriesKey, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
-import type { ChartData, ChartOptions } from 'chart.js';
+import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,7 @@ type YearViewProps = {
   yearBenefitDotClass: string;
   yearSeriesVisibility: Record<SeriesKey, boolean>;
   toggleYearSeries: (key: SeriesKey) => void;
+  showOnlyYearSeries: (key: SeriesKey) => void;
   yearChartType: ChartType;
   setYearChartType: (value: ChartType) => void;
   hasChartData: boolean;
@@ -55,6 +56,7 @@ export function YearView({
   yearBenefitDotClass,
   yearSeriesVisibility,
   toggleYearSeries,
+  showOnlyYearSeries,
   yearChartType,
   setYearChartType,
   hasChartData,
@@ -75,6 +77,21 @@ export function YearView({
     Number(yearSeriesVisibility.expense) +
     Number(yearSeriesVisibility.balance) +
     Number(yearSeriesVisibility.benefit);
+  const handleYearChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+    const element = elements[0];
+    if (!element) {
+      return;
+    }
+    const seriesKey = BAR_TYPES[element.datasetIndex]?.key;
+    if (!seriesKey) {
+      return;
+    }
+    showOnlyYearSeries(seriesKey);
+  };
+  const yearChartOptionsWithClick: SeriesChartOptions = {
+    ...yearChartOptions,
+    onClick: handleYearChartClick
+  };
   return (
     <>
       <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
@@ -214,13 +231,13 @@ export function YearView({
                 {isYearLine ? (
                   <Line
                     data={yearChartData as ChartData<'line', number | null, string>}
-                    options={yearChartOptions as ChartOptions<'line'>}
+                    options={yearChartOptionsWithClick as ChartOptions<'line'>}
                     ref={yearChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
                   />
                 ) : (
                   <Bar
                     data={yearChartData as ChartData<'bar', number | null, string>}
-                    options={yearChartOptions as ChartOptions<'bar'>}
+                    options={yearChartOptionsWithClick as ChartOptions<'bar'>}
                     ref={yearChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
                   />
                 )}
@@ -354,4 +371,3 @@ export function YearView({
     </>
   );
 }
-

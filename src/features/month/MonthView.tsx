@@ -1,6 +1,6 @@
 import type { FormState, SeriesKey, ChartType } from '../../types';
 import type { MonthlySummary } from '../../db';
-import type { ChartData, ChartOptions } from 'chart.js';
+import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,8 @@ import { getMonthLabel, shiftMonthValue } from '../../utils/date';
 type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
 type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 
+const MONTH_SERIES_ORDER: SeriesKey[] = ['income', 'expense', 'balance'];
+
 type MonthViewProps = {
   monthValue: string;
   setMonthValue: (value: string | ((prev: string) => string)) => void;
@@ -23,6 +25,7 @@ type MonthViewProps = {
   displaySummary: MonthlySummary;
   monthSeriesVisibility: Record<SeriesKey, boolean>;
   toggleMonthSeries: (key: SeriesKey) => void;
+  showOnlyMonthSeries: (key: SeriesKey) => void;
   monthBenefitDotClass: string;
   monthChartType: ChartType;
   setMonthChartType: (value: ChartType) => void;
@@ -49,6 +52,7 @@ export function MonthView({
   displaySummary,
   monthSeriesVisibility,
   toggleMonthSeries,
+  showOnlyMonthSeries,
   monthBenefitDotClass,
   monthChartType,
   setMonthChartType,
@@ -71,6 +75,21 @@ export function MonthView({
   const { chartRef: monthChartRef, containerRef: monthChartContainerRef } = useChartResize();
   const { chartRef: benefitChartRef, containerRef: benefitChartContainerRef } = useChartResize();
   const showMonthBenefitSection = !isCurrentMonth || hasMonthData;
+  const handleMonthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+    const element = elements[0];
+    if (!element) {
+      return;
+    }
+    const seriesKey = MONTH_SERIES_ORDER[element.index];
+    if (!seriesKey) {
+      return;
+    }
+    showOnlyMonthSeries(seriesKey);
+  };
+  const monthChartOptionsWithClick: SeriesChartOptions = {
+    ...monthChartOptions,
+    onClick: handleMonthChartClick
+  };
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
       <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
@@ -200,13 +219,13 @@ export function MonthView({
                   isMonthLine ? (
                     <Line
                       data={monthChartData as ChartData<'line', number | null, string>}
-                      options={monthChartOptions as ChartOptions<'line'>}
+                      options={monthChartOptionsWithClick as ChartOptions<'line'>}
                       ref={monthChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
                     />
                   ) : (
                     <Bar
                       data={monthChartData as ChartData<'bar', number | null, string>}
-                      options={monthChartOptions as ChartOptions<'bar'>}
+                      options={monthChartOptionsWithClick as ChartOptions<'bar'>}
                       ref={monthChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
                     />
                   )
