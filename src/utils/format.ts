@@ -1,14 +1,22 @@
 const EURO_FORMATTER = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
+  useGrouping: true
+});
+const EURO_FORMATTER_INT = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+  useGrouping: true
 });
 
 export function formatEuro(value: number) {
-  return EURO_FORMATTER.format(value);
+  const rounded = Math.round(value * 100);
+  return rounded % 100 === 0 ? EURO_FORMATTER_INT.format(value) : EURO_FORMATTER.format(value);
 }
 
 export function formatCents(cents: number) {
-  return EURO_FORMATTER.format(cents / 100);
+  const abs = Math.abs(cents);
+  return abs % 100 === 0 ? EURO_FORMATTER_INT.format(cents / 100) : EURO_FORMATTER.format(cents / 100);
 }
 
 export function formatInputCents(cents: number) {

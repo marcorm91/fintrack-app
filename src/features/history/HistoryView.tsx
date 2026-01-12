@@ -124,6 +124,22 @@ export function HistoryView({
       datasets
     };
   }, [allYearsChartData, chartLabels, filteredChartLabels]);
+  const { bestBenefitYear, worstBenefitYear } = useMemo(() => {
+    if (filteredAllYears.length === 0) {
+      return { bestBenefitYear: null, worstBenefitYear: null };
+    }
+    let best = filteredAllYears[0];
+    let worst = filteredAllYears[0];
+    for (const point of filteredAllYears) {
+      if (point.benefitCents > best.benefitCents) {
+        best = point;
+      }
+      if (point.benefitCents < worst.benefitCents) {
+        worst = point;
+      }
+    }
+    return { bestBenefitYear: best, worstBenefitYear: worst };
+  }, [filteredAllYears]);
   const hasFilteredData = hasAllYearsData && filteredAllYears.length > 0;
   const pageSizeValue = pageSize === 'all' ? filteredAllYears.length : Number(pageSize);
   const totalPages =
@@ -223,6 +239,30 @@ export function HistoryView({
               />
             </div>
           </div>
+          {bestBenefitYear && allYearsSeriesVisibility.benefit ? (
+            <ul className="mt-4 space-y-1 text-sm text-muted">
+              <li className="flex items-start gap-2">
+                <span className="text-benefit">&bull;</span>
+                <span>
+                  {t('labels.bestBenefitYear', { year: bestBenefitYear.year })}
+                  <span className="ml-1 font-semibold text-benefit">
+                    {formatCents(bestBenefitYear.benefitCents)} EUR
+                  </span>
+                </span>
+              </li>
+              {worstBenefitYear && worstBenefitYear.year !== bestBenefitYear.year ? (
+                <li className="flex items-start gap-2">
+                  <span className="text-benefitNegative">&bull;</span>
+                  <span>
+                    {t('labels.worstBenefitYear', { year: worstBenefitYear.year })}
+                    <span className="ml-1 font-semibold text-benefitNegative">
+                      {formatCents(worstBenefitYear.benefitCents)} EUR
+                    </span>
+                  </span>
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
           <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.historyChart')}</p>

@@ -36,13 +36,17 @@ export function shiftYearValue(value: string, delta: number) {
 
 const DEFAULT_LOCALE = 'es';
 
-export function getMonthLabel(monthValue: string, locale: string = DEFAULT_LOCALE) {
+export function getMonthLabel(
+  monthValue: string,
+  locale: string = DEFAULT_LOCALE,
+  format: 'short' | 'long' = 'short'
+) {
   const { year, month } = getMonthParts(monthValue);
   if (!Number.isFinite(year) || !Number.isFinite(month)) {
     return monthValue;
   }
   const date = new Date(year, month - 1, 1);
-  const label = new Intl.DateTimeFormat(locale, { month: 'short' }).format(date);
+  const label = new Intl.DateTimeFormat(locale, { month: format }).format(date);
   return label.replace('.', '').toLowerCase();
 }
 

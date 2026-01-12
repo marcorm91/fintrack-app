@@ -82,7 +82,7 @@ export function MonthView({
     Array<number | null>,
     string
   >();
-  const showMonthBenefitSection = !isCurrentMonth || hasMonthData;
+  const showMonthBenefitSection = hasMonthData;
   const handleMonthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
@@ -105,7 +105,7 @@ export function MonthView({
           <div>
             <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.monthSummary')}</p>
             <h2 className="text-2xl font-semibold text-ink">
-              {getMonthLabel(monthValue, locale)} {monthValue.slice(0, 4)}
+              {getMonthLabel(monthValue, locale, 'long')} {monthValue.slice(0, 4)}
             </h2>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -213,9 +213,6 @@ export function MonthView({
             <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.monthChart')}</p>
             <div className="flex items-center gap-3">
               <ChartTypeToggle value={monthChartType} onChange={setMonthChartType} />
-              <span className="text-xs uppercase tracking-[0.2em] text-muted">
-                {getMonthLabel(monthValue, locale)} {monthValue.slice(0, 4)}
-              </span>
             </div>
           </div>
           <div

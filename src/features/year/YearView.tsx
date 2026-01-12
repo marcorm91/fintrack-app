@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { BalanceTrend, ChartType, SeriesKey, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
 import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
@@ -79,6 +80,22 @@ export function YearView({
     Array<number | null>,
     string
   >();
+  const { bestBenefitMonth, worstBenefitMonth } = useMemo(() => {
+    if (sortedYearSeries.length === 0) {
+      return { bestBenefitMonth: null, worstBenefitMonth: null };
+    }
+    let best: MonthlySeriesPoint = sortedYearSeries[0];
+    let worst: MonthlySeriesPoint = sortedYearSeries[0];
+    for (const point of sortedYearSeries) {
+      if (point.benefitCents > best.benefitCents) {
+        best = point;
+      }
+      if (point.benefitCents < worst.benefitCents) {
+        worst = point;
+      }
+    }
+    return { bestBenefitMonth: best, worstBenefitMonth: worst };
+  }, [sortedYearSeries]);
   const visibleColumns =
     1 +
     Number(yearSeriesVisibility.income) +
@@ -232,6 +249,24 @@ export function YearView({
               </div>
             </div>
           </div>
+          {bestBenefitMonth && yearSeriesVisibility.benefit ? (
+            <ul className="mt-4 list-disc pl-5 text-sm text-muted">
+              <li className="font-medium text-ink">
+                {t('labels.bestBenefitMonth', {
+                  month: getMonthLabel(bestBenefitMonth.month, locale),
+                  value: formatCents(bestBenefitMonth.benefitCents)
+                })}
+              </li>
+              {worstBenefitMonth && worstBenefitMonth.month !== bestBenefitMonth.month ? (
+                <li className="text-ink">
+                  {t('labels.worstBenefitMonth', {
+                    month: getMonthLabel(worstBenefitMonth.month, locale),
+                    value: formatCents(worstBenefitMonth.benefitCents)
+                  })}
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
           <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.yearChart')}</p>
