@@ -1,17 +1,32 @@
 import type { BalanceTrend } from '../types';
 
-export function TrendIcon({ trend }: { trend: BalanceTrend }) {
-  const colorClass =
-    trend === 'up' ? 'text-benefit' : trend === 'down' ? 'text-benefitNegative' : 'text-muted';
+type TrendIconDirection = BalanceTrend | 'right';
+type TrendIconProps = {
+  trend: TrendIconDirection;
+  colorClass?: string;
+};
+
+export function TrendIcon({ trend, colorClass }: TrendIconProps) {
+  const defaultColorClass =
+    trend === 'right'
+      ? 'text-ink'
+      : trend === 'up'
+        ? 'text-benefit'
+        : trend === 'down'
+          ? 'text-benefitNegative'
+          : 'text-muted';
+  const resolvedColorClass = colorClass ?? defaultColorClass;
   const path =
-    trend === 'up'
-      ? 'M8 3l4 4H9v6H7V7H4l4-4z'
-      : trend === 'down'
-        ? 'M8 13l-4-4h3V3h2v6h3l-4 4z'
-        : 'M4 8h8v2H4z';
+    trend === 'right'
+      ? 'M13 8l-4-4v3H3v2h6v3l4-4z'
+      : trend === 'up'
+        ? 'M8 3l4 4H9v6H7V7H4l4-4z'
+        : trend === 'down'
+          ? 'M8 13l-4-4h3V3h2v6h3l-4 4z'
+          : 'M4 8h8v2H4z';
 
   return (
-    <svg className={`h-4 w-4 ${colorClass}`} viewBox="0 0 16 16" aria-hidden="true">
+    <svg className={`h-4 w-4 ${resolvedColorClass}`} viewBox="0 0 16 16" aria-hidden="true">
       <path d={path} fill="currentColor" />
     </svg>
   );

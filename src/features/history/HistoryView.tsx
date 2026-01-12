@@ -241,21 +241,22 @@ export function HistoryView({
           </div>
           {bestBenefitYear && allYearsSeriesVisibility.benefit ? (
             <ul className="mt-4 space-y-1 text-sm text-muted">
-              <li className="flex items-start gap-2">
-                <span className="text-benefit">&bull;</span>
-                <span>
+              <li className="flex items-center gap-2">
+                <TrendIcon trend="up" />
+                <span className="flex items-center gap-2">
                   {t('labels.bestBenefitYear', { year: bestBenefitYear.year })}
-                  <span className="ml-1 font-semibold text-benefit">
-                    {formatCents(bestBenefitYear.benefitCents)} EUR
+                  <span className="flex gap-1 items-center font-semibold text-benefit">
+                    <TrendIcon trend="right" /> {formatCents(bestBenefitYear.benefitCents)} EUR
                   </span>
                 </span>
               </li>
               {worstBenefitYear && worstBenefitYear.year !== bestBenefitYear.year ? (
-                <li className="flex items-start gap-2">
-                  <span className="text-benefitNegative">&bull;</span>
-                  <span>
+                <li className="flex items-center gap-2">
+                  <TrendIcon trend="down" />
+                  <span className="flex items-center gap-2">
                     {t('labels.worstBenefitYear', { year: worstBenefitYear.year })}
-                    <span className="ml-1 font-semibold text-benefitNegative">
+                    <span className="flex gap-1 items-center font-semibold text-benefitNegative">
+                      <TrendIcon trend="right" />
                       {formatCents(worstBenefitYear.benefitCents)} EUR
                     </span>
                   </span>

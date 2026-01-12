@@ -167,7 +167,7 @@ export function useCharts({
       point.benefitCents < 0 ? COLORS.benefitNegative : COLORS.benefit
     );
     return {
-      labels: yearSeries.map((point) => getMonthLabel(point.month, language)),
+      labels: yearSeries.map((point) => getMonthLabel(point.month, language, 'long')),
       datasets: [
         {
           label: translate('series.income'),

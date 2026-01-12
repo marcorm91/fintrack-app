@@ -250,19 +250,31 @@ export function YearView({
             </div>
           </div>
           {bestBenefitMonth && yearSeriesVisibility.benefit ? (
-            <ul className="mt-4 list-disc pl-5 text-sm text-muted">
-              <li className="font-medium text-ink">
-                {t('labels.bestBenefitMonth', {
-                  month: getMonthLabel(bestBenefitMonth.month, locale),
-                  value: formatCents(bestBenefitMonth.benefitCents)
-                })}
+            <ul className="mt-4 space-y-1 text-sm text-muted">
+              <li className="flex items-center gap-2">
+                <TrendIcon trend="up" />
+                <span className="flex items-center gap-2">
+                  {t('labels.bestBenefitMonth', {
+                    month: getMonthLabel(bestBenefitMonth.month, locale, 'long')
+                  })}
+                  <span className="flex items-center gap-1 font-semibold text-benefit">
+                    <TrendIcon trend="right" />
+                    {formatCents(bestBenefitMonth.benefitCents)} EUR
+                  </span>
+                </span>
               </li>
               {worstBenefitMonth && worstBenefitMonth.month !== bestBenefitMonth.month ? (
-                <li className="text-ink">
-                  {t('labels.worstBenefitMonth', {
-                    month: getMonthLabel(worstBenefitMonth.month, locale),
-                    value: formatCents(worstBenefitMonth.benefitCents)
-                  })}
+                <li className="flex items-center gap-2">
+                  <TrendIcon trend="down" />
+                  <span className="flex items-center gap-2">
+                    {t('labels.worstBenefitMonth', {
+                      month: getMonthLabel(worstBenefitMonth.month, locale, 'long')
+                    })}
+                    <span className="flex items-center gap-1 font-semibold text-benefitNegative">
+                      <TrendIcon trend="right" />
+                      {formatCents(worstBenefitMonth.benefitCents)} EUR
+                    </span>
+                  </span>
                 </li>
               ) : null}
             </ul>
@@ -395,7 +407,7 @@ export function YearView({
                   const trend = yearTrendByMonth.get(point.month) ?? 'flat';
                   return (
                     <tr key={point.month} className="border-b border-ink/5">
-                      <td className="py-3 pr-4 text-muted">{getMonthLabel(point.month, locale)}</td>
+                      <td className="py-3 pr-4 text-muted">{getMonthLabel(point.month, locale, 'long')}</td>
                       {yearSeriesVisibility.income ? (
                         <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
                       ) : null}
