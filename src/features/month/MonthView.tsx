@@ -42,6 +42,7 @@ type MonthViewProps = {
   onSubmit: (event: React.FormEvent) => void;
   saving: boolean;
   error: string | null;
+  onOpenSettings?: () => void;
 };
 
 export function MonthView({
@@ -68,7 +69,8 @@ export function MonthView({
   onFormChange,
   onSubmit,
   saving,
-  error
+  error,
+  onOpenSettings
 }: MonthViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
@@ -336,7 +338,20 @@ export function MonthView({
             {saving ? t('actions.saving') : t('actions.saveMonth')}
           </button>
         </form>
-        {error ? <p className="mt-4 rounded-xl bg-red-100 px-4 py-2 text-sm text-red-700">{error}</p> : null}
+        {error ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-100 px-4 py-2 text-sm text-red-700">
+            <span>{error}</span>
+            {onOpenSettings ? (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-red-700 transition hover:border-red-300"
+              >
+                {t('actions.openSettings')}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </div>
   );

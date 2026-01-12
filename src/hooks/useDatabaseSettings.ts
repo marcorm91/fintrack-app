@@ -31,15 +31,11 @@ export function useDatabaseSettings({ onPathChange }: UseDatabaseSettingsOptions
   }, []);
 
   const saveSettings = useCallback(() => {
-    const saved = savePath();
-    if (saved) {
-      setSettingsOpen(false);
-    }
+    return savePath();
   }, [savePath]);
 
   const resetSettings = useCallback(() => {
     resetPath();
-    setSettingsOpen(false);
   }, [resetPath]);
 
   const handleDatabasePathInputChange = useCallback(

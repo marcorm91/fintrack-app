@@ -26,6 +26,7 @@
     "import": "Importar",
     "cancel": "Cancelar",
     "close": "Cerrar",
+    "openSettings": "Abrir ajustes",
     "settings": "Config",
     "prepareImport": "Preparar import",
     "show": "Mostrar {{label}}",
@@ -45,7 +46,6 @@
   },
   "settings": {
     "title": "Configuracion de datos",
-    "description": "La base de datos se guarda en este archivo:",
     "currentPath": "Ruta actual",
     "defaultPath": "Ruta por defecto",
     "defaultBadge": "por defecto",
@@ -54,11 +54,13 @@
     "inputPlaceholder": "C:\\Users\\usuario\\Documentos\\finanzas.db",
     "inputHelp": "Pega una carpeta o una ruta .db.",
     "browse": "Buscar",
-    "useDefault": "Usar por defecto",
-    "savePath": "Guardar ubicación",
+    "useDefault": "Restablecer ruta por defecto",
+    "savePath": "Guardar",
     "invalidDbPath": "Indica una ruta valida para la base de datos.",
     "dialogUnavailable": "El selector de carpetas no esta disponible en esta version.",
     "updatesTitle": "Actualizaciones",
+    "tabsData": "Base de datos",
+    "tabsUpdates": "Actualizaciones",
     "updateStatusOnline": "Conectado",
     "updateStatusOffline": "Sin conexion",
     "checkUpdates": "Buscar actualizaciones",
@@ -70,7 +72,26 @@
     "updateIdle": "Pulsa buscar para revisar.",
     "currentVersion": "Version actual",
     "latestVersion": "Ultima version",
-    "openRelease": "Ver release"
+    "openRelease": "Ver release",
+    "exportTitle": "Exportar datos",
+    "exportDescription": "Descarga tu historico en CSV o SQL.",
+    "exportCsv": "Exportar CSV",
+    "exportSql": "Exportar SQL",
+    "exportingCsv": "Exportando CSV...",
+    "exportingSql": "Exportando SQL...",
+    "exportCsvTitle": "Guardar CSV",
+    "exportSqlTitle": "Guardar SQL",
+    "exportCsvSuccess": "CSV exportado en {{path}}.",
+    "exportSqlSuccess": "SQL exportado en {{path}}.",
+    "exportError": "No se pudo exportar.",
+    "authorLabel": "Hecho por",
+    "saveConfirmTitle": "¿Guardar cambios?",
+    "saveConfirmMessage": "Se actualizará la ruta de la base de datos.",
+    "saveSuccess": "Ruta guardada.",
+    "saveError": "No se pudo guardar la ruta.",
+    "closeConfirmTitle": "¿Descartar cambios?",
+    "closeConfirmMessage": "Tienes cambios sin guardar. ¿Cerrar sin guardar?",
+    "noChanges": "No hay cambios para guardar."
   },
   "labels": {
     "summary": "Resumen",
@@ -206,7 +227,7 @@
     }
   },
   "errors": {
-    "loadData": "Error cargando datos",
+    "loadData": "No se pudo cargar la base de datos. Revisa la ruta de la .db en ajustes.",
     "invalidIncome": "Ingresos inválidos",
     "invalidExpense": "Gastos inválidos",
     "invalidBalance": "Saldo al cierre invalido",
@@ -231,6 +252,7 @@
     "benefit": "Beneficio: {{value}} EUR"
   },
   "footer": {
-    "openSource": "Open source · codigo libre"
+    "openSource": "Open source · codigo libre",
+    "version": "Fintrack v{{version}}"
   }
 }

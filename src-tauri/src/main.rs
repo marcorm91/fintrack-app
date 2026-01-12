@@ -13,10 +13,16 @@ fn resolve_portable_db_path(app: tauri::AppHandle) -> Option<String> {
   None
 }
 
+#[tauri::command]
+fn write_text_file(path: String, contents: String) -> Result<(), String> {
+  std::fs::write(&path, contents).map_err(|err| err.to_string())
+}
+
 fn main() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![resolve_portable_db_path])
+    .invoke_handler(tauri::generate_handler![resolve_portable_db_path, write_text_file])
     .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_sql::Builder::default().build())
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

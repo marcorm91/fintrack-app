@@ -14,7 +14,9 @@
       {
         "title": "Fintrack",
         "width": 980,
-        "height": 720
+        "height": 720,
+        "fullscreen": false,
+        "maximized": true
       }
     ],
     "security": {

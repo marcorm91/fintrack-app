@@ -26,6 +26,7 @@
     "import": "Import",
     "cancel": "Cancel",
     "close": "Close",
+    "openSettings": "Open settings",
     "settings": "Settings",
     "prepareImport": "Prepare import",
     "show": "Show {{label}}",
@@ -45,7 +46,6 @@
   },
   "settings": {
     "title": "Database settings",
-    "description": "The database is stored in this file:",
     "currentPath": "Current path",
     "defaultPath": "Default path",
     "defaultBadge": "default",
@@ -54,11 +54,13 @@
     "inputPlaceholder": "C:\\Users\\name\\Documents\\finanzas.db",
     "inputHelp": "Paste a folder or a .db file path.",
     "browse": "Browse",
-    "useDefault": "Use default",
-    "savePath": "Save location",
+    "useDefault": "Reset to default path",
+    "savePath": "Save",
     "invalidDbPath": "Enter a valid database path.",
     "dialogUnavailable": "Folder picker is unavailable in this build.",
     "updatesTitle": "Updates",
+    "tabsData": "Database",
+    "tabsUpdates": "Updates",
     "updateStatusOnline": "Online",
     "updateStatusOffline": "Offline",
     "checkUpdates": "Check updates",
@@ -70,7 +72,26 @@
     "updateIdle": "Press check to look for updates.",
     "currentVersion": "Current version",
     "latestVersion": "Latest version",
-    "openRelease": "Open release"
+    "openRelease": "Open release",
+    "exportTitle": "Export data",
+    "exportDescription": "Download your history as CSV or SQL.",
+    "exportCsv": "Export CSV",
+    "exportSql": "Export SQL",
+    "exportingCsv": "Exporting CSV...",
+    "exportingSql": "Exporting SQL...",
+    "exportCsvTitle": "Save CSV",
+    "exportSqlTitle": "Save SQL",
+    "exportCsvSuccess": "CSV exported to {{path}}.",
+    "exportSqlSuccess": "SQL exported to {{path}}.",
+    "exportError": "Could not export.",
+    "authorLabel": "Built by",
+    "saveConfirmTitle": "Save changes?",
+    "saveConfirmMessage": "This will update the database path.",
+    "saveSuccess": "Path saved.",
+    "saveError": "Could not save the path.",
+    "closeConfirmTitle": "Discard changes?",
+    "closeConfirmMessage": "You have unsaved changes. Close without saving?",
+    "noChanges": "No changes to save."
   },
   "labels": {
     "summary": "Summary",
@@ -206,7 +227,7 @@
     }
   },
   "errors": {
-    "loadData": "Error loading data",
+    "loadData": "Could not load the database. Check the .db path in settings.",
     "invalidIncome": "Invalid income",
     "invalidExpense": "Invalid expenses",
     "invalidBalance": "Invalid closing balance",
@@ -231,6 +252,7 @@
     "benefit": "Profit: {{value}} EUR"
   },
   "footer": {
-    "openSource": "Open source · free code"
+    "openSource": "Open source · free code",
+    "version": "Fintrack v{{version}}"
   }
 }

@@ -66,6 +66,7 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     }
     setDatabasePath(nextPath);
     setCurrentPath(nextPath);
+    setInputPath(nextPath);
     setIsDefaultPath(false);
     setError(null);
     onPathChange?.(nextPath);

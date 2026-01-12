@@ -10,8 +10,51 @@
       href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(120% 120% at 10% 10%, #fef7ef 0%, #f7efe4 60%, #f1e9dc 100%);
+        color: #2b2b2b;
+        font-family: "Open Sans", sans-serif;
+        z-index: 9999;
+      }
+      #splash .title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      #splash .spinner {
+        margin: 18px auto 0;
+        width: 24px;
+        height: 24px;
+        border: 2px solid rgba(43, 43, 43, 0.2);
+        border-top-color: rgba(43, 43, 43, 0.7);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      #splash.fade-out {
+        opacity: 0;
+        transition: opacity 180ms ease;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="splash">
+      <div>
+        <div class="title">Fintrack</div>
+        <div class="spinner" aria-hidden="true"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

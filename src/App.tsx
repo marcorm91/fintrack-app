@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { useCharts } from './hooks/useCharts';
 import { useDatabaseSettings } from './hooks/useDatabaseSettings';
+import { useExportData } from './hooks/useExportData';
 import { useInfoDialogContent } from './hooks/useInfoDialogContent';
 import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
@@ -48,6 +49,7 @@ export default function App() {
   const [monthChartType, setMonthChartType] = useState<ChartType>('bar');
   const [yearChartType, setYearChartType] = useState<ChartType>('bar');
   const [allYearsChartType, setAllYearsChartType] = useState<ChartType>('bar');
+  const [appReady, setAppReady] = useState(false);
   const {
     monthValue,
     setMonthValue,
@@ -251,11 +253,42 @@ export default function App() {
     isOnline,
     checkForUpdates
   } = useUpdateStatus();
+  const { exportCsv, exportSql, exportingCsv, exportingSql, exportStatus } = useExportData({
+    currentPath,
+    language,
+    t
+  });
   const infoDialogContent = useInfoDialogContent(infoDialog);
 
   useEffect(() => {
-    refreshData();
+    let active = true;
+    const load = async () => {
+      try {
+        await refreshData();
+      } finally {
+        if (active) {
+          setAppReady(true);
+        }
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
   }, [refreshData]);
+
+  useEffect(() => {
+    if (!appReady) {
+      return;
+    }
+    const splash = document.getElementById('splash');
+    if (!splash) {
+      return;
+    }
+    splash.classList.add('fade-out');
+    const timeout = window.setTimeout(() => splash.remove(), 200);
+    return () => window.clearTimeout(timeout);
+  }, [appReady]);
 
   const handleYearSort = (key: YearTableSortKey) => {
     setYearTableSort((prev) =>
@@ -347,11 +380,16 @@ export default function App() {
             currentVersion={currentVersion}
             latestVersion={latestVersion}
             latestReleaseUrl={latestReleaseUrl}
+            exportingCsv={exportingCsv}
+            exportingSql={exportingSql}
+            exportStatus={exportStatus}
             onInputChange={handleDatabasePathInputChange}
             onBrowse={browsePath}
             onSave={saveSettings}
             onReset={resetSettings}
             onCheckUpdates={checkForUpdates}
+            onExportCsv={exportCsv}
+            onExportSql={exportSql}
             onClose={closeSettings}
           />
         </>
@@ -385,6 +423,7 @@ export default function App() {
             onSubmit={handleSubmit}
             saving={saving}
             error={error}
+            onOpenSettings={openSettings}
           />
           <InsightsPanel
             title={monthInsights.title}
