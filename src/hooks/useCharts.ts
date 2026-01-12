@@ -21,7 +21,7 @@ type UseChartsOptions = {
   allYears: AllYearsPoint[];
 };
 
-type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
+type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 
 export function useCharts({

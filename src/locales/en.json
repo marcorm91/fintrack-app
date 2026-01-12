@@ -72,6 +72,7 @@
     "totalExpense": "Total expenses",
     "totalBenefit": "Total profit",
     "finalBalance": "Final closing balance",
+    "yearDetail": "Year detail",
     "month": "Month",
     "year": "Year",
     "currentMonth": "Current month",
@@ -84,6 +85,14 @@
     "from": "From",
     "to": "To",
     "page": "Page"
+  },
+  "insights": {
+    "title": "Comparisons",
+    "previousMonth": "Vs previous month",
+    "previousYear": "Vs same month last year",
+    "previousYearTotal": "Vs previous year",
+    "latestVsPreviousYear": "Latest year vs previous year",
+    "noComparison": "Not enough data to compare."
   },
   "series": {
     "income": "Income",

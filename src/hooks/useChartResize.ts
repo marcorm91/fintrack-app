@@ -9,7 +9,7 @@ export type ChartInstance<TType extends ChartType, TData, TLabel> =
 
 export function useChartResize<
   TType extends ChartKinds = ChartKinds,
-  TData = number | null,
+  TData = Array<number | null>,
   TLabel = unknown
 >() {
   const chartRef = useRef<ChartInstance<TType, TData, TLabel>>();

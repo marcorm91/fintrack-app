@@ -55,7 +55,7 @@
     "inputHelp": "Pega una carpeta o una ruta .db.",
     "browse": "Buscar",
     "useDefault": "Usar por defecto",
-    "savePath": "Guardar ubicacion",
+    "savePath": "Guardar ubicación",
     "invalidDbPath": "Indica una ruta valida para la base de datos.",
     "dialogUnavailable": "El selector de carpetas no esta disponible en esta version."
   },
@@ -72,6 +72,7 @@
     "totalExpense": "Total gastos",
     "totalBenefit": "Total beneficio",
     "finalBalance": "Saldo al cierre final",
+    "yearDetail": "Detalle por año",
     "month": "Mes",
     "year": "Año",
     "currentMonth": "Mes actual",
@@ -84,6 +85,14 @@
     "from": "Desde",
     "to": "Hasta",
     "page": "Pagina"
+  },
+  "insights": {
+    "title": "Comparativas",
+    "previousMonth": "Vs mes anterior",
+    "previousYear": "Vs mismo mes del año anterior",
+    "previousYearTotal": "Vs año anterior",
+    "latestVsPreviousYear": "Último año vs anterior",
+    "noComparison": "Sin datos suficientes para comparar."
   },
   "series": {
     "income": "Ingresos",
@@ -208,5 +217,3 @@
     "openSource": "Open source · codigo libre"
   }
 }
-
-

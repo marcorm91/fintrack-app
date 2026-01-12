@@ -70,7 +70,7 @@ export function useImportFlow({
   const [deletingMonth, setDeletingMonth] = useState(false);
   const [deletingYear, setDeletingYear] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const translate = useCallback(
     (key: string, options?: Record<string, unknown>) => t(key, { ...options, lng: language }),
     [language, t]

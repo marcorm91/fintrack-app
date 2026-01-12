@@ -6,12 +6,14 @@ import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { EyeToggle } from '../../components/EyeToggle';
+import { InsightsPanel } from '../../components/InsightsPanel';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { BAR_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftYearValue } from '../../utils/date';
+import type { InsightsPayload } from '../../types/insights';
 
 type YearTotals = {
   incomeCents: number;
@@ -20,7 +22,7 @@ type YearTotals = {
   benefitCents: number;
 };
 
-type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
+type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 
 type YearViewProps = {
@@ -44,6 +46,7 @@ type YearViewProps = {
   handleYearSort: (key: YearTableSortKey) => void;
   yearTrendByMonth: Map<string, BalanceTrend>;
   isYearLine: boolean;
+  yearInsights: InsightsPayload;
 };
 
 export function YearView({
@@ -66,11 +69,16 @@ export function YearView({
   yearTableSort,
   handleYearSort,
   yearTrendByMonth,
-  isYearLine
+  isYearLine,
+  yearInsights
 }: YearViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
-  const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize();
+  const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
   const visibleColumns =
     1 +
     Number(yearSeriesVisibility.income) +
@@ -94,162 +102,174 @@ export function YearView({
   };
   return (
     <>
-      <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.yearChart')}</p>
-            <h2 className="text-2xl font-semibold text-ink">{yearValue}</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
-                aria-label={t('actions.previousYear')}
-                title={t('actions.previousYear')}
-                className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
-              >
-                <ChevronIcon direction="left" />
-              </button>
-              <div className="text-sm text-muted">
-                <select
-                  id="year"
-                  value={yearValue}
-                  onChange={(event) => setYearValue(event.target.value)}
-                  className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card" open>
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.28em] text-accent2 list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('labels.yearChart')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
+        <div className="mt-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-ink">{yearValue}</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
+                  aria-label={t('actions.previousYear')}
+                  title={t('actions.previousYear')}
+                  className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
                 >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
+                  <ChevronIcon direction="left" />
+                </button>
+                <div className="text-sm text-muted">
+                  <select
+                    id="year"
+                    value={yearValue}
+                    onChange={(event) => setYearValue(event.target.value)}
+                    className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+                  >
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
+                  aria-label={t('actions.nextYear')}
+                  title={t('actions.nextYear')}
+                  className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                >
+                  <ChevronIcon direction="right" />
+                </button>
               </div>
               <button
                 type="button"
-                onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
-                aria-label={t('actions.nextYear')}
-                title={t('actions.nextYear')}
-                className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                onClick={() => setYearValue(currentYearValue)}
+                disabled={isCurrentYear}
+                className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition ${
+                  isCurrentYear
+                    ? 'cursor-default opacity-60'
+                    : ' hover:border-accent hover:text-ink'
+                }`}
               >
-                <ChevronIcon direction="right" />
+                {t('actions.gotoCurrentYear')}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setYearValue(currentYearValue)}
-              disabled={isCurrentYear}
-              className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition ${
-                isCurrentYear
-                  ? 'cursor-default opacity-60'
-                  : ' hover:border-accent hover:text-ink'
-              }`}
-            >
-              {t('actions.gotoCurrentYear')}
-            </button>
-          </div>
-          <div aria-hidden="true">
-            
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
-          {BAR_TYPES.map((item) => (
-            <span key={item.key} className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
-              {t(item.labelKey)}
-            </span>
-          ))}
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-            <div className="flex items-center justify-between">
-              <span>{t('labels.totalIncome')}</span>
-              <EyeToggle
-                hidden={!yearSeriesVisibility.income}
-                onClick={() => toggleYearSeries('income')}
-                label={t('series.income')}
-              />
-            </div>
-            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
-              <span className="h-2.5 w-2.5 rounded-full bg-income" />
-              <span>{formatCents(yearTotals.incomeCents)} EUR</span>
+            <div aria-hidden="true">
+              
             </div>
           </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-            <div className="flex items-center justify-between">
-              <span>{t('labels.totalExpense')}</span>
-              <EyeToggle
-                hidden={!yearSeriesVisibility.expense}
-                onClick={() => toggleYearSeries('expense')}
-                label={t('series.expense')}
-              />
-            </div>
-            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
-              <span className="h-2.5 w-2.5 rounded-full bg-expense" />
-              <span>{formatCents(yearTotals.expenseCents)} EUR</span>
-            </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
+            {BAR_TYPES.map((item) => (
+              <span key={item.key} className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
+                {t(item.labelKey)}
+              </span>
+            ))}
           </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-            <div className="flex items-center justify-between">
-              <span>{t('labels.totalBenefit')}</span>
-              <EyeToggle
-                hidden={!yearSeriesVisibility.benefit}
-                onClick={() => toggleYearSeries('benefit')}
-                label={t('series.benefit')}
-              />
-            </div>
-            <div className={`mt-2 font-semibold flex items-center gap-2 text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${yearBenefitDotClass}`} />
-              <span>{formatCents(yearTotals.benefitCents)} EUR</span>
-            </div>
-          </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-            <div className="flex items-center justify-between">
-              <span>{t('labels.finalBalance')}</span>
-              <EyeToggle
-                hidden={!yearSeriesVisibility.balance}
-                onClick={() => toggleYearSeries('balance')}
-                label={t('series.balance')}
-              />
-            </div>
-            <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
-              <span className="h-2.5 w-2.5 rounded-full bg-balance" />
-              <span>{formatCents(yearTotals.balanceCents)} EUR</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.yearChart')}</p>
-            <ChartTypeToggle value={yearChartType} onChange={setYearChartType} />
-          </div>
-          <div className="mt-4">
-            {!hasChartData ? (
-              <p className="text-sm text-muted">{t('messages.noChartData')}</p>
-            ) : (
-              <div className="h-[320px]" ref={yearChartContainerRef}>
-                {isYearLine ? (
-                  <Line
-                    data={yearChartData as ChartData<'line', number | null, string>}
-                    options={yearChartOptionsWithClick as ChartOptions<'line'>}
-                    ref={yearChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
-                  />
-                ) : (
-                  <Bar
-                    data={yearChartData as ChartData<'bar', number | null, string>}
-                    options={yearChartOptionsWithClick as ChartOptions<'bar'>}
-                    ref={yearChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
-                  />
-                )}
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="flex items-center justify-between">
+                <span>{t('labels.totalIncome')}</span>
+                <EyeToggle
+                  hidden={!yearSeriesVisibility.income}
+                  onClick={() => toggleYearSeries('income')}
+                  label={t('series.income')}
+                />
               </div>
-            )}
+              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+                <span className="h-2.5 w-2.5 rounded-full bg-income" />
+                <span>{formatCents(yearTotals.incomeCents)} EUR</span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="flex items-center justify-between">
+                <span>{t('labels.totalExpense')}</span>
+                <EyeToggle
+                  hidden={!yearSeriesVisibility.expense}
+                  onClick={() => toggleYearSeries('expense')}
+                  label={t('series.expense')}
+                />
+              </div>
+              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+                <span className="h-2.5 w-2.5 rounded-full bg-expense" />
+                <span>{formatCents(yearTotals.expenseCents)} EUR</span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="flex items-center justify-between">
+                <span>{t('labels.totalBenefit')}</span>
+                <EyeToggle
+                  hidden={!yearSeriesVisibility.benefit}
+                  onClick={() => toggleYearSeries('benefit')}
+                  label={t('series.benefit')}
+                />
+              </div>
+              <div className={`mt-2 font-semibold flex items-center gap-2 text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
+                <span className={`h-2.5 w-2.5 rounded-full ${yearBenefitDotClass}`} />
+                <span>{formatCents(yearTotals.benefitCents)} EUR</span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="flex items-center justify-between">
+                <span>{t('labels.finalBalance')}</span>
+                <EyeToggle
+                  hidden={!yearSeriesVisibility.balance}
+                  onClick={() => toggleYearSeries('balance')}
+                  label={t('series.balance')}
+                />
+              </div>
+              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+                <span className="h-2.5 w-2.5 rounded-full bg-balance" />
+                <span>{formatCents(yearTotals.balanceCents)} EUR</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.yearChart')}</p>
+              <ChartTypeToggle value={yearChartType} onChange={setYearChartType} />
+            </div>
+            <div className="mt-4">
+              {!hasChartData ? (
+                <p className="text-sm text-muted">{t('messages.noChartData')}</p>
+              ) : (
+                <div className="h-[320px]" ref={yearChartContainerRef}>
+                  {isYearLine ? (
+                    <Line
+                      data={yearChartData as ChartData<'line', Array<number | null>, string>}
+                      options={yearChartOptionsWithClick as ChartOptions<'line'>}
+                      ref={yearChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+                    />
+                  ) : (
+                    <Bar
+                      data={yearChartData as ChartData<'bar', Array<number | null>, string>}
+                      options={yearChartOptionsWithClick as ChartOptions<'bar'>}
+                      ref={yearChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </section>
+      </details>
 
-      <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-ink">{t('labels.monthDetail')}</h2>
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('labels.monthDetail')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
+        <div className="mt-4 flex items-center justify-end">
           <span className="text-xs uppercase tracking-[0.2em] text-muted">{yearValue}</span>
         </div>
         <div className="mt-4 overflow-x-auto">
@@ -367,7 +387,25 @@ export function YearView({
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('insights.title')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
+        <div className="mt-4">
+          <InsightsPanel
+            title={yearInsights.title}
+            comparisons={yearInsights.comparisons}
+            emptyLabel={yearInsights.emptyLabel}
+            hasAnyData={yearInsights.hasAnyData}
+            showTitle={false}
+            containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"
+          />
+        </div>
+      </details>
     </>
   );
 }

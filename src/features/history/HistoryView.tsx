@@ -4,10 +4,12 @@ import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.j
 import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
+import { InsightsPanel } from '../../components/InsightsPanel';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { EyeToggle } from '../../components/EyeToggle';
 import { SortIndicator } from '../../components/SortIndicator';
-import { TrendIcon } from '../../components/icons';
+import { ChevronIcon, TrendIcon } from '../../components/icons';
+import { useHistoryInsights } from '../../hooks/useHistoryInsights';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { BAR_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
@@ -20,7 +22,7 @@ type AllYearsPoint = {
   benefitCents: number;
 };
 
-type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
+type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 
 type HistoryViewProps = {
@@ -55,7 +57,11 @@ export function HistoryView({
   isAllYearsLine
 }: HistoryViewProps) {
   const { t } = useTranslation();
-  const { chartRef: historyChartRef, containerRef: historyChartContainerRef } = useChartResize();
+  const { chartRef: historyChartRef, containerRef: historyChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
   const [rangeFrom, setRangeFrom] = useState('');
   const [rangeTo, setRangeTo] = useState('');
   const [pageSize, setPageSize] = useState<'5' | '10' | '15' | '20' | 'all'>('all');
@@ -106,13 +112,13 @@ export function HistoryView({
   }, [chartLabels, hasRangeFilter, maxYearFilter, minYearFilter]);
   const filteredChartData = useMemo<SeriesChartData>(() => {
     const labelIndex = new Map(chartLabels.map((label, index) => [label, index]));
-    const datasets = (allYearsChartData.datasets ?? []).map((dataset) => {
-      const data = Array.isArray(dataset.data) ? dataset.data : [];
-      const nextData = filteredChartLabels.map((label) => {
+    const datasets: SeriesChartData['datasets'] = (allYearsChartData.datasets ?? []).map((dataset) => {
+      const data = Array.isArray(dataset.data) ? (dataset.data as Array<number | null>) : [];
+      const nextData: Array<number | null> = filteredChartLabels.map((label) => {
         const index = labelIndex.get(label);
         return index === undefined ? null : data[index] ?? null;
       });
-      return { ...dataset, data: nextData };
+      return { ...dataset, data: nextData } as SeriesChartData['datasets'][number];
     });
     return {
       ...allYearsChartData,
@@ -121,6 +127,11 @@ export function HistoryView({
     };
   }, [allYearsChartData, chartLabels, filteredChartLabels]);
   const hasFilteredData = hasAllYearsData && filteredAllYears.length > 0;
+  const historyInsights = useHistoryInsights({
+    allYears: filteredAllYears,
+    allYearsSeriesVisibility,
+    t
+  });
   const pageSizeValue = pageSize === 'all' ? filteredAllYears.length : Number(pageSize);
   const totalPages =
     pageSize === 'all' || filteredAllYears.length === 0
@@ -165,81 +176,97 @@ export function HistoryView({
     onClick: handleHistoryChartClick
   };
   return (
-    <section className="rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.historyTotal')}</p>
-          <h2 className="text-2xl font-semibold text-ink">{t('labels.allYears')}</h2>
-        </div>
-      </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
-        <div className="flex flex-wrap gap-8">
-          {BAR_TYPES.map((item) => {
-            const seriesKey = item.key as SeriesKey;
-            const label = t(item.labelKey);
-            return (
-              <span key={item.key} className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
-                {label}
-                <EyeToggle
-                  hidden={!allYearsSeriesVisibility[seriesKey]}
-                  onClick={() => toggleAllYearsSeries(seriesKey)}
-                  label={label}
-                />
-              </span>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] uppercase tracking-[0.18em]">{t('labels.yearRange')}</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder={t('labels.from')}
-            value={rangeFrom}
-            onChange={(event) => setRangeFrom(event.target.value)}
-            className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
-          />
-          <span className="text-muted">-</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder={t('labels.to')}
-            value={rangeTo}
-            onChange={(event) => setRangeTo(event.target.value)}
-            className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
-          />
-        </div>
-      </div>
-      <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.historyChart')}</p>
-          <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
-        </div>
+    <>
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card" open>
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.28em] text-accent2 list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('labels.historyChart')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
         <div className="mt-4">
-          {!hasFilteredData ? (
-            <p className="text-sm text-muted">{t('messages.noChartData')}</p>
-          ) : (
-            <div className="h-[360px]" ref={historyChartContainerRef}>
-              {isAllYearsLine ? (
-                <Line
-                  data={filteredChartData as ChartData<'line', number | null, string>}
-                  options={historyChartOptionsWithClick as ChartOptions<'line'>}
-                  ref={historyChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
-                />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.historyTotal')}</p>
+              <h2 className="text-2xl font-semibold text-ink">{t('labels.allYears')}</h2>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
+            <div className="flex flex-wrap gap-8">
+              {BAR_TYPES.map((item) => {
+                const seriesKey = item.key as SeriesKey;
+                const label = t(item.labelKey);
+                return (
+                  <span key={item.key} className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
+                    {label}
+                    <EyeToggle
+                      hidden={!allYearsSeriesVisibility[seriesKey]}
+                      onClick={() => toggleAllYearsSeries(seriesKey)}
+                      label={label}
+                    />
+                  </span>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em]">{t('labels.yearRange')}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder={t('labels.from')}
+                value={rangeFrom}
+                onChange={(event) => setRangeFrom(event.target.value)}
+                className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+              />
+              <span className="text-muted">-</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder={t('labels.to')}
+                value={rangeTo}
+                onChange={(event) => setRangeTo(event.target.value)}
+                className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+              />
+            </div>
+          </div>
+          <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.historyChart')}</p>
+              <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
+            </div>
+            <div className="mt-4">
+              {!hasFilteredData ? (
+                <p className="text-sm text-muted">{t('messages.noChartData')}</p>
               ) : (
-                <Bar
-                  data={filteredChartData as ChartData<'bar', number | null, string>}
-                  options={historyChartOptionsWithClick as ChartOptions<'bar'>}
-                  ref={historyChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
-                />
+                <div className="h-[360px]" ref={historyChartContainerRef}>
+                  {isAllYearsLine ? (
+                    <Line
+                      data={filteredChartData as ChartData<'line', Array<number | null>, string>}
+                      options={historyChartOptionsWithClick as ChartOptions<'line'>}
+                      ref={historyChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+                    />
+                  ) : (
+                    <Bar
+                      data={filteredChartData as ChartData<'bar', Array<number | null>, string>}
+                      options={historyChartOptionsWithClick as ChartOptions<'bar'>}
+                      ref={historyChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                    />
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-ink/10 bg-white/90 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+      </details>
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('labels.yearDetail')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
           <label className="flex items-center gap-2">
             {t('labels.showRows')}
             <select
@@ -255,119 +282,121 @@ export function HistoryView({
             </select>
           </label>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-[0.14em] text-muted">
-            <tr className="border-b border-ink/10">
-              <th className="py-3 pr-4">
-                <button
-                  type="button"
-                  onClick={() => handleAllYearsSort('year')}
-                  className="inline-flex items-center gap-1"
-                >
-                  {t('labels.year')}
-                  <SortIndicator active={allYearsTableSort.key === 'year'} direction={allYearsTableSort.direction} />
-                </button>
-              </th>
-              {allYearsSeriesVisibility.income ? (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs uppercase tracking-[0.14em] text-muted">
+              <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
                   <button
                     type="button"
-                    onClick={() => handleAllYearsSort('income')}
+                    onClick={() => handleAllYearsSort('year')}
                     className="inline-flex items-center gap-1"
                   >
-                    {t('series.income')}
-                    <SortIndicator
-                      active={allYearsTableSort.key === 'income'}
-                      direction={allYearsTableSort.direction}
-                    />
+                    {t('labels.year')}
+                    <SortIndicator active={allYearsTableSort.key === 'year'} direction={allYearsTableSort.direction} />
                   </button>
                 </th>
-              ) : null}
-              {allYearsSeriesVisibility.expense ? (
-                <th className="py-3 pr-4">
-                  <button
-                    type="button"
-                    onClick={() => handleAllYearsSort('expense')}
-                    className="inline-flex items-center gap-1"
-                  >
-                    {t('series.expense')}
-                    <SortIndicator
-                      active={allYearsTableSort.key === 'expense'}
-                      direction={allYearsTableSort.direction}
-                    />
-                  </button>
-                </th>
-              ) : null}
-              {allYearsSeriesVisibility.balance ? (
-                <th className="py-3 pr-4">
-                  <button
-                    type="button"
-                    onClick={() => handleAllYearsSort('balance')}
-                    className="inline-flex items-center gap-1"
-                  >
-                    {t('series.balance')}
-                    <SortIndicator
-                      active={allYearsTableSort.key === 'balance'}
-                      direction={allYearsTableSort.direction}
-                    />
-                  </button>
-                </th>
-              ) : null}
-              {allYearsSeriesVisibility.benefit ? (
-                <th className="py-3">
-                  <button
-                    type="button"
-                    onClick={() => handleAllYearsSort('benefit')}
-                    className="inline-flex items-center gap-1"
-                  >
-                    {t('series.benefit')}
-                    <SortIndicator
-                      active={allYearsTableSort.key === 'benefit'}
-                      direction={allYearsTableSort.direction}
-                    />
-                  </button>
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {!hasFilteredData ? (
-              <tr>
-                <td colSpan={visibleColumns} className="py-6 text-center text-sm text-muted">
-                  {t('messages.noTableData')}
-                </td>
+                {allYearsSeriesVisibility.income ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('income')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.income')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'income'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
+                {allYearsSeriesVisibility.expense ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('expense')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.expense')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'expense'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
+                {allYearsSeriesVisibility.balance ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('balance')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.balance')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'balance'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
+                {allYearsSeriesVisibility.benefit ? (
+                  <th className="py-3">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('benefit')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.benefit')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'benefit'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
               </tr>
-            ) : (
-              pagedAllYears.map((point) => {
-                const trend = allYearsTrendByYear.get(point.year) ?? 'flat';
-                return (
-                  <tr key={point.year} className="border-b border-ink/5">
-                    <td className="py-3 pr-4 text-muted">{point.year}</td>
-                    {allYearsSeriesVisibility.income ? (
-                      <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
-                    ) : null}
-                    {allYearsSeriesVisibility.expense ? (
-                      <td className="py-3 pr-4 text-ink">{formatCents(point.expenseCents)} EUR</td>
-                    ) : null}
-                    {allYearsSeriesVisibility.balance ? (
-                      <td className="py-3 pr-4 text-ink">
-                        <div className="flex items-center gap-2">
-                          <span>{formatCents(point.balanceCents)} EUR</span>
-                          <TrendIcon trend={trend} />
-                        </div>
-                      </td>
-                    ) : null}
-                    {allYearsSeriesVisibility.benefit ? (
-                      <td className={`py-3 ${getBenefitClass(point.benefitCents)}`}>
-                        {formatCents(point.benefitCents)} EUR
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {!hasFilteredData ? (
+                <tr>
+                  <td colSpan={visibleColumns} className="py-6 text-center text-sm text-muted">
+                    {t('messages.noTableData')}
+                  </td>
+                </tr>
+              ) : (
+                pagedAllYears.map((point) => {
+                  const trend = allYearsTrendByYear.get(point.year) ?? 'flat';
+                  return (
+                    <tr key={point.year} className="border-b border-ink/5">
+                      <td className="py-3 pr-4 text-muted">{point.year}</td>
+                      {allYearsSeriesVisibility.income ? (
+                        <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
+                      ) : null}
+                      {allYearsSeriesVisibility.expense ? (
+                        <td className="py-3 pr-4 text-ink">{formatCents(point.expenseCents)} EUR</td>
+                      ) : null}
+                      {allYearsSeriesVisibility.balance ? (
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.balanceCents)} EUR</span>
+                            <TrendIcon trend={trend} />
+                          </div>
+                        </td>
+                      ) : null}
+                      {allYearsSeriesVisibility.benefit ? (
+                        <td className={`py-3 ${getBenefitClass(point.benefitCents)}`}>
+                          {formatCents(point.benefitCents)} EUR
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-xs text-muted">
           {pageSize !== 'all' && totalPages > 1 ? (
             <div className="flex items-center gap-2">
@@ -393,7 +422,25 @@ export function HistoryView({
             </div>
           ) : null}
         </div>
-      </div>
-    </section>
+      </details>
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+          <span>{t('insights.title')}</span>
+          <span className="text-muted transition group-open:rotate-90">
+            <ChevronIcon direction="right" />
+          </span>
+        </summary>
+        <div className="mt-4">
+          <InsightsPanel
+            title={historyInsights.title}
+            comparisons={historyInsights.comparisons}
+            emptyLabel={historyInsights.emptyLabel}
+            hasAnyData={historyInsights.hasAnyData}
+            showTitle={false}
+            containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"
+          />
+        </div>
+      </details>
+    </>
   );
 }

@@ -3,11 +3,11 @@ import { AppFooter } from './AppFooter';
 import { AppHeader } from './AppHeader';
 
 type AppLayoutProps = {
-  activeLanguage: string;
-  onLanguageChange: (languageValue: string) => void;
+  activeLanguage: 'en' | 'es';
+  onLanguageChange: (languageValue: 'en' | 'es') => void;
   onOpenSettings: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
-  importInputRef: RefObject<HTMLInputElement | null>;
+  importInputRef: RefObject<HTMLInputElement>;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   tabs: ReactNode;
   children: ReactNode;
@@ -64,7 +64,7 @@ export function AppLayout({
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />
         {tabs}
-        <main className="mt-6 grid gap-6 flex-1">{children}</main>
+        <main className="mt-6 gap-6 flex flex-col flex-1">{children}</main>
         <AppFooter />
         {dialogs}
         {toast}

@@ -12,7 +12,7 @@ import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftMonthValue } from '../../utils/date';
 
-type SeriesChartData = ChartData<'bar' | 'line', number | null, string>;
+type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
 
 const MONTH_SERIES_ORDER: SeriesKey[] = ['income', 'expense', 'balance'];
@@ -72,8 +72,16 @@ export function MonthView({
 }: MonthViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
-  const { chartRef: monthChartRef, containerRef: monthChartContainerRef } = useChartResize();
-  const { chartRef: benefitChartRef, containerRef: benefitChartContainerRef } = useChartResize();
+  const { chartRef: monthChartRef, containerRef: monthChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: benefitChartRef, containerRef: benefitChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
   const showMonthBenefitSection = !isCurrentMonth || hasMonthData;
   const handleMonthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
@@ -218,15 +226,15 @@ export function MonthView({
                 hasVisibleMonthBars ? (
                   isMonthLine ? (
                     <Line
-                      data={monthChartData as ChartData<'line', number | null, string>}
+                      data={monthChartData as ChartData<'line', Array<number | null>, string>}
                       options={monthChartOptionsWithClick as ChartOptions<'line'>}
-                      ref={monthChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
+                      ref={monthChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
                     />
                   ) : (
                     <Bar
-                      data={monthChartData as ChartData<'bar', number | null, string>}
+                      data={monthChartData as ChartData<'bar', Array<number | null>, string>}
                       options={monthChartOptionsWithClick as ChartOptions<'bar'>}
-                      ref={monthChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
+                      ref={monthChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                     />
                   )
                 ) : (
@@ -253,15 +261,15 @@ export function MonthView({
                     showMonthBenefit ? (
                       isMonthLine ? (
                         <Line
-                          data={benefitChartData as ChartData<'line', number | null, string>}
+                          data={benefitChartData as ChartData<'line', Array<number | null>, string>}
                           options={benefitChartOptions as ChartOptions<'line'>}
-                          ref={benefitChartRef as RefObject<ChartInstance<'line', number | null, unknown>>}
+                          ref={benefitChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
                         />
                       ) : (
                         <Bar
-                          data={benefitChartData as ChartData<'bar', number | null, string>}
+                          data={benefitChartData as ChartData<'bar', Array<number | null>, string>}
                           options={benefitChartOptions as ChartOptions<'bar'>}
-                          ref={benefitChartRef as RefObject<ChartInstance<'bar', number | null, unknown>>}
+                          ref={benefitChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                         />
                       )
                     ) : (

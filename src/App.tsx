@@ -16,7 +16,9 @@ import { useInfoDialogContent } from './hooks/useInfoDialogContent';
 import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
+import { useMonthlyInsights } from './hooks/useMonthlyInsights';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
+import { useYearInsights } from './hooks/useYearInsights';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
 import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
@@ -30,6 +32,7 @@ import type {
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
+import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
@@ -182,6 +185,21 @@ export default function App() {
     displaySummary.balanceCents !== 0 ||
     displaySummary.benefitCents !== 0;
 
+  const monthInsights = useMonthlyInsights({
+    monthValue,
+    displaySummary,
+    series,
+    monthSeriesVisibility,
+    t
+  });
+  const yearInsights = useYearInsights({
+    yearValue,
+    yearTotals,
+    allYears,
+    yearSeriesVisibility,
+    t
+  });
+
   const {
     monthChartData,
     monthChartOptions,
@@ -326,32 +344,40 @@ export default function App() {
       toast={toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
     >
       {activeTab === 'month' ? (
-        <MonthView
-          monthValue={monthValue}
-          setMonthValue={setMonthValue}
-          currentMonthValue={currentMonthValue}
-          isCurrentMonth={isCurrentMonth}
-          displaySummary={displaySummary}
-          monthSeriesVisibility={monthSeriesVisibility}
-          toggleMonthSeries={toggleMonthSeries}
-          showOnlyMonthSeries={showOnlyMonthSeries}
-          monthBenefitDotClass={monthBenefitDotClass}
-          monthChartType={monthChartType}
-          setMonthChartType={setMonthChartType}
-          monthChartData={monthChartData}
-          monthChartOptions={monthChartOptions}
-          benefitChartData={benefitChartData}
-          benefitChartOptions={benefitChartOptions}
-          hasMonthData={hasMonthData}
-          hasVisibleMonthBars={hasVisibleMonthBars}
-          showMonthBenefit={showMonthBenefit}
-          isMonthLine={isMonthLine}
-          form={form}
-          onFormChange={handleChange}
-          onSubmit={handleSubmit}
-          saving={saving}
-          error={error}
-        />
+        <>
+          <MonthView
+            monthValue={monthValue}
+            setMonthValue={setMonthValue}
+            currentMonthValue={currentMonthValue}
+            isCurrentMonth={isCurrentMonth}
+            displaySummary={displaySummary}
+            monthSeriesVisibility={monthSeriesVisibility}
+            toggleMonthSeries={toggleMonthSeries}
+            showOnlyMonthSeries={showOnlyMonthSeries}
+            monthBenefitDotClass={monthBenefitDotClass}
+            monthChartType={monthChartType}
+            setMonthChartType={setMonthChartType}
+            monthChartData={monthChartData}
+            monthChartOptions={monthChartOptions}
+            benefitChartData={benefitChartData}
+            benefitChartOptions={benefitChartOptions}
+            hasMonthData={hasMonthData}
+            hasVisibleMonthBars={hasVisibleMonthBars}
+            showMonthBenefit={showMonthBenefit}
+            isMonthLine={isMonthLine}
+            form={form}
+            onFormChange={handleChange}
+            onSubmit={handleSubmit}
+            saving={saving}
+            error={error}
+          />
+          <InsightsPanel
+            title={monthInsights.title}
+            comparisons={monthInsights.comparisons}
+            emptyLabel={monthInsights.emptyLabel}
+            hasAnyData={monthInsights.hasAnyData}
+          />
+        </>
       ) : null}
       {activeTab === 'year' ? (
         <YearView
@@ -375,6 +401,7 @@ export default function App() {
           handleYearSort={handleYearSort}
           yearTrendByMonth={yearTrendByMonth}
           isYearLine={isYearLine}
+          yearInsights={yearInsights}
         />
       ) : null}
       {activeTab === 'all' ? (
