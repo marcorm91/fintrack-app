@@ -57,7 +57,20 @@
     "useDefault": "Usar por defecto",
     "savePath": "Guardar ubicación",
     "invalidDbPath": "Indica una ruta valida para la base de datos.",
-    "dialogUnavailable": "El selector de carpetas no esta disponible en esta version."
+    "dialogUnavailable": "El selector de carpetas no esta disponible en esta version.",
+    "updatesTitle": "Actualizaciones",
+    "updateStatusOnline": "Conectado",
+    "updateStatusOffline": "Sin conexion",
+    "checkUpdates": "Buscar actualizaciones",
+    "updateChecking": "Buscando...",
+    "updateUpToDate": "Todo actualizado.",
+    "updateAvailable": "Actualizacion disponible: {{version}}",
+    "updateUnknown": "Desconocida",
+    "updateError": "No se pudo comprobar.",
+    "updateIdle": "Pulsa buscar para revisar.",
+    "currentVersion": "Version actual",
+    "latestVersion": "Ultima version",
+    "openRelease": "Ver release"
   },
   "labels": {
     "summary": "Resumen",

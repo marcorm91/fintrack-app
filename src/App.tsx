@@ -22,6 +22,7 @@ import { useYearInsights } from './hooks/useYearInsights';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
 import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
+import { useUpdateStatus } from './hooks/useUpdateStatus';
 import type {
   AllTableSortKey,
   ChartType,
@@ -242,6 +243,14 @@ export default function App() {
     error: databasePathError,
     browsePath
   } = useDatabaseSettings({ onPathChange: refreshData });
+  const {
+    status: updateStatus,
+    currentVersion,
+    latestVersion,
+    latestReleaseUrl,
+    isOnline,
+    checkForUpdates
+  } = useUpdateStatus();
   const infoDialogContent = useInfoDialogContent(infoDialog);
 
   useEffect(() => {
@@ -333,10 +342,16 @@ export default function App() {
             isDefaultPath={isDefaultPath}
             loading={isDatabasePathLoading}
             error={databasePathError}
+            updateStatus={updateStatus}
+            isOnline={isOnline}
+            currentVersion={currentVersion}
+            latestVersion={latestVersion}
+            latestReleaseUrl={latestReleaseUrl}
             onInputChange={handleDatabasePathInputChange}
             onBrowse={browsePath}
             onSave={saveSettings}
             onReset={resetSettings}
+            onCheckUpdates={checkForUpdates}
             onClose={closeSettings}
           />
         </>

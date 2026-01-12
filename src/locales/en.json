@@ -57,7 +57,20 @@
     "useDefault": "Use default",
     "savePath": "Save location",
     "invalidDbPath": "Enter a valid database path.",
-    "dialogUnavailable": "Folder picker is unavailable in this build."
+    "dialogUnavailable": "Folder picker is unavailable in this build.",
+    "updatesTitle": "Updates",
+    "updateStatusOnline": "Online",
+    "updateStatusOffline": "Offline",
+    "checkUpdates": "Check updates",
+    "updateChecking": "Checking...",
+    "updateUpToDate": "You are up to date.",
+    "updateAvailable": "Update available: {{version}}",
+    "updateUnknown": "Unknown",
+    "updateError": "Could not check updates.",
+    "updateIdle": "Press check to look for updates.",
+    "currentVersion": "Current version",
+    "latestVersion": "Latest version",
+    "openRelease": "Open release"
   },
   "labels": {
     "summary": "Summary",

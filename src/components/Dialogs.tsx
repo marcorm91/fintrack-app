@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import type { UpdateStatus } from '../hooks/useUpdateStatus';
 
 export function ConfirmDialog({
   open,
@@ -150,10 +151,16 @@ export function DatabaseSettingsDialog({
   isDefaultPath,
   loading,
   error,
+  updateStatus,
+  isOnline,
+  currentVersion,
+  latestVersion,
+  latestReleaseUrl,
   onInputChange,
   onBrowse,
   onSave,
   onReset,
+  onCheckUpdates,
   onClose
 }: {
   open: boolean;
@@ -163,10 +170,16 @@ export function DatabaseSettingsDialog({
   isDefaultPath: boolean;
   loading: boolean;
   error: string | null;
+  updateStatus: UpdateStatus;
+  isOnline: boolean;
+  currentVersion: string | null;
+  latestVersion: string | null;
+  latestReleaseUrl: string | null;
   onInputChange: (value: string) => void;
   onBrowse: () => void;
   onSave: () => void;
   onReset: () => void;
+  onCheckUpdates: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -177,6 +190,23 @@ export function DatabaseSettingsDialog({
   const resolvedCurrent = currentPath || t('settings.unknownPath');
   const resolvedDefault = defaultPath || t('settings.unknownPath');
   const errorMessage = error ? t(error) : null;
+  const resolvedCurrentVersion = currentVersion ?? t('settings.updateUnknown');
+  const resolvedLatestVersion = latestVersion ?? t('settings.updateUnknown');
+  let updateMessage = t('settings.updateIdle');
+  if (updateStatus === 'checking') {
+    updateMessage = t('settings.updateChecking');
+  }
+  if (updateStatus === 'upToDate') {
+    updateMessage = t('settings.updateUpToDate');
+  }
+  if (updateStatus === 'updateAvailable') {
+    updateMessage = t('settings.updateAvailable', { version: resolvedLatestVersion });
+  }
+  if (updateStatus === 'error') {
+    updateMessage = t('settings.updateError');
+  }
+  const updateActionLabel =
+    updateStatus === 'checking' ? t('settings.updateChecking') : t('settings.checkUpdates');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
@@ -222,6 +252,45 @@ export function DatabaseSettingsDialog({
         {errorMessage ? (
           <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
         ) : null}
+        <div className="mt-6 rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">{t('settings.updatesTitle')}</p>
+              <p className="text-xs text-muted">
+                {t(isOnline ? 'settings.updateStatusOnline' : 'settings.updateStatusOffline')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onCheckUpdates}
+              disabled={!isOnline || updateStatus === 'checking'}
+              className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {updateActionLabel}
+            </button>
+          </div>
+          <div className="mt-3 grid gap-1 text-xs text-muted">
+            <span>
+              {t('settings.currentVersion')}: <span className="text-ink">{resolvedCurrentVersion}</span>
+            </span>
+            <span>
+              {t('settings.latestVersion')}: <span className="text-ink">{resolvedLatestVersion}</span>
+            </span>
+            <span className="text-ink">{updateMessage}</span>
+          </div>
+          {updateStatus === 'updateAvailable' && latestReleaseUrl ? (
+            <div className="mt-3">
+              <a
+                href={latestReleaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-full border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+              >
+                {t('settings.openRelease')}
+              </a>
+            </div>
+          ) : null}
+        </div>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button
             type="button"
