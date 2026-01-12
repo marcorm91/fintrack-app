@@ -4,12 +4,10 @@ import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.j
 import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { InsightsPanel } from '../../components/InsightsPanel';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { EyeToggle } from '../../components/EyeToggle';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
-import { useHistoryInsights } from '../../hooks/useHistoryInsights';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { BAR_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
@@ -127,11 +125,6 @@ export function HistoryView({
     };
   }, [allYearsChartData, chartLabels, filteredChartLabels]);
   const hasFilteredData = hasAllYearsData && filteredAllYears.length > 0;
-  const historyInsights = useHistoryInsights({
-    allYears: filteredAllYears,
-    allYearsSeriesVisibility,
-    t
-  });
   const pageSizeValue = pageSize === 'all' ? filteredAllYears.length : Number(pageSize);
   const totalPages =
     pageSize === 'all' || filteredAllYears.length === 0
@@ -421,24 +414,6 @@ export function HistoryView({
               </button>
             </div>
           ) : null}
-        </div>
-      </details>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
-          <span>{t('insights.title')}</span>
-          <span className="text-muted transition group-open:rotate-90">
-            <ChevronIcon direction="right" />
-          </span>
-        </summary>
-        <div className="mt-4">
-          <InsightsPanel
-            title={historyInsights.title}
-            comparisons={historyInsights.comparisons}
-            emptyLabel={historyInsights.emptyLabel}
-            hasAnyData={historyInsights.hasAnyData}
-            showTitle={false}
-            containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"
-          />
         </div>
       </details>
     </>
