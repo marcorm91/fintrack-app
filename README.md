@@ -1,29 +1,30 @@
 # Fintrack
 
-Aplicacion para control mensual/anual de finanzas personales con graficas, tablas e importacion de datos.
+Aplicación para control mensual/anual de finanzas personales con gráficas, tablas e importación de datos.
 
 > **Motivación**  
 > Este proyecto nace de una necesidad personal: dejar de gestionar mis finanzas en hojas de Excel que con el tiempo se volvieron difíciles de mantener, propensas a errores y poco prácticas para analizar el histórico.  
 > Fintrack surge como una alternativa local, sencilla y mantenible para controlar ingresos, gastos y saldo acumulado sin depender de herramientas externas.
 
-## Caracteristicas
-- Vista mensual, anual e historico.
-- Importacion desde CSV o pegado de texto.
-- Graficas de barras/linea con control de series visibles.
-- Ordenacion de columnas en tablas.
+## Características
+- Vista mensual, anual e histórico.
+- Importación desde CSV o pegado de texto.
+- Exportación CSV y SQL desde ajustes.
+- Gráficas de barras/línea con control de series visibles.
+- Ordenación de columnas en tablas.
 - Idiomas ES/EN.
 - Datos locales con SQLite (Tauri plugin).
-- Filtros por rango y paginacion en historico.
-- Configuracion de ruta de base de datos desde la app.
+- Filtros por rango y paginación en histórico.
+- Configuración de ruta de base de datos desde la app.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_x64-setup.exe)
-- Windows (MSI): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_aarch64.dmg)
-- Linux (AppImage): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_amd64.AppImage)
-- Linux (DEB): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3_amd64.deb)
-- Linux (RPM): [Fintrack 1.0.3](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.3-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_x64-setup.exe)
+- Windows (MSI): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_aarch64.dmg)
+- Linux (AppImage): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_amd64.AppImage)
+- Linux (DEB): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4_amd64.deb)
+- Linux (RPM): [Fintrack 1.0.4](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.4-1.x86_64.rpm)
 
 ## Stack
 - React + Vite + TypeScript
@@ -35,9 +36,9 @@ Aplicacion para control mensual/anual de finanzas personales con graficas, tabla
 - Node.js 18+ (o 20+)
 - Rust toolchain y dependencias de Tauri
 
-Guia de requisitos de Tauri: https://tauri.app
+Guía de requisitos de Tauri: https://tauri.app
 
-## Instalacion
+## Instalación
 ```bash
 npm install
 ```
@@ -63,7 +64,7 @@ npm run build
 npm run tauri build
 ```
 
-## Distribucion (sin firma)
+## Distribución (sin firma)
 Si compartes el .exe desde el repo, Windows puede mostrar advertencias (SmartScreen).
 Recomendado:
 - Publicar en GitHub Releases con nota de que es una app sin firma.
@@ -78,23 +79,23 @@ Get-FileHash -Algorithm SHA256 .\src-tauri\target\release\fintrack-app.exe
 ## Portable (Windows)
 Para usar la app sin instalar:
 1. Crea una carpeta y copia `fintrack-app.exe`.
-2. Crea un archivo vacio `fintrack.portable` en la misma carpeta (o copia `finanzas.db` ahi).
-3. Ejecuta la app. La base de datos se guardara en esa carpeta.
+2. Crea un archivo vacío `fintrack.portable` en la misma carpeta (o copia `finanzas.db` ahí).
+3. Ejecuta la app. La base de datos se guardará en esa carpeta.
 
 Nota: requiere WebView2 (Windows 10/11 normalmente lo trae).
 
-## Datos y ubicacion
+## Datos y ubicación
 En Windows, la base de datos se guarda por defecto en:
 `C:\Users\<usuario>\AppData\Roaming\com.fintrack.app\finanzas.db`.
 
-Desde la app puedes abrir la configuracion y elegir otra carpeta o archivo `.db`.
+Desde la app puedes abrir la configuración y elegir otra carpeta o archivo `.db`.
 
-## Importacion CSV
+## Importación CSV
 Admite coma o punto y coma como delimitador. El importador intenta detectar cabeceras en ES/EN.
 
 Cabeceras reconocidas:
 - mes: `mes`, `month`, `fecha`
-- ano: `year`, `ano`
+- año: `year`, `ano`
 - ingresos: `income`, `ingresos`
 - gastos: `expense`, `gastos`
 - saldo: `balance`, `saldo`, `acumulacion`, `saldo al cierre`, `saldo cierre`
@@ -106,14 +107,14 @@ Formatos de mes aceptados:
 
 Notas:
 - En vista mensual se espera una sola fila (si no se incluye la columna de mes).
-- Si se repite un mes en la importacion, se sobrescribe el snapshot de ese mes.
+- Si se repite un mes en la importación, se sobrescribe el snapshot de ese mes.
 
 ## Estructura del proyecto
 - `src/`: UI, hooks, features, utils y locales.
-- `src-tauri/`: codigo desktop, configuracion y build.
+- `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v1.0.3`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*` (por ejemplo `v1.0.4`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Ejemplo de uso
 
@@ -155,7 +156,10 @@ También puedes pegar directamente los datos como texto, tal y como se muestran 
 El formato de los datos depende de la vista desde la que se realiza la importación (mensual, anual o histórico).
 Cada vista muestra un ejemplo de formato en el campo de texto, que debe respetarse al pegar los datos.
 
-**Importación/exportación .db** <br/>
+**Exportar CSV/SQL** <br/>
+Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o migraciones.
+
+**Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  
 Este archivo es el origen de todos los datos de la aplicación: meses, histórico y saldo acumulado.
 
