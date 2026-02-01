@@ -5,6 +5,8 @@ export type InsightDelta = {
   label: string;
   deltaCents: number;
   percentChange: number | null;
+  currentCents: number;
+  previousCents: number;
 };
 
 export type InsightComparison = {
@@ -17,6 +19,8 @@ export type InsightComparison = {
 export type InsightsPayload = {
   title: string;
   emptyLabel: string;
+  currentLabel: string;
+  previousLabel: string;
   comparisons: InsightComparison[];
   hasAnyData: boolean;
 };

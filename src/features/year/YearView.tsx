@@ -447,6 +447,8 @@ export function YearView({
             title={yearInsights.title}
             comparisons={yearInsights.comparisons}
             emptyLabel={yearInsights.emptyLabel}
+            currentLabel={yearInsights.currentLabel}
+            previousLabel={yearInsights.previousLabel}
             hasAnyData={yearInsights.hasAnyData}
             showTitle={false}
             containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"

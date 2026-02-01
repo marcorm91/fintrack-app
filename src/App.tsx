@@ -193,6 +193,8 @@ export default function App() {
     displaySummary,
     series,
     monthSeriesVisibility,
+    hasMonthData,
+    isCurrentMonth,
     t
   });
   const yearInsights = useYearInsights({
@@ -429,6 +431,8 @@ export default function App() {
             title={monthInsights.title}
             comparisons={monthInsights.comparisons}
             emptyLabel={monthInsights.emptyLabel}
+            currentLabel={monthInsights.currentLabel}
+            previousLabel={monthInsights.previousLabel}
             hasAnyData={monthInsights.hasAnyData}
           />
         </>

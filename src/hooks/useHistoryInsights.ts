@@ -46,7 +46,9 @@ export function useHistoryInsights({
           key,
           label: t(`series.${key}`),
           deltaCents,
-          percentChange
+          percentChange,
+          currentCents: currentValues[key],
+          previousCents: baseValues[key]
         };
       });
       return { hasData: true, deltas };
@@ -68,6 +70,8 @@ export function useHistoryInsights({
       comparisons,
       emptyLabel: t('insights.noComparison'),
       title: t('insights.title'),
+      currentLabel: t('insights.current'),
+      previousLabel: t('insights.previous'),
       hasAnyData
     };
   }, [allYears, allYearsSeriesVisibility, t]);

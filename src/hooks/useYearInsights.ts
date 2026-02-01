@@ -50,7 +50,9 @@ export function useYearInsights({
           key,
           label: t(`series.${key}`),
           deltaCents,
-          percentChange
+          percentChange,
+          currentCents: currentValues[key],
+          previousCents: previousValues[key]
         };
       });
       return { hasData: true, deltas };
@@ -72,6 +74,8 @@ export function useYearInsights({
       comparisons,
       emptyLabel: t('insights.noComparison'),
       title: t('insights.title'),
+      currentLabel: t('insights.current'),
+      previousLabel: t('insights.previous'),
       hasAnyData
     };
   }, [allYears, t, yearSeriesVisibility, yearTotals, yearValue]);

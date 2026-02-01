@@ -130,6 +130,9 @@
     "previousYear": "Vs mismo mes del año anterior",
     "previousYearTotal": "Vs año anterior",
     "latestVsPreviousYear": "Último año vs anterior",
+    "current": "Actual",
+    "previous": "Anterior",
+    "noCurrentData": "Sin datos registrados en el mes actual.",
     "noComparison": "Sin datos suficientes para comparar."
   },
   "series": {

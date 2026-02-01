@@ -11,6 +11,8 @@ type UseMonthlyInsightsOptions = {
   displaySummary: MonthlySummary;
   series: MonthlySeriesPoint[];
   monthSeriesVisibility: Record<SeriesKey, boolean>;
+  hasMonthData: boolean;
+  isCurrentMonth: boolean;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
@@ -28,9 +30,22 @@ export function useMonthlyInsights({
   displaySummary,
   series,
   monthSeriesVisibility,
+  hasMonthData,
+  isCurrentMonth,
   t
 }: UseMonthlyInsightsOptions) {
   return useMemo<InsightsPayload>(() => {
+    if (isCurrentMonth && !hasMonthData) {
+      return {
+        comparisons: [],
+        emptyLabel: t('insights.noCurrentData'),
+        title: t('insights.title'),
+        currentLabel: t('insights.current'),
+        previousLabel: t('insights.previous'),
+        hasAnyData: false
+      };
+    }
+
     const currentValues = getSeriesValues(displaySummary);
     const visibleKeys = SERIES_KEYS.filter((key) => monthSeriesVisibility[key]);
     const previousMonthValue = shiftMonthValue(monthValue, -1);
@@ -52,7 +67,9 @@ export function useMonthlyInsights({
           key,
           label: t(`series.${key}`),
           deltaCents,
-          percentChange
+          percentChange,
+          currentCents: currentValues[key],
+          previousCents: previousValues[key]
         };
       });
       return { hasData: true, deltas };
@@ -80,7 +97,9 @@ export function useMonthlyInsights({
       comparisons,
       emptyLabel: t('insights.noComparison'),
       title: t('insights.title'),
+      currentLabel: t('insights.current'),
+      previousLabel: t('insights.previous'),
       hasAnyData
     };
-  }, [displaySummary, monthSeriesVisibility, monthValue, series, t]);
+  }, [displaySummary, hasMonthData, isCurrentMonth, monthSeriesVisibility, monthValue, series, t]);
 }
