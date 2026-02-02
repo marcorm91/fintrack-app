@@ -1,0 +1,77 @@
+name: Android APK (artifact)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_API_LEVEL: "34"
+      BUILD_TOOLS_VERSION: "34.0.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-${{ env.ANDROID_API_LEVEL }}
+            build-tools;${{ env.BUILD_TOOLS_VERSION }}
+
+      - name: Install latest available NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          NDK_PKG=$(sdkmanager --list | grep -oE 'ndk;[0-9.]+' | sort -V | tail -n1)
+          if [ -z "$NDK_PKG" ]; then
+            echo "No NDK package found via sdkmanager --list"
+            exit 1
+          fi
+          echo "Installing $NDK_PKG"
+          sdkmanager "$NDK_PKG"
+          NDK_VER="${NDK_PKG#ndk;}"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/$NDK_VER" >> "$GITHUB_ENV"
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Init Android project
+        run: npm run tauri android init
+
+      - name: Build Android
+        run: npm run tauri android build
+
+      - name: Upload APK/AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: fintrack-android
+          path: |
+            src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+            src-tauri/gen/android/app/build/outputs/bundle/release/*.aab
