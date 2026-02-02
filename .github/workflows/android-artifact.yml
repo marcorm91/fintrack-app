@@ -72,6 +72,43 @@ jobs:
         run: |
           ls -R src-tauri/gen/android/app/build/outputs || true
 
+      - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "ANDROID_KEYSTORE_BASE64 is missing"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /home/runner/keystore.jks
+          echo "KEYSTORE_PATH=/home/runner/keystore.jks" >> "$GITHUB_ENV"
+
+      - name: Sign APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          APK_IN=$(find src-tauri/gen/android/app/build/outputs -name "*-unsigned.apk" -o -name "*.apk" | head -n1)
+          if [ -z "$APK_IN" ]; then
+            echo "No APK found in outputs"
+            exit 1
+          fi
+          APK_DIR=$(dirname "$APK_IN")
+          APK_ALIGNED="$APK_DIR/app-aligned.apk"
+          APK_OUT="$APK_DIR/fintrack-release-signed.apk"
+          ZIPALIGN="$ANDROID_SDK_ROOT/build-tools/${BUILD_TOOLS_VERSION}/zipalign"
+          APKSIGNER="$ANDROID_SDK_ROOT/build-tools/${BUILD_TOOLS_VERSION}/apksigner"
+          "$ZIPALIGN" -v -p 4 "$APK_IN" "$APK_ALIGNED"
+          if [ -n "$KEY_PASSWORD" ]; then
+            "$APKSIGNER" sign --ks "$KEYSTORE_PATH" --ks-key-alias "$KEY_ALIAS" --ks-pass pass:"$KEYSTORE_PASSWORD" --key-pass pass:"$KEY_PASSWORD" --out "$APK_OUT" "$APK_ALIGNED"
+          else
+            "$APKSIGNER" sign --ks "$KEYSTORE_PATH" --ks-key-alias "$KEY_ALIAS" --ks-pass pass:"$KEYSTORE_PASSWORD" --out "$APK_OUT" "$APK_ALIGNED"
+          fi
+          "$APKSIGNER" verify --verbose "$APK_OUT"
+          echo "SIGNED_APK=$APK_OUT" >> "$GITHUB_ENV"
+
       - name: Upload APK/AAB
         uses: actions/upload-artifact@v4
         with:
