@@ -3,6 +3,10 @@ name = "fintrack-app"
 version = "1.0.7"
 edition = "2021"
 
+[lib]
+name = "fintrack_app"
+crate-type = ["cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
