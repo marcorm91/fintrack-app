@@ -277,7 +277,7 @@ export function YearView({
               </span>
             ))}
           </div>
-          <div className="mt-5 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
             <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
               <div className="flex items-center justify-between">
                 <span>{t('labels.totalIncome')}</span>

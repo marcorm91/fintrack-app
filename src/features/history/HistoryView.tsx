@@ -236,7 +236,7 @@ export function HistoryView({
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-[10px] text-muted sm:text-xs">
-            <div className="flex flex-wrap gap-8">
+            <div className="grid grid-cols-2 gap-2">
               {BAR_TYPES.map((item) => {
                 const seriesKey = item.key as SeriesKey;
                 const label = t(item.labelKey);
@@ -253,31 +253,33 @@ export function HistoryView({
                 );
               })}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className={`${isMobile ? 'w-full' : ''}`}>
               <span className="text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
                 {t('labels.yearRange')}
               </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                placeholder={t('labels.from')}
-                value={rangeFrom}
-                onChange={(event) => setRangeFrom(event.target.value)}
-                className={`w-20 rounded-lg border border-ink/10 bg-white text-ink text-center ${
-                  isMobile ? 'px-2 py-0.5 text-[9px]' : 'px-2 py-1 text-base sm:text-xs'
-                }`}
-              />
-              <span className="text-muted">-</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                placeholder={t('labels.to')}
-                value={rangeTo}
-                onChange={(event) => setRangeTo(event.target.value)}
-                className={`w-20 rounded-lg border border-ink/10 bg-white text-ink text-center ${
-                  isMobile ? 'px-2 py-0.5 text-[9px]' : 'px-2 py-1 text-base sm:text-xs'
-                }`}
-              />
+              <div className={`${isMobile ? 'mt-2 grid grid-cols-[1fr_auto_1fr] gap-2' : 'mt-0 inline-flex items-center gap-2 ml-2'}`}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={t('labels.from')}
+                  value={rangeFrom}
+                  onChange={(event) => setRangeFrom(event.target.value)}
+                  className={`rounded-lg border border-ink/10 bg-white text-ink text-center ${
+                    isMobile ? 'px-3 py-1.5 text-[10px]' : 'w-20 px-2 py-1 text-base sm:text-xs'
+                  }`}
+                />
+                <span className="text-muted text-center">-</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder={t('labels.to')}
+                  value={rangeTo}
+                  onChange={(event) => setRangeTo(event.target.value)}
+                  className={`rounded-lg border border-ink/10 bg-white text-ink text-center ${
+                    isMobile ? 'px-3 py-1.5 text-[10px]' : 'w-20 px-2 py-1 text-base sm:text-xs'
+                  }`}
+                />
+              </div>
             </div>
           </div>
           {bestBenefitYear && allYearsSeriesVisibility.benefit ? (

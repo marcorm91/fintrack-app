@@ -212,7 +212,7 @@ export function MonthView({
           )}
         </div>
         <div
-          className={`mt-4 grid grid-cols-1 gap-3 sm:mt-5 sm:gap-4 lg:grid-cols-2 ${showMonthBenefitSection ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
+          className={`mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4`}
         >
           <div className="rounded-xl border border-ink/10 bg-white/90 p-2.5 lg:p-3">
             <div className="flex items-center justify-between">
@@ -302,7 +302,7 @@ export function MonthView({
           <div
             className={`mt-4 grid gap-4 ${showMonthBenefitSection ? 'lg:grid-cols-[1fr_220px]' : 'lg:grid-cols-1'}`}
           >
-            <div className="h-[140px] sm:h-[220px]" ref={monthChartContainerRef}>
+            <div className="h-[140px] sm:h-[220px] overflow-hidden" ref={monthChartContainerRef}>
               {hasMonthData ? (
                 hasVisibleMonthBars ? (
                   isMonthLine ? (
@@ -330,14 +330,14 @@ export function MonthView({
               )}
             </div>
             {showMonthBenefitSection ? (
-              <div className="flex h-[140px] flex-col rounded-xl border border-ink/10 bg-white/80 p-3 sm:h-[220px]">
+              <div className="flex h-[140px] flex-col overflow-hidden rounded-xl border border-ink/10 bg-white/80 p-3 sm:h-[220px]">
                 <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.18em]">
                   {t('series.benefit')}
                   <span className={getBenefitClass(displaySummary.benefitCents)}>
                     {formatCents(displaySummary.benefitCents)} EUR
                   </span>
                 </div>
-                <div className="mt-2 flex-1" ref={benefitChartContainerRef}>
+                <div className="mt-2 flex-1 overflow-hidden" ref={benefitChartContainerRef}>
                   {hasMonthData ? (
                     showMonthBenefit ? (
                       isMonthLine ? (
@@ -371,7 +371,14 @@ export function MonthView({
       </section>
 
       <section className="order-1 min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6 lg:order-2">
-        <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
+          {isMobile ? (
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              {monthValue.slice(5, 7)}/{monthValue.slice(0, 4)}
+            </span>
+          ) : null}
+        </div>
         <p className="mt-2 text-sm text-muted sm:text-sm">
           {t('descriptions.monthSave')}
         </p>
