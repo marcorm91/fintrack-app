@@ -56,7 +56,7 @@ function ImportMenu({
         <DotsVerticalIcon />
       </button>
       {isOpen ? (
-        <div className="absolute right-0 z-30 mt-2 w-48 rounded-xl border border-ink/10 bg-white p-2 shadow-card">
+        <div className="absolute left-0 z-30 mt-2 w-48 rounded-xl border border-ink/10 bg-white p-2 shadow-card sm:left-auto sm:right-0">
           <button
             type="button"
             onClick={() => openFileImport(scope)}

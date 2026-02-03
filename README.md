@@ -18,14 +18,14 @@ Aplicación para control mensual/anual de finanzas personales con gráficas, tab
 - Configuración de ruta de base de datos desde la app.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_x64-setup.exe)
-- Windows (MSI): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_aarch64.dmg)
-- Linux (AppImage): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_amd64.AppImage)
-- Linux (DEB): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_amd64.deb)
-- Linux (RPM): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7-1.x86_64.rpm)
-- Android (APK): [Fintrack 1.0.7](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.0.7_android.apk)
+- Windows (instalador .exe): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_x64-setup.exe)
+- Windows (MSI): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_aarch64.dmg)
+- Linux (AppImage): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_amd64.AppImage)
+- Linux (DEB): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_amd64.deb)
+- Linux (RPM): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0-1.x86_64.rpm)
+- Android (APK): [Fintrack 1.1.0](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.0_android.apk)
 
 ## Stack
 - React + Vite + TypeScript
@@ -115,7 +115,7 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v1.0.7`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*` (por ejemplo `v1.1.0`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Ejemplo de uso
 
