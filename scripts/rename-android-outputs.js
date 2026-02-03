@@ -26,18 +26,45 @@ function readPackageVersion() {
   }
 }
 
-function pickReleaseFile(dir, ext) {
+function walkFiles(dir) {
   if (!fs.existsSync(dir)) {
-    return null;
+    return [];
   }
-  const files = fs
-    .readdirSync(dir)
-    .filter((file) => file.toLowerCase().endsWith(ext));
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...walkFiles(fullPath));
+    } else {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+function pickOutputFile(ext) {
+  const files = walkFiles(outputsRoot).filter((file) =>
+    file.toLowerCase().endsWith(ext)
+  );
   if (files.length === 0) {
     return null;
   }
-  const preferred = files.find((file) => file.toLowerCase() === `app-release${ext}`);
-  return preferred ?? files.sort()[0];
+
+  const scored = files
+    .filter((file) => !file.toLowerCase().includes('androidtest'))
+    .map((file) => {
+      const lower = file.toLowerCase();
+      let score = 0;
+      if (lower.includes(`${path.sep}release${path.sep}`)) score += 30;
+      if (lower.includes('universal')) score += 10;
+      if (lower.includes('app-release')) score += 20;
+      if (lower.includes('unsigned')) score -= 5;
+      return { file, score };
+    })
+    .sort((a, b) => b.score - a.score || a.file.localeCompare(b.file));
+
+  return scored[0]?.file ?? files.sort()[0];
 }
 
 function copyOutput(filePath, targetName) {
@@ -52,11 +79,8 @@ function copyOutput(filePath, targetName) {
 
 function renameOutputs() {
   const version = readPackageVersion();
-  const apkDir = path.join(outputsRoot, 'apk', 'release');
-  const aabDir = path.join(outputsRoot, 'bundle', 'release');
-
-  const apkFile = pickReleaseFile(apkDir, '.apk');
-  const aabFile = pickReleaseFile(aabDir, '.aab');
+  const apkFile = pickOutputFile('.apk');
+  const aabFile = pickOutputFile('.aab');
 
   const apkDest = copyOutput(apkFile, `Fintrack_${version}_android.apk`);
   const aabDest = copyOutput(aabFile, `Fintrack_${version}_android.aab`);
