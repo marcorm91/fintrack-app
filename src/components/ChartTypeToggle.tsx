@@ -11,7 +11,7 @@ export function ChartTypeToggle({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 p-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm">
+    <div className="flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 p-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm sm:text-[10px]">
       {CHART_TYPES.map((type) => {
         const isActive = value === type.key;
         return (

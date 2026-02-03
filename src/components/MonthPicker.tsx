@@ -5,11 +5,19 @@ import { formatMonthValue, getMonthLabel, getMonthLabels, getMonthParts } from '
 export function MonthPicker({
   value,
   label,
-  onChange
+  onChange,
+  className = '',
+  buttonClassName = '',
+  labelClassName = '',
+  iconClassName = ''
 }: {
   value: string;
   label: string;
   onChange: (value: string) => void;
+  className?: string;
+  buttonClassName?: string;
+  labelClassName?: string;
+  iconClassName?: string;
 }) {
   const { i18n } = useTranslation();
   const locale = i18n.language;
@@ -38,18 +46,18 @@ export function MonthPicker({
   }, [open]);
 
   return (
-    <div className="relative" ref={wrapperRef}>
+    <div className={`relative ${className}`.trim()} ref={wrapperRef}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-label={label}
         title={label}
-        className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+        className={`flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none sm:px-4 sm:text-sm ${buttonClassName}`.trim()}
       >
-        <span>
+        <span className={labelClassName}>
           {getMonthLabel(value, locale)} {year}
         </span>
-        <svg className="h-4 w-4 text-muted" viewBox="0 0 20 20" aria-hidden="true">
+        <svg className={`h-4 w-4 text-muted ${iconClassName}`.trim()} viewBox="0 0 20 20" aria-hidden="true">
           <path
             fill="currentColor"
             d="M6 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h1.5A1.5 1.5 0 0 1 18 5.5v11A1.5 1.5 0 0 1 16.5 18h-13A1.5 1.5 0 0 1 2 16.5v-11A1.5 1.5 0 0 1 3.5 4H5V3a1 1 0 0 1 1-1zm10 7H4v7.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V9zM5 6H4.5a.5.5 0 0 0-.5.5V7h12v-.5a.5.5 0 0 0-.5-.5H15v1a1 1 0 1 1-2 0V6H7v1a1 1 0 1 1-2 0V6z"
@@ -57,7 +65,7 @@ export function MonthPicker({
         </svg>
       </button>
       {open ? (
-        <div className="absolute z-20 mt-2 w-64 rounded-2xl border border-ink/10 bg-white p-4 shadow-card">
+        <div className="absolute z-20 mt-2 w-56 rounded-2xl border border-ink/10 bg-white p-3 shadow-card sm:w-64 sm:p-4">
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -87,7 +95,7 @@ export function MonthPicker({
                     onChange(formatMonthValue(viewYear, monthIndex));
                     setOpen(false);
                   }}
-                  className={`rounded-lg px-2 py-2 text-xs uppercase tracking-[0.16em] ${
+                  className={`rounded-lg px-2 py-2 text-[10px] uppercase tracking-[0.14em] sm:text-xs sm:tracking-[0.16em] ${
                     selected
                       ? 'bg-accent text-white'
                       : 'border border-ink/10 text-muted hover:border-accent'

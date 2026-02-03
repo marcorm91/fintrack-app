@@ -2,13 +2,16 @@ import type { FormState, SeriesKey, ChartType } from '../../types';
 import type { MonthlySummary } from '../../db';
 import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
+import { useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
+import { ChartModal } from '../../components/ChartModal';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { MonthPicker } from '../../components/MonthPicker';
 import { EyeToggle } from '../../components/EyeToggle';
 import { ChevronIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftMonthValue } from '../../utils/date';
 
@@ -42,6 +45,7 @@ type MonthViewProps = {
   onSubmit: (event: React.FormEvent) => void;
   saving: boolean;
   error: string | null;
+  readOnly?: boolean;
   onOpenSettings?: () => void;
 };
 
@@ -70,11 +74,19 @@ export function MonthView({
   onSubmit,
   saving,
   error,
+  readOnly = false,
   onOpenSettings
 }: MonthViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+  const isMobile = useIsMobile();
+  const [chartModalOpen, setChartModalOpen] = useState(false);
   const { chartRef: monthChartRef, containerRef: monthChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: monthChartModalRef, containerRef: monthChartModalContainerRef } = useChartResize<
     'bar' | 'line',
     Array<number | null>,
     string
@@ -101,126 +113,196 @@ export function MonthView({
     onClick: handleMonthChartClick
   };
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <section className="order-2 min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6 lg:order-1">
+        <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.monthSummary')}</p>
-            <h2 className="text-2xl font-semibold text-ink">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
+              {t('labels.monthSummary')}
+            </p>
+            <h2 className="text-xl font-semibold text-ink sm:text-2xl">
               {getMonthLabel(monthValue, locale, 'long')} {monthValue.slice(0, 4)}
             </h2>
           </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex items-center gap-2">
+          {isMobile ? (
+            <div className="grid w-full gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMonthValue((prev) => shiftMonthValue(prev, -1))}
+                  aria-label={t('actions.previousMonth')}
+                  title={t('actions.previousMonth')}
+                  className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
+                    isMobile ? 'h-8 w-8 p-0' : 'p-1'
+                  }`}
+                >
+                  <ChevronIcon direction="left" />
+                </button>
+                <MonthPicker
+                  label={t('labels.currentMonth')}
+                  value={monthValue}
+                  onChange={setMonthValue}
+                  className="flex-1"
+                  buttonClassName="w-full justify-between px-3 py-2 text-[11px] leading-4"
+                  labelClassName="flex-1 text-center text-[11px] leading-4"
+                  iconClassName="h-4 w-4"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMonthValue((prev) => shiftMonthValue(prev, 1))}
+                  aria-label={t('actions.nextMonth')}
+                  title={t('actions.nextMonth')}
+                  className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
+                    isMobile ? 'h-8 w-8 p-0' : 'p-1'
+                  }`}
+                >
+                  <ChevronIcon direction="right" />
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={() => setMonthValue((prev) => shiftMonthValue(prev, -1))}
-                aria-label={t('actions.previousMonth')}
-                title={t('actions.previousMonth')}
-                className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                onClick={() => setMonthValue(currentMonthValue)}
+                disabled={isCurrentMonth}
+                className={`w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition ${
+                  isCurrentMonth ? 'cursor-default opacity-60' : ' hover:border-accent hover:text-ink'
+                }`}
               >
-                <ChevronIcon direction="left" />
-              </button>
-              <MonthPicker label={t('labels.currentMonth')} value={monthValue} onChange={setMonthValue} />
-              <button
-                type="button"
-                onClick={() => setMonthValue((prev) => shiftMonthValue(prev, 1))}
-                aria-label={t('actions.nextMonth')}
-                title={t('actions.nextMonth')}
-                className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
-              >
-                <ChevronIcon direction="right" />
+                {t('actions.gotoCurrentMonth')}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setMonthValue(currentMonthValue)}
-              disabled={isCurrentMonth}
-              className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition ${
-                isCurrentMonth
-                  ? 'cursor-default opacity-60'
-                  : ' hover:border-accent hover:text-ink'
-              }`}
-            >
-              {t('actions.gotoCurrentMonth')}
-            </button>
-          </div>
-          <div aria-hidden="true">
-          </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMonthValue((prev) => shiftMonthValue(prev, -1))}
+                    aria-label={t('actions.previousMonth')}
+                    title={t('actions.previousMonth')}
+                    className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                  >
+                    <ChevronIcon direction="left" />
+                  </button>
+                  <MonthPicker label={t('labels.currentMonth')} value={monthValue} onChange={setMonthValue} />
+                  <button
+                    type="button"
+                    onClick={() => setMonthValue((prev) => shiftMonthValue(prev, 1))}
+                    aria-label={t('actions.nextMonth')}
+                    title={t('actions.nextMonth')}
+                    className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                  >
+                    <ChevronIcon direction="right" />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMonthValue(currentMonthValue)}
+                  disabled={isCurrentMonth}
+                  className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition sm:text-[11px] sm:tracking-[0.18em] ${
+                    isCurrentMonth
+                      ? 'cursor-default opacity-60'
+                      : ' hover:border-accent hover:text-ink'
+                  }`}
+                >
+                  {t('actions.gotoCurrentMonth')}
+                </button>
+              </div>
+              <div aria-hidden="true"></div>
+            </>
+          )}
         </div>
         <div
-          className={`mt-6 grid gap-4 md:grid-cols-2 ${showMonthBenefitSection ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
+          className={`mt-4 grid grid-cols-1 gap-3 sm:mt-5 sm:gap-4 lg:grid-cols-2 ${showMonthBenefitSection ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}
         >
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
+          <div className="rounded-xl border border-ink/10 bg-white/90 p-2.5 lg:p-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.income')}</p>
+              <p className="text-[9px] uppercase tracking-[0.16em] text-muted sm:text-[10px] sm:tracking-[0.18em] lg:text-xs lg:tracking-[0.2em]">
+                {t('series.income')}
+              </p>
               <EyeToggle
                 hidden={!monthSeriesVisibility.income}
                 onClick={() => toggleMonthSeries('income')}
                 label={t('series.income')}
               />
             </div>
-            <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-ink">
+            <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-ink sm:text-xl lg:text-2xl">
               <span className="h-2.5 w-2.5 rounded-full bg-income" />
               <span>{formatCents(displaySummary.incomeCents)} EUR</span>
             </div>
           </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
+          <div className="rounded-xl border border-ink/10 bg-white/90 p-2.5 lg:p-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.expense')}</p>
+              <p className="text-[9px] uppercase tracking-[0.16em] text-muted sm:text-[10px] sm:tracking-[0.18em] lg:text-xs lg:tracking-[0.2em]">
+                {t('series.expense')}
+              </p>
               <EyeToggle
                 hidden={!monthSeriesVisibility.expense}
                 onClick={() => toggleMonthSeries('expense')}
                 label={t('series.expense')}
               />
             </div>
-            <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-ink">
+            <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-ink sm:text-xl lg:text-2xl">
               <span className="h-2.5 w-2.5 rounded-full bg-expense" />
               <span>{formatCents(displaySummary.expenseCents)} EUR</span>
             </div>
           </div>
-          <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
+          <div className="rounded-xl border border-ink/10 bg-white/90 p-2.5 lg:p-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.balance')}</p>
+              <p className="text-[9px] uppercase tracking-[0.16em] text-muted sm:text-[10px] sm:tracking-[0.18em] lg:text-xs lg:tracking-[0.2em]">
+                {t('series.balance')}
+              </p>
               <EyeToggle
                 hidden={!monthSeriesVisibility.balance}
                 onClick={() => toggleMonthSeries('balance')}
                 label={t('series.balance')}
               />
             </div>
-            <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-ink">
+            <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-ink sm:text-xl lg:text-2xl">
               <span className="h-2.5 w-2.5 rounded-full bg-balance" />
               <span>{formatCents(displaySummary.balanceCents)} EUR</span>
             </div>
           </div>
           {showMonthBenefitSection ? (
-            <div className="rounded-xl border border-ink/10 bg-white/90 p-3">
+            <div className="rounded-xl border border-ink/10 bg-white/90 p-2.5 lg:p-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('series.benefit')}</p>
+                <p className="text-[9px] uppercase tracking-[0.16em] text-muted sm:text-[10px] sm:tracking-[0.18em] lg:text-xs lg:tracking-[0.2em]">
+                  {t('series.benefit')}
+                </p>
                 <EyeToggle
                   hidden={!monthSeriesVisibility.benefit}
                   onClick={() => toggleMonthSeries('benefit')}
                   label={t('series.benefit')}
                 />
               </div>
-              <div className={`mt-2 flex items-center gap-2 text-2xl font-semibold ${getBenefitClass(displaySummary.benefitCents)}`}>
+              <div className={`mt-2 flex items-center gap-2 text-lg font-semibold sm:text-xl lg:text-2xl ${getBenefitClass(displaySummary.benefitCents)}`}>
                 <span className={`h-2.5 w-2.5 rounded-full ${monthBenefitDotClass}`} />
                 <span>{formatCents(displaySummary.benefitCents)} EUR</span>
               </div>
             </div>
           ) : null}
         </div>
-        <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+        <div className="mt-5 rounded-2xl border border-ink/10 bg-white/90 p-3 sm:mt-6 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.monthChart')}</p>
-            <div className="flex items-center gap-3">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+              {t('labels.monthChart')}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <ChartTypeToggle value={monthChartType} onChange={setMonthChartType} />
+              {isMobile ? (
+                <button
+                  type="button"
+                  onClick={() => setChartModalOpen(true)}
+                  className="rounded-full border border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                >
+                  {t('actions.viewLarge')}
+                </button>
+              ) : null}
             </div>
           </div>
           <div
             className={`mt-4 grid gap-4 ${showMonthBenefitSection ? 'lg:grid-cols-[1fr_220px]' : 'lg:grid-cols-1'}`}
           >
-            <div className="h-[220px]" ref={monthChartContainerRef}>
+            <div className="h-[140px] sm:h-[220px]" ref={monthChartContainerRef}>
               {hasMonthData ? (
                 hasVisibleMonthBars ? (
                   isMonthLine ? (
@@ -248,8 +330,8 @@ export function MonthView({
               )}
             </div>
             {showMonthBenefitSection ? (
-              <div className="flex h-[220px] flex-col rounded-xl border border-ink/10 bg-white/80 p-3">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted">
+              <div className="flex h-[140px] flex-col rounded-xl border border-ink/10 bg-white/80 p-3 sm:h-[220px]">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.18em]">
                   {t('series.benefit')}
                   <span className={getBenefitClass(displaySummary.benefitCents)}>
                     {formatCents(displaySummary.benefitCents)} EUR
@@ -288,11 +370,16 @@ export function MonthView({
         </div>
       </section>
 
-      <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <h2 className="text-2xl font-semibold text-ink">{t('labels.saveMonth')}</h2>
-        <p className="mt-2 text-sm text-muted">
+      <section className="order-1 min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6 lg:order-2">
+        <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
+        <p className="mt-2 text-sm text-muted sm:text-sm">
           {t('descriptions.monthSave')}
         </p>
+        {readOnly ? (
+          <div className="mt-3 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs">
+            {t('messages.readOnlyActive')}
+          </div>
+        ) : null}
         <form onSubmit={onSubmit} className="mt-6 grid gap-4">
           <label className="flex flex-col gap-2 text-sm text-muted">
             {t('series.income')}
@@ -303,7 +390,8 @@ export function MonthView({
               placeholder={t('placeholders.amount')}
               value={form.income}
               onChange={onFormChange('income')}
-              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+              disabled={readOnly}
+              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
             />
           </label>
           <label className="flex flex-col gap-2 text-sm text-muted">
@@ -315,7 +403,8 @@ export function MonthView({
               placeholder={t('placeholders.amount')}
               value={form.expense}
               onChange={onFormChange('expense')}
-              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+              disabled={readOnly}
+              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
             />
           </label>
           <label className="flex flex-col gap-2 text-sm text-muted">
@@ -327,13 +416,14 @@ export function MonthView({
               placeholder={t('placeholders.amount')}
               value={form.balance}
               onChange={onFormChange('balance')}
-              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+              disabled={readOnly}
+              className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
             />
           </label>
           <button
             type="submit"
-            disabled={saving}
-            className="mt-2 rounded-full px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition md:w-auto bg-accent text-white shadow-md"
+            disabled={saving || readOnly}
+            className="mt-2 rounded-full px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] transition bg-accent text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm sm:tracking-[0.18em] md:w-auto"
           >
             {saving ? t('actions.saving') : t('actions.saveMonth')}
           </button>
@@ -345,7 +435,7 @@ export function MonthView({
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-red-700 transition hover:border-red-300"
+                className="rounded-full border border-red-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-red-700 transition hover:border-red-300 sm:text-xs sm:tracking-[0.18em]"
               >
                 {t('actions.openSettings')}
               </button>
@@ -353,6 +443,43 @@ export function MonthView({
           </div>
         ) : null}
       </section>
+      <ChartModal
+        open={chartModalOpen}
+        title={t('labels.monthChart')}
+        closeLabel={t('actions.close')}
+        onClose={() => setChartModalOpen(false)}
+        fullScreen={isMobile}
+        requestLandscape={isMobile}
+        rotateHint={t('messages.rotateDevice')}
+      >
+        <div className="h-full" ref={monthChartModalContainerRef}>
+          {hasMonthData ? (
+            hasVisibleMonthBars ? (
+              isMonthLine ? (
+                <Line
+                  data={monthChartData as ChartData<'line', Array<number | null>, string>}
+                  options={monthChartOptionsWithClick as ChartOptions<'line'>}
+                  ref={monthChartModalRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+                />
+              ) : (
+                <Bar
+                  data={monthChartData as ChartData<'bar', Array<number | null>, string>}
+                  options={monthChartOptionsWithClick as ChartOptions<'bar'>}
+                  ref={monthChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                />
+              )
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted">
+                {t('messages.seriesHidden')}
+              </div>
+            )
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted">
+              {t('messages.noChartData')}
+            </div>
+          )}
+        </div>
+      </ChartModal>
     </div>
   );
 }

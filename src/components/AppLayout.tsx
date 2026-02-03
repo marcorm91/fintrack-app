@@ -55,7 +55,7 @@ export function AppLayout({
           />
         </svg>
       </div>
-      <div className="w-full px-6 py-10 relative z-10 min-h-screen flex flex-col">
+      <div className="w-full px-3 py-4 pb-[calc(6rem+var(--app-safe-bottom))] sm:px-4 sm:py-10 sm:pb-10 md:px-6 relative z-10 min-h-screen flex flex-col">
         <AppHeader
           activeLanguage={activeLanguage}
           onLanguageChange={onLanguageChange}
@@ -64,7 +64,7 @@ export function AppLayout({
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />
         {tabs}
-        <main className="mt-6 gap-6 flex flex-col flex-1">{children}</main>
+        <main className="mt-3 gap-4 sm:mt-6 sm:gap-6 flex flex-col flex-1">{children}</main>
         <AppFooter />
         {dialogs}
         {toast}

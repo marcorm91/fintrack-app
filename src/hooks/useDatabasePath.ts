@@ -21,6 +21,14 @@ function resolveInputPath(value: string) {
   return `${base}${separator}${DATABASE_FILENAME}`;
 }
 
+function isMobileUserAgent() {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+  const ua = navigator.userAgent || navigator.vendor || '';
+  return /android|iphone|ipad|ipod/i.test(ua);
+}
+
 export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
   const [defaultPath, setDefaultPath] = useState('');
   const [currentPath, setCurrentPath] = useState('');
@@ -76,7 +84,12 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
   const browsePath = useCallback(async () => {
     setError(null);
     try {
-      const selected = await open({ directory: true, multiple: false });
+      const useFilePicker = isMobileUserAgent();
+      const selected = await open(
+        useFilePicker
+          ? { multiple: false, filters: [{ name: 'Database', extensions: ['db'] }] }
+          : { directory: true, multiple: false }
+      );
       if (!selected) {
         return;
       }

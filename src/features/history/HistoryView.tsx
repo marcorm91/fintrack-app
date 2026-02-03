@@ -5,10 +5,12 @@ import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
+import { ChartModal } from '../../components/ChartModal';
 import { EyeToggle } from '../../components/EyeToggle';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { BAR_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 
@@ -55,7 +57,14 @@ export function HistoryView({
   isAllYearsLine
 }: HistoryViewProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
+  const [chartModalOpen, setChartModalOpen] = useState(false);
   const { chartRef: historyChartRef, containerRef: historyChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: historyChartModalRef, containerRef: historyChartModalContainerRef } = useChartResize<
     'bar' | 'line',
     Array<number | null>,
     string
@@ -184,10 +193,34 @@ export function HistoryView({
     ...allYearsChartOptions,
     onClick: handleHistoryChartClick
   };
+  const compactHistoryChartOptions: SeriesChartOptions = isMobile
+    ? {
+        ...historyChartOptionsWithClick,
+        scales: {
+          ...historyChartOptionsWithClick.scales,
+          x: {
+            ...(historyChartOptionsWithClick.scales?.x ?? {}),
+            ticks: {
+              ...((historyChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
+              autoSkip: true,
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            ...(historyChartOptionsWithClick.scales?.y ?? {}),
+            ticks: {
+              ...((historyChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
+              maxTicksLimit: 5
+            }
+          }
+        }
+      }
+    : historyChartOptionsWithClick;
+  const historyChartModalMinWidth = Math.max(360, filteredChartLabels.length * 56);
   return (
     <>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card" open>
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.28em] text-accent2 list-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
           <span>{t('labels.historyChart')}</span>
           <span className="text-muted transition group-open:rotate-90">
             <ChevronIcon direction="right" />
@@ -196,11 +229,13 @@ export function HistoryView({
         <div className="mt-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-accent2">{t('labels.historyTotal')}</p>
-              <h2 className="text-2xl font-semibold text-ink">{t('labels.allYears')}</h2>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
+                {t('labels.historyTotal')}
+              </p>
+              <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.allYears')}</h2>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-[10px] text-muted sm:text-xs">
             <div className="flex flex-wrap gap-8">
               {BAR_TYPES.map((item) => {
                 const seriesKey = item.key as SeriesKey;
@@ -219,14 +254,18 @@ export function HistoryView({
               })}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.18em]">{t('labels.yearRange')}</span>
+              <span className="text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
+                {t('labels.yearRange')}
+              </span>
               <input
                 type="number"
                 inputMode="numeric"
                 placeholder={t('labels.from')}
                 value={rangeFrom}
                 onChange={(event) => setRangeFrom(event.target.value)}
-                className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+                className={`w-20 rounded-lg border border-ink/10 bg-white text-ink text-center ${
+                  isMobile ? 'px-2 py-0.5 text-[9px]' : 'px-2 py-1 text-base sm:text-xs'
+                }`}
               />
               <span className="text-muted">-</span>
               <input
@@ -235,27 +274,29 @@ export function HistoryView({
                 placeholder={t('labels.to')}
                 value={rangeTo}
                 onChange={(event) => setRangeTo(event.target.value)}
-                className="w-20 rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+                className={`w-20 rounded-lg border border-ink/10 bg-white text-ink text-center ${
+                  isMobile ? 'px-2 py-0.5 text-[9px]' : 'px-2 py-1 text-base sm:text-xs'
+                }`}
               />
             </div>
           </div>
           {bestBenefitYear && allYearsSeriesVisibility.benefit ? (
-            <ul className="mt-4 space-y-1 text-sm text-muted">
-              <li className="flex items-center gap-2">
+            <ul className="mt-4 space-y-2 text-sm text-muted">
+              <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
                 <TrendIcon trend="up" />
-                <span className="flex items-center gap-2">
+                <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
                   {t('labels.bestBenefitYear', { year: bestBenefitYear.year })}
-                  <span className="flex gap-1 items-center font-semibold text-benefit">
+                  <span className="flex gap-1 items-center font-semibold text-benefit whitespace-nowrap">
                     <TrendIcon trend="right" /> {formatCents(bestBenefitYear.benefitCents)} EUR
                   </span>
                 </span>
               </li>
               {worstBenefitYear && worstBenefitYear.year !== bestBenefitYear.year ? (
-                <li className="flex items-center gap-2">
+                <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
                   <TrendIcon trend="down" />
-                  <span className="flex items-center gap-2">
+                  <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
                     {t('labels.worstBenefitYear', { year: worstBenefitYear.year })}
-                    <span className="flex gap-1 items-center font-semibold text-benefitNegative">
+                    <span className="flex gap-1 items-center font-semibold text-benefitNegative whitespace-nowrap">
                       <TrendIcon trend="right" />
                       {formatCents(worstBenefitYear.benefitCents)} EUR
                     </span>
@@ -264,26 +305,39 @@ export function HistoryView({
               ) : null}
             </ul>
           ) : null}
-          <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+          <div className="mt-5 rounded-2xl border border-ink/10 bg-white/90 p-3 sm:mt-6 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.historyChart')}</p>
-              <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.historyChart')}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
+                {isMobile ? (
+                  <button
+                    type="button"
+                    onClick={() => setChartModalOpen(true)}
+                    className="rounded-full border border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                  >
+                    {t('actions.viewLarge')}
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="mt-4">
               {!hasFilteredData ? (
                 <p className="text-sm text-muted">{t('messages.noChartData')}</p>
               ) : (
-                <div className="h-[360px]" ref={historyChartContainerRef}>
+                <div className="h-[160px] sm:h-[360px]" ref={historyChartContainerRef}>
                   {isAllYearsLine ? (
                     <Line
                       data={filteredChartData as ChartData<'line', Array<number | null>, string>}
-                      options={historyChartOptionsWithClick as ChartOptions<'line'>}
+                      options={compactHistoryChartOptions as ChartOptions<'line'>}
                       ref={historyChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
                     />
                   ) : (
                     <Bar
                       data={filteredChartData as ChartData<'bar', Array<number | null>, string>}
-                      options={historyChartOptionsWithClick as ChartOptions<'bar'>}
+                      options={compactHistoryChartOptions as ChartOptions<'bar'>}
                       ref={historyChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                     />
                   )}
@@ -293,20 +347,22 @@ export function HistoryView({
           </div>
         </div>
       </details>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
           <span>{t('labels.yearDetail')}</span>
           <span className="text-muted transition group-open:rotate-90">
             <ChevronIcon direction="right" />
           </span>
         </summary>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[10px] text-muted sm:text-xs">
           <label className="flex items-center gap-2">
             {t('labels.showRows')}
             <select
               value={pageSize}
               onChange={(event) => setPageSize(event.target.value as '5' | '10' | '15' | '20' | 'all')}
-              className="rounded-lg border border-ink/10 bg-white px-2 py-1 text-xs text-ink"
+              className={`rounded-lg border border-ink/10 bg-white text-ink ${
+                isMobile ? 'px-2 py-1 text-[10px]' : 'px-2 py-1 text-base sm:text-xs'
+              }`}
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -317,8 +373,8 @@ export function HistoryView({
           </label>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase tracking-[0.14em] text-muted">
+          <table className="w-full min-w-[520px] text-left text-xs sm:text-sm">
+            <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
                   <button
@@ -431,25 +487,25 @@ export function HistoryView({
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-xs text-muted">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-3 text-[10px] text-muted sm:text-xs">
           {pageSize !== 'all' && totalPages > 1 ? (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={page === 1}
-                className="rounded-full border border-ink/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-ink/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
               >
                 {t('actions.previous')}
               </button>
-              <span className="text-[11px] uppercase tracking-[0.18em] text-muted">
+              <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-[11px] sm:tracking-[0.18em]">
                 {t('labels.page')} {page} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={page === totalPages}
-                className="rounded-full border border-ink/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full border border-ink/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
               >
                 {t('actions.next')}
               </button>
@@ -457,6 +513,43 @@ export function HistoryView({
           ) : null}
         </div>
       </details>
+      <ChartModal
+        open={chartModalOpen}
+        title={t('labels.historyChart')}
+        closeLabel={t('actions.close')}
+        onClose={() => setChartModalOpen(false)}
+        fullScreen={isMobile}
+        requestLandscape={isMobile}
+        rotateHint={t('messages.rotateDevice')}
+      >
+        <div className="h-full w-full overflow-x-auto">
+          <div
+            className="h-full"
+            style={{ minWidth: `${historyChartModalMinWidth}px` }}
+            ref={historyChartModalContainerRef}
+          >
+            {hasFilteredData ? (
+              isAllYearsLine ? (
+                <Line
+                  data={filteredChartData as ChartData<'line', Array<number | null>, string>}
+                  options={historyChartOptionsWithClick as ChartOptions<'line'>}
+                  ref={historyChartModalRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+                />
+              ) : (
+                <Bar
+                  data={filteredChartData as ChartData<'bar', Array<number | null>, string>}
+                  options={historyChartOptionsWithClick as ChartOptions<'bar'>}
+                  ref={historyChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                />
+              )
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted">
+                {t('messages.noChartData')}
+              </div>
+            )}
+          </div>
+        </div>
+      </ChartModal>
     </>
   );
 }

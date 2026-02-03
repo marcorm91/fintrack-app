@@ -14,9 +14,10 @@ export type { MonthlySnapshotInput } from '../db';
 
 type UseMonthlyDataOptions = {
   loadErrorMessage?: string;
+  readOnly?: boolean;
 };
 
-export function useMonthlyData({ loadErrorMessage }: UseMonthlyDataOptions = {}) {
+export function useMonthlyData({ loadErrorMessage, readOnly = false }: UseMonthlyDataOptions = {}) {
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [series, setSeries] = useState<MonthlySeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,21 +45,45 @@ export function useMonthlyData({ loadErrorMessage }: UseMonthlyDataOptions = {})
     [fallbackMessage]
   );
 
-  const saveSnapshot = useCallback(async (snapshot: MonthlySnapshotInput) => {
-    await saveMonthlySnapshot(snapshot);
-  }, []);
+  const saveSnapshot = useCallback(
+    async (snapshot: MonthlySnapshotInput) => {
+      if (readOnly) {
+        return;
+      }
+      await saveMonthlySnapshot(snapshot);
+    },
+    [readOnly]
+  );
 
-  const deleteMonth = useCallback(async (month: string) => {
-    await deleteMonthlySnapshot(month);
-  }, []);
+  const deleteMonth = useCallback(
+    async (month: string) => {
+      if (readOnly) {
+        return;
+      }
+      await deleteMonthlySnapshot(month);
+    },
+    [readOnly]
+  );
 
-  const deleteYear = useCallback(async (year: string) => {
-    await deleteMonthlySnapshotsForYear(year);
-  }, []);
+  const deleteYear = useCallback(
+    async (year: string) => {
+      if (readOnly) {
+        return;
+      }
+      await deleteMonthlySnapshotsForYear(year);
+    },
+    [readOnly]
+  );
 
-  const deleteAll = useCallback(async () => {
-    await deleteAllMonthlySnapshots();
-  }, []);
+  const deleteAll = useCallback(
+    async () => {
+      if (readOnly) {
+        return;
+      }
+      await deleteAllMonthlySnapshots();
+    },
+    [readOnly]
+  );
 
   return {
     summary,

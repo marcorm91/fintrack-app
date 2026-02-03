@@ -19,6 +19,7 @@ type TabActionsProps = {
   deletingMonth: boolean;
   deletingYear: boolean;
   deletingAll: boolean;
+  readOnly: boolean;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
@@ -93,6 +94,7 @@ export function TabActions({
   deletingMonth,
   deletingYear,
   deletingAll,
+  readOnly,
   t
 }: TabActionsProps) {
   useEffect(() => {
@@ -128,11 +130,11 @@ export function TabActions({
     return null;
   }
 
-  const importDisabled = importing || activeConfig.deleting;
+  const importDisabled = importing || activeConfig.deleting || readOnly;
 
   return (
-    <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted sm:text-xs sm:gap-4">
+      <div className="flex flex-wrap items-center gap-2">
         <ImportMenu
           scope={activeConfig.scope}
           importMenuOpen={importMenuOpen}
@@ -145,8 +147,8 @@ export function TabActions({
         <button
           type="button"
           onClick={() => setInfoScope(activeConfig.scope)}
-          className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
-        >
+        className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink sm:text-[11px] sm:tracking-[0.2em]"
+      >
           <InfoIcon />
           <span>{t('actions.info')}</span>
         </button>
@@ -155,7 +157,7 @@ export function TabActions({
         type="button"
         onClick={activeConfig.onDelete}
         disabled={importDisabled}
-        className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-700 shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-full border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-red-700 shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-xs sm:tracking-[0.18em]"
       >
         {activeConfig.deleting ? t('actions.deleting') : t(activeConfig.deleteLabelKey)}
       </button>

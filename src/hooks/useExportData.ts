@@ -12,6 +12,8 @@ export type ExportStatus = {
   message: string;
 } | null;
 
+export type BackupStatus = ExportStatus;
+
 type UseExportDataOptions = {
   currentPath: string;
   language: string;
@@ -21,6 +23,11 @@ type UseExportDataOptions = {
 function getExportFileName(extension: 'csv' | 'sql') {
   const date = new Date().toISOString().slice(0, 10);
   return `fintrack-${date}.${extension}`;
+}
+
+function getBackupFileName() {
+  const date = new Date().toISOString().slice(0, 10);
+  return `fintrack-backup-${date}.db`;
 }
 
 async function resolveDefaultExportPath(currentPath: string, fileName: string) {
@@ -48,10 +55,13 @@ function formatExportError(error: unknown, fallback: string) {
 export function useExportData({ currentPath, language, t }: UseExportDataOptions) {
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingSql, setExportingSql] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
   const [exportStatus, setExportStatus] = useState<ExportStatus>(null);
+  const [backupStatus, setBackupStatus] = useState<BackupStatus>(null);
 
   const exportCsv = useCallback(async () => {
     setExportStatus(null);
+    setBackupStatus(null);
     setExportingCsv(true);
     try {
       const series = await getMonthlySeries();
@@ -76,6 +86,7 @@ export function useExportData({ currentPath, language, t }: UseExportDataOptions
 
   const exportSql = useCallback(async () => {
     setExportStatus(null);
+    setBackupStatus(null);
     setExportingSql(true);
     try {
       const series = await getMonthlySeries();
@@ -98,11 +109,41 @@ export function useExportData({ currentPath, language, t }: UseExportDataOptions
     }
   }, [currentPath, t]);
 
+  const backupDatabase = useCallback(async () => {
+    setBackupStatus(null);
+    setExportStatus(null);
+    setBackingUp(true);
+    try {
+      if (!currentPath) {
+        setBackupStatus({ tone: 'error', message: t('settings.backupMissingPath') });
+        return;
+      }
+      const defaultPath = await resolveDefaultExportPath(currentPath, getBackupFileName());
+      const path = await save({
+        title: t('settings.backupTitle'),
+        defaultPath,
+        filters: [{ name: 'Database', extensions: ['db'] }]
+      });
+      if (!path) {
+        return;
+      }
+      await invoke('copy_file', { source: currentPath, destination: path });
+      setBackupStatus({ tone: 'success', message: t('settings.backupSuccess', { path }) });
+    } catch (error) {
+      setBackupStatus({ tone: 'error', message: formatExportError(error, t('settings.backupError')) });
+    } finally {
+      setBackingUp(false);
+    }
+  }, [currentPath, t]);
+
   return {
     exportCsv,
     exportSql,
+    backupDatabase,
     exportingCsv,
     exportingSql,
-    exportStatus
+    backingUp,
+    exportStatus,
+    backupStatus
   };
 }

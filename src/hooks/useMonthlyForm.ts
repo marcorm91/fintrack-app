@@ -11,6 +11,7 @@ type UseMonthlyFormOptions = {
   refreshData: () => Promise<void> | void;
   setError: (message: string | null) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
+  readOnly?: boolean;
 };
 
 const emptyForm: FormState = {
@@ -25,7 +26,8 @@ export function useMonthlyForm({
   saveSnapshot,
   refreshData,
   setError,
-  t
+  t,
+  readOnly = false
 }: UseMonthlyFormOptions) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -62,6 +64,9 @@ export function useMonthlyForm({
   const handleSubmit = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
+      if (readOnly) {
+        return;
+      }
       setError(null);
 
       const incomeValue = parseAmount(form.income);
@@ -103,7 +108,7 @@ export function useMonthlyForm({
         setSaving(false);
       }
     },
-    [form, monthValue, refreshData, saveSnapshot, setError, t]
+    [form, monthValue, refreshData, readOnly, saveSnapshot, setError, t]
   );
 
   return {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { BalanceTrend, ChartType, SeriesKey, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
 import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
@@ -6,11 +6,13 @@ import type { RefObject } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartTypeToggle } from '../../components/ChartTypeToggle';
+import { ChartModal } from '../../components/ChartModal';
 import { EyeToggle } from '../../components/EyeToggle';
 import { InsightsPanel } from '../../components/InsightsPanel';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { BAR_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftYearValue } from '../../utils/date';
@@ -75,7 +77,14 @@ export function YearView({
 }: YearViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+  const isMobile = useIsMobile();
+  const [chartModalOpen, setChartModalOpen] = useState(false);
   const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
+    'bar' | 'line',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: yearChartModalRef, containerRef: yearChartModalContainerRef } = useChartResize<
     'bar' | 'line',
     Array<number | null>,
     string
@@ -117,73 +126,150 @@ export function YearView({
     ...yearChartOptions,
     onClick: handleYearChartClick
   };
+  const compactYearChartOptions: SeriesChartOptions = isMobile
+    ? {
+        ...yearChartOptionsWithClick,
+        scales: {
+          ...yearChartOptionsWithClick.scales,
+          x: {
+            ...(yearChartOptionsWithClick.scales?.x ?? {}),
+            ticks: {
+              ...((yearChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
+              autoSkip: true,
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            ...(yearChartOptionsWithClick.scales?.y ?? {}),
+            ticks: {
+              ...((yearChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
+              maxTicksLimit: 5
+            }
+          }
+        }
+      }
+    : yearChartOptionsWithClick;
+  const yearChartModalMinWidth = Math.max(360, sortedYearSeries.length * 56);
   return (
     <>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card" open>
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.28em] text-accent2 list-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
           <span>{t('labels.yearChart')}</span>
           <span className="text-muted transition group-open:rotate-90">
             <ChevronIcon direction="right" />
           </span>
         </summary>
         <div className="mt-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
             <div>
-              <h2 className="text-2xl font-semibold text-ink">{yearValue}</h2>
+              <h2 className="text-xl font-semibold text-ink sm:text-2xl">{yearValue}</h2>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
-                  aria-label={t('actions.previousYear')}
-                  title={t('actions.previousYear')}
-                  className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
-                >
-                  <ChevronIcon direction="left" />
-                </button>
-                <div className="text-sm text-muted">
-                  <select
-                    id="year"
-                    value={yearValue}
-                    onChange={(event) => setYearValue(event.target.value)}
-                    className="rounded-xl border border-ink/10 bg-white px-4 py-2 text-sm text-ink shadow-sm focus:border-accent focus:outline-none"
+            {isMobile ? (
+              <div className="grid w-full gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
+                    aria-label={t('actions.previousYear')}
+                    title={t('actions.previousYear')}
+                    className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
+                      isMobile ? 'h-8 w-8 p-0' : 'p-1'
+                    }`}
                   >
-                    {availableYears.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
+                    <ChevronIcon direction="left" />
+                  </button>
+                  <div className="flex-1 text-sm text-muted">
+                    <select
+                      id="year"
+                      value={yearValue}
+                      onChange={(event) => setYearValue(event.target.value)}
+                      className="w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-center text-[11px] leading-4 text-ink shadow-sm focus:border-accent focus:outline-none sm:px-4 sm:text-sm"
+                    >
+                      {availableYears.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
+                    aria-label={t('actions.nextYear')}
+                    title={t('actions.nextYear')}
+                    className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
+                      isMobile ? 'h-8 w-8 p-0' : 'p-1'
+                    }`}
+                  >
+                    <ChevronIcon direction="right" />
+                  </button>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
-                  aria-label={t('actions.nextYear')}
-                  title={t('actions.nextYear')}
-                  className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                  onClick={() => setYearValue(currentYearValue)}
+                  disabled={isCurrentYear}
+                  className={`w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition ${
+                    isCurrentYear ? 'cursor-default opacity-60' : ' hover:border-accent hover:text-ink'
+                  }`}
                 >
-                  <ChevronIcon direction="right" />
+                  {t('actions.gotoCurrentYear')}
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setYearValue(currentYearValue)}
-                disabled={isCurrentYear}
-                className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition ${
-                  isCurrentYear
-                    ? 'cursor-default opacity-60'
-                    : ' hover:border-accent hover:text-ink'
-                }`}
-              >
-                {t('actions.gotoCurrentYear')}
-              </button>
-            </div>
-            <div aria-hidden="true">
-              
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
+                      aria-label={t('actions.previousYear')}
+                      title={t('actions.previousYear')}
+                      className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                    >
+                      <ChevronIcon direction="left" />
+                    </button>
+                    <div className="text-sm text-muted">
+                      <select
+                        id="year"
+                        value={yearValue}
+                        onChange={(event) => setYearValue(event.target.value)}
+                        className="rounded-xl border border-ink/10 bg-white px-3 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none sm:px-4 sm:text-sm"
+                      >
+                        {availableYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
+                      aria-label={t('actions.nextYear')}
+                      title={t('actions.nextYear')}
+                      className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                    >
+                      <ChevronIcon direction="right" />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setYearValue(currentYearValue)}
+                    disabled={isCurrentYear}
+                    className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition sm:text-[11px] sm:tracking-[0.18em] ${
+                      isCurrentYear
+                        ? 'cursor-default opacity-60'
+                        : ' hover:border-accent hover:text-ink'
+                    }`}
+                  >
+                    {t('actions.gotoCurrentYear')}
+                  </button>
+                </div>
+                <div aria-hidden="true"></div>
+              </>
+            )}
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
+          <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
             {BAR_TYPES.map((item) => (
               <span key={item.key} className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
@@ -191,7 +277,7 @@ export function YearView({
               </span>
             ))}
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
+          <div className="mt-5 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-4">
             <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
               <div className="flex items-center justify-between">
                 <span>{t('labels.totalIncome')}</span>
@@ -201,7 +287,7 @@ export function YearView({
                   label={t('series.income')}
                 />
               </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
                 <span className="h-2.5 w-2.5 rounded-full bg-income" />
                 <span>{formatCents(yearTotals.incomeCents)} EUR</span>
               </div>
@@ -215,7 +301,7 @@ export function YearView({
                   label={t('series.expense')}
                 />
               </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
                 <span className="h-2.5 w-2.5 rounded-full bg-expense" />
                 <span>{formatCents(yearTotals.expenseCents)} EUR</span>
               </div>
@@ -229,7 +315,7 @@ export function YearView({
                   label={t('series.benefit')}
                 />
               </div>
-              <div className={`mt-2 font-semibold flex items-center gap-2 text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
+              <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
                 <span className={`h-2.5 w-2.5 rounded-full ${yearBenefitDotClass}`} />
                 <span>{formatCents(yearTotals.benefitCents)} EUR</span>
               </div>
@@ -243,34 +329,34 @@ export function YearView({
                   label={t('series.balance')}
                 />
               </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-lg text-ink">
+              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
                 <span className="h-2.5 w-2.5 rounded-full bg-balance" />
                 <span>{formatCents(yearTotals.balanceCents)} EUR</span>
               </div>
             </div>
           </div>
           {bestBenefitMonth && yearSeriesVisibility.benefit ? (
-            <ul className="mt-4 space-y-1 text-sm text-muted">
-              <li className="flex items-center gap-2">
+            <ul className="mt-4 space-y-2 text-sm text-muted">
+              <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
                 <TrendIcon trend="up" />
-                <span className="flex items-center gap-2">
+                <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
                   {t('labels.bestBenefitMonth', {
                     month: getMonthLabel(bestBenefitMonth.month, locale, 'long')
                   })}
-                  <span className="flex items-center gap-1 font-semibold text-benefit">
+                  <span className="flex items-center gap-1 font-semibold text-benefit whitespace-nowrap">
                     <TrendIcon trend="right" />
                     {formatCents(bestBenefitMonth.benefitCents)} EUR
                   </span>
                 </span>
               </li>
               {worstBenefitMonth && worstBenefitMonth.month !== bestBenefitMonth.month ? (
-                <li className="flex items-center gap-2">
+                <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
                   <TrendIcon trend="down" />
-                  <span className="flex items-center gap-2">
+                  <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
                     {t('labels.worstBenefitMonth', {
                       month: getMonthLabel(worstBenefitMonth.month, locale, 'long')
                     })}
-                    <span className="flex items-center gap-1 font-semibold text-benefitNegative">
+                    <span className="flex items-center gap-1 font-semibold text-benefitNegative whitespace-nowrap">
                       <TrendIcon trend="right" />
                       {formatCents(worstBenefitMonth.benefitCents)} EUR
                     </span>
@@ -279,26 +365,39 @@ export function YearView({
               ) : null}
             </ul>
           ) : null}
-          <div className="mt-6 rounded-2xl border border-ink/10 bg-white/90 p-4">
+          <div className="mt-5 rounded-2xl border border-ink/10 bg-white/90 p-3 sm:mt-6 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('labels.yearChart')}</p>
-              <ChartTypeToggle value={yearChartType} onChange={setYearChartType} />
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.yearChart')}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <ChartTypeToggle value={yearChartType} onChange={setYearChartType} />
+                {isMobile ? (
+                  <button
+                    type="button"
+                    onClick={() => setChartModalOpen(true)}
+                    className="rounded-full border border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                  >
+                    {t('actions.viewLarge')}
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="mt-4">
               {!hasChartData ? (
                 <p className="text-sm text-muted">{t('messages.noChartData')}</p>
               ) : (
-                <div className="h-[320px]" ref={yearChartContainerRef}>
+                <div className="h-[160px] sm:h-[320px]" ref={yearChartContainerRef}>
                   {isYearLine ? (
                     <Line
                       data={yearChartData as ChartData<'line', Array<number | null>, string>}
-                      options={yearChartOptionsWithClick as ChartOptions<'line'>}
+                      options={compactYearChartOptions as ChartOptions<'line'>}
                       ref={yearChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
                     />
                   ) : (
                     <Bar
                       data={yearChartData as ChartData<'bar', Array<number | null>, string>}
-                      options={yearChartOptionsWithClick as ChartOptions<'bar'>}
+                      options={compactYearChartOptions as ChartOptions<'bar'>}
                       ref={yearChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                     />
                   )}
@@ -309,19 +408,21 @@ export function YearView({
         </div>
       </details>
 
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
           <span>{t('labels.monthDetail')}</span>
           <span className="text-muted transition group-open:rotate-90">
             <ChevronIcon direction="right" />
           </span>
         </summary>
         <div className="mt-4 flex items-center justify-end">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted">{yearValue}</span>
+          <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+            {yearValue}
+          </span>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase tracking-[0.14em] text-muted">
+          <table className="w-full min-w-[520px] text-left text-xs sm:text-sm">
+            <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
                   <button
@@ -435,8 +536,8 @@ export function YearView({
           </table>
         </div>
       </details>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-6 shadow-card">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-muted list-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
           <span>{t('insights.title')}</span>
           <span className="text-muted transition group-open:rotate-90">
             <ChevronIcon direction="right" />
@@ -455,6 +556,39 @@ export function YearView({
           />
         </div>
       </details>
+      <ChartModal
+        open={chartModalOpen}
+        title={t('labels.yearChart')}
+        closeLabel={t('actions.close')}
+        onClose={() => setChartModalOpen(false)}
+        fullScreen={isMobile}
+        requestLandscape={isMobile}
+        rotateHint={t('messages.rotateDevice')}
+      >
+        <div className="h-full w-full overflow-x-auto">
+          <div className="h-full" style={{ minWidth: `${yearChartModalMinWidth}px` }} ref={yearChartModalContainerRef}>
+            {hasChartData ? (
+              isYearLine ? (
+                <Line
+                  data={yearChartData as ChartData<'line', Array<number | null>, string>}
+                  options={yearChartOptionsWithClick as ChartOptions<'line'>}
+                  ref={yearChartModalRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+                />
+              ) : (
+                <Bar
+                  data={yearChartData as ChartData<'bar', Array<number | null>, string>}
+                  options={yearChartOptionsWithClick as ChartOptions<'bar'>}
+                  ref={yearChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                />
+              )
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted">
+                {t('messages.noChartData')}
+              </div>
+            )}
+          </div>
+        </div>
+      </ChartModal>
     </>
   );
 }
