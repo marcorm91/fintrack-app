@@ -393,16 +393,6 @@ export function DatabaseSettingsDialog({
                 <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
               </label>
             </div>
-            <div className="mt-4 rounded-xl border border-ink/10 bg-ink/5 px-3 py-3 text-[10px] text-muted sm:text-xs">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-ink">
-                {t('settings.syncNoteTitle')}
-              </p>
-              <ul className="mt-2 space-y-1">
-                <li>{t('settings.syncNoteLine1')}</li>
-                <li>{t('settings.syncNoteLine2')}</li>
-                <li>{t('settings.syncNoteLine3')}</li>
-              </ul>
-            </div>
             {errorMessage ? (
               <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
             ) : null}

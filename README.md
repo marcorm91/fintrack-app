@@ -18,14 +18,14 @@ Aplicación para control mensual/anual de finanzas personales con gráficas, tab
 - Configuración de ruta de base de datos desde la app.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_x64-setup.exe)
-- Windows (MSI): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_aarch64.dmg)
-- Linux (AppImage): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_amd64.AppImage)
-- Linux (DEB): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_amd64.deb)
-- Linux (RPM): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1-1.x86_64.rpm)
-- Android (APK): [Fintrack 1.1.1](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.1_android.apk)
+- Windows (instalador .exe): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_x64-setup.exe)
+- Windows (MSI): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_aarch64.dmg)
+- Linux (AppImage): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_amd64.AppImage)
+- Linux (DEB): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_amd64.deb)
+- Linux (RPM): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2-1.x86_64.rpm)
+- Android (APK): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_android.apk)
 
 ## Stack
 - React + Vite + TypeScript
@@ -167,9 +167,6 @@ Este archivo es el origen de todos los datos de la aplicación: meses, históric
 Es importante que la aplicación esté **apuntando al archivo `.db` correcto** para poder ver, guardar o recuperar tu información.  
 Cambiar de archivo implica cambiar de conjunto de datos.
 
-No existe sincronización automática ni copias ocultas.
-La app de escritorio y la app móvil **son independientes** y **no comparten** la misma base de datos.
-Si quieres mantener ambas con los mismos datos, debes **sincronizar manualmente** los CSV (exportar/importar).
 
 Ventaja clave: los datos **no se alojan en ningun servidor**, no hace falta registro ni cuenta, y todo queda en tu equipo.
 Fintrack busca llevar tus cuentas de forma puntual y **lo mas simple posible**.
