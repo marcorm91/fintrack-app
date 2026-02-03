@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-safe-bottom-visual: 0px;
+    --app-safe-bottom: max(env(safe-area-inset-bottom), var(--app-safe-bottom-visual));
+  }
+
   body {
     @apply font-sans text-ink;
   }

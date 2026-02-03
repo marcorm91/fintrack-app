@@ -45,7 +45,9 @@ export function InsightsPanel({
     return (
       <section className={sectionClassName}>
         {showTitle ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{title}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+            {title}
+          </p>
         ) : null}
         <p className="mt-3 text-sm text-muted">{emptyLabel}</p>
       </section>
@@ -55,12 +57,14 @@ export function InsightsPanel({
   return (
     <section className={sectionClassName}>
       {showTitle ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{title}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+          {title}
+        </p>
       ) : null}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {comparisons.map((comparison) => (
           <div key={comparison.key} className="rounded-xl border border-ink/10 bg-white/90 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.18em]">
               {comparison.label}
             </p>
             {comparison.hasData ? (

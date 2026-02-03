@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
+import { formatMonthValue } from '../utils/date';
 import schemaSql from './schema.sql?raw';
 
 export const DATABASE_FILENAME = 'finanzas.db';
@@ -123,6 +124,43 @@ export interface MonthlySnapshotInput {
   balanceCents: number;
 }
 
+const DEV_SEED_MONTHS = 18;
+
+function shouldSeedDevData() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  if (!import.meta.env.DEV) {
+    return false;
+  }
+  return import.meta.env.VITE_SEED_MOCKS !== 'false';
+}
+
+function buildMockSnapshots(): MonthlySnapshotInput[] {
+  const now = new Date();
+  const snapshots: MonthlySnapshotInput[] = [];
+  let balanceCents = 780_000;
+
+  for (let offset = DEV_SEED_MONTHS - 1; offset >= 0; offset -= 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const month = formatMonthValue(date.getFullYear(), date.getMonth() + 1);
+    const incomeBase = 230_000 + (offset % 6) * 6_500;
+    const expenseBase = 150_000 + (offset % 4) * 9_000;
+    const incomeCents = Math.max(0, Math.round(incomeBase + Math.sin(offset / 2) * 12_000));
+    const expenseCents = Math.max(0, Math.round(expenseBase + Math.cos(offset / 3) * 10_000));
+    balanceCents += incomeCents - expenseCents;
+
+    snapshots.push({
+      month,
+      incomeCents,
+      expenseCents,
+      balanceCents: Math.round(balanceCents)
+    });
+  }
+
+  return snapshots;
+}
+
 const MONTHLY_SUMMARY_SQL = `
 SELECT
   month,
@@ -168,6 +206,32 @@ DELETE FROM monthly_snapshots;
 
 let dbPromise: Promise<Database> | null = null;
 let initPromise: Promise<void> | null = null;
+let devSeedPromise: Promise<void> | null = null;
+
+async function ensureDevSeeded(db: Database): Promise<void> {
+  if (!shouldSeedDevData()) {
+    return;
+  }
+  if (!devSeedPromise) {
+    devSeedPromise = (async () => {
+      const rows = await db.select<{ count: number }>('SELECT COUNT(*) as count FROM monthly_snapshots;');
+      const count = Number(rows[0]?.count ?? 0);
+      if (Number.isFinite(count) && count > 0) {
+        return;
+      }
+      const snapshots = buildMockSnapshots();
+      for (const snapshot of snapshots) {
+        await db.execute(UPSERT_MONTH_SQL, [
+          snapshot.month,
+          snapshot.incomeCents,
+          snapshot.expenseCents,
+          snapshot.balanceCents
+        ]);
+      }
+    })();
+  }
+  await devSeedPromise;
+}
 
 async function getDb(): Promise<Database> {
   if (!dbPromise) {
@@ -183,6 +247,7 @@ async function initDb(): Promise<Database> {
     initPromise = (async () => {
       await db.execute('PRAGMA foreign_keys = ON;');
       await db.execute(schemaSql);
+      await ensureDevSeeded(db);
     })();
   }
   await initPromise;

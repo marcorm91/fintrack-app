@@ -22,6 +22,8 @@ import { usePeriodSelection } from './hooks/usePeriodSelection';
 import { useYearInsights } from './hooks/useYearInsights';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
+import { useSafeAreaInsets } from './hooks/useSafeAreaInsets';
+import { useReadOnlySetting } from './hooks/useReadOnlySetting';
 import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
 import { useUpdateStatus } from './hooks/useUpdateStatus';
 import type {
@@ -45,6 +47,7 @@ import { YearView } from './features/year/YearView';
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
 
 export default function App() {
+  useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [monthChartType, setMonthChartType] = useState<ChartType>('bar');
   const [yearChartType, setYearChartType] = useState<ChartType>('bar');
@@ -60,6 +63,7 @@ export default function App() {
     isCurrentMonth,
     isCurrentYear
   } = usePeriodSelection();
+  const { readOnly, toggleReadOnly } = useReadOnlySetting();
   const { toast, setToast } = useToastAutoDismiss();
   const {
     visibility: monthSeriesVisibility,
@@ -97,16 +101,32 @@ export default function App() {
     deleteYear,
     deleteAll,
     setError
-  } = useMonthlyData({ loadErrorMessage: t('errors.loadData') });
+  } = useMonthlyData({ loadErrorMessage: t('errors.loadData'), readOnly });
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
+  const {
+    settingsOpen,
+    openSettings,
+    closeSettings,
+    saveSettings,
+    resetSettings,
+    handleDatabasePathInputChange,
+    currentPath,
+    defaultPath,
+    inputPath,
+    isDefaultPath,
+    loading: isDatabasePathLoading,
+    error: databasePathError,
+    browsePath
+  } = useDatabaseSettings({ onPathChange: refreshData });
   const { form, saving, handleChange, handleSubmit, resetForm } = useMonthlyForm({
     summary,
     monthValue,
     saveSnapshot,
     refreshData,
     setError,
-    t
+    t,
+    readOnly
   });
   const {
     importInputRef,
@@ -233,21 +253,6 @@ export default function App() {
     allYears
   });
   const {
-    settingsOpen,
-    openSettings,
-    closeSettings,
-    saveSettings,
-    resetSettings,
-    handleDatabasePathInputChange,
-    currentPath,
-    defaultPath,
-    inputPath,
-    isDefaultPath,
-    loading: isDatabasePathLoading,
-    error: databasePathError,
-    browsePath
-  } = useDatabaseSettings({ onPathChange: refreshData });
-  const {
     status: updateStatus,
     currentVersion,
     latestVersion,
@@ -255,7 +260,16 @@ export default function App() {
     isOnline,
     checkForUpdates
   } = useUpdateStatus();
-  const { exportCsv, exportSql, exportingCsv, exportingSql, exportStatus } = useExportData({
+  const {
+    exportCsv,
+    exportSql,
+    backupDatabase,
+    exportingCsv,
+    exportingSql,
+    backingUp,
+    exportStatus,
+    backupStatus
+  } = useExportData({
     currentPath,
     language,
     t
@@ -340,6 +354,7 @@ export default function App() {
           deletingMonth={deletingMonth}
           deletingYear={deletingYear}
           deletingAll={deletingAll}
+          readOnly={readOnly}
           t={t}
         />
       }
@@ -377,6 +392,8 @@ export default function App() {
             isDefaultPath={isDefaultPath}
             loading={isDatabasePathLoading}
             error={databasePathError}
+            readOnly={readOnly}
+            onToggleReadOnly={toggleReadOnly}
             updateStatus={updateStatus}
             isOnline={isOnline}
             currentVersion={currentVersion}
@@ -384,7 +401,9 @@ export default function App() {
             latestReleaseUrl={latestReleaseUrl}
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
+            backingUp={backingUp}
             exportStatus={exportStatus}
+            backupStatus={backupStatus}
             onInputChange={handleDatabasePathInputChange}
             onBrowse={browsePath}
             onSave={saveSettings}
@@ -392,6 +411,7 @@ export default function App() {
             onCheckUpdates={checkForUpdates}
             onExportCsv={exportCsv}
             onExportSql={exportSql}
+            onBackupDatabase={backupDatabase}
             onClose={closeSettings}
           />
         </>
@@ -425,6 +445,7 @@ export default function App() {
             onSubmit={handleSubmit}
             saving={saving}
             error={error}
+            readOnly={readOnly}
             onOpenSettings={openSettings}
           />
           <InsightsPanel
