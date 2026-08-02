@@ -16,13 +16,22 @@ type UseMonthlyInsightsOptions = {
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
-const SERIES_KEYS: SeriesKey[] = ['income', 'expense', 'balance', 'benefit'];
+const SERIES_KEYS: SeriesKey[] = [
+  'income',
+  'expense',
+  'benefit',
+  'balance',
+  'portfolio',
+  'totalWealth'
+];
 
 const getSeriesValues = (point: MonthlySummary | MonthlySeriesPoint): SeriesValues => ({
   income: point.incomeCents,
   expense: point.expenseCents,
+  benefit: point.benefitCents,
   balance: point.balanceCents,
-  benefit: point.benefitCents
+  portfolio: point.portfolioCents,
+  totalWealth: point.totalWealthCents
 });
 
 export function useMonthlyInsights({
@@ -35,10 +44,10 @@ export function useMonthlyInsights({
   t
 }: UseMonthlyInsightsOptions) {
   return useMemo<InsightsPayload>(() => {
-    if (isCurrentMonth && !hasMonthData) {
+    if (!hasMonthData) {
       return {
         comparisons: [],
-        emptyLabel: t('insights.noCurrentData'),
+        emptyLabel: isCurrentMonth ? t('insights.noCurrentData') : t('insights.noComparison'),
         title: t('insights.title'),
         currentLabel: t('insights.current'),
         previousLabel: t('insights.previous'),

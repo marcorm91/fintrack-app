@@ -2,8 +2,8 @@ import type { MonthlySeriesPoint } from '../db';
 import schemaSql from '../db/schema.sql?raw';
 
 const CSV_HEADERS = {
-  es: ['mes', 'ingresos', 'gastos', 'saldo al cierre'],
-  en: ['month', 'income', 'expenses', 'closing balance']
+  es: ['mes', 'ingresos', 'gastos', 'saldo al cierre', 'cartera al cierre'],
+  en: ['month', 'income', 'expenses', 'closing balance', 'portfolio closing value']
 };
 
 function resolveCsvHeaders(locale: string) {
@@ -23,7 +23,8 @@ export function buildCsvSnapshots(series: MonthlySeriesPoint[], locale: string) 
         point.month,
         formatCsvNumber(point.incomeCents, locale),
         formatCsvNumber(point.expenseCents, locale),
-        formatCsvNumber(point.balanceCents, locale)
+        formatCsvNumber(point.balanceCents, locale),
+        formatCsvNumber(point.portfolioCents, locale)
       ].join(';')
     );
   }
@@ -44,9 +45,9 @@ export function buildSqlDump(series: MonthlySeriesPoint[]) {
     lines.push('BEGIN TRANSACTION;');
     for (const point of series) {
       lines.push(
-        `INSERT INTO monthly_snapshots (month, income_cents, expense_cents, balance_cents) VALUES ('${escapeSqlValue(
+        `INSERT INTO monthly_snapshots (month, income_cents, expense_cents, balance_cents, portfolio_cents) VALUES ('${escapeSqlValue(
           point.month
-        )}', ${point.incomeCents}, ${point.expenseCents}, ${point.balanceCents});`
+        )}', ${point.incomeCents}, ${point.expenseCents}, ${point.balanceCents}, ${point.portfolioCents});`
       );
     }
     lines.push('COMMIT;');

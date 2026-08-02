@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { BalanceTrend, ChartType, SeriesKey, SortDirection, AllTableSortKey } from '../../types';
+import type { SeriesKey, SeriesTrendMap, SortDirection, AllTableSortKey } from '../../types';
 import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { ChartModal } from '../../components/ChartModal';
 import { EyeToggle } from '../../components/EyeToggle';
+import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { BAR_TYPES } from '../../constants';
+import { FLOW_TYPES, WEALTH_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 
 type AllYearsPoint = {
@@ -19,53 +19,68 @@ type AllYearsPoint = {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
   benefitCents: number;
 };
 
-type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
-type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
+type HistoryTotals = {
+  incomeCents: number;
+  expenseCents: number;
+  balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
+  benefitCents: number;
+};
+
+type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
+type SeriesChartOptions = ChartOptions<'bar'>;
 
 type HistoryViewProps = {
   allYearsSeriesVisibility: Record<SeriesKey, boolean>;
   toggleAllYearsSeries: (key: SeriesKey) => void;
   showOnlyAllYearsSeries: (key: SeriesKey) => void;
+  hasInvestmentPortfolio: boolean;
   hasAllYearsData: boolean;
   allYearsChartData: SeriesChartData;
+  allYearsWealthChartData: SeriesChartData;
   allYearsChartOptions: SeriesChartOptions;
-  allYearsChartType: ChartType;
-  setAllYearsChartType: (value: ChartType) => void;
   sortedAllYears: AllYearsPoint[];
   allYearsTableSort: { key: AllTableSortKey; direction: SortDirection };
   handleAllYearsSort: (key: AllTableSortKey) => void;
-  allYearsTrendByYear: Map<string, BalanceTrend>;
-  isAllYearsLine: boolean;
+  allYearsTrendByYear: Map<string, SeriesTrendMap>;
 };
 
 export function HistoryView({
   allYearsSeriesVisibility,
   toggleAllYearsSeries,
   showOnlyAllYearsSeries,
+  hasInvestmentPortfolio,
   hasAllYearsData,
   allYearsChartData,
+  allYearsWealthChartData,
   allYearsChartOptions,
-  allYearsChartType,
-  setAllYearsChartType,
   sortedAllYears,
   allYearsTableSort,
   handleAllYearsSort,
-  allYearsTrendByYear,
-  isAllYearsLine
+  allYearsTrendByYear
 }: HistoryViewProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [chartModalOpen, setChartModalOpen] = useState(false);
+  const [activeChartPanel, setActiveChartPanel] = useState<'summary' | 'wealth'>('summary');
   const { chartRef: historyChartRef, containerRef: historyChartContainerRef } = useChartResize<
-    'bar' | 'line',
+    'bar',
     Array<number | null>,
     string
   >();
   const { chartRef: historyChartModalRef, containerRef: historyChartModalContainerRef } = useChartResize<
-    'bar' | 'line',
+    'bar',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: historyWealthChartRef, containerRef: historyWealthChartContainerRef } = useChartResize<
+    'bar',
     Array<number | null>,
     string
   >();
@@ -74,6 +89,15 @@ export function HistoryView({
   const [pageSize, setPageSize] = useState<'5' | '10' | '15' | '20' | 'all'>('all');
   const [page, setPage] = useState(1);
   const chartLabels = useMemo(() => (allYearsChartData.labels ?? []) as string[], [allYearsChartData]);
+  const wealthChartLabels = useMemo(
+    () => (allYearsWealthChartData.labels ?? []) as string[],
+    [allYearsWealthChartData]
+  );
+  const availableRangeYears = useMemo(
+    () =>
+      Array.from(new Set(sortedAllYears.map((point) => point.year))).sort((a, b) => Number(a) - Number(b)),
+    [sortedAllYears]
+  );
   const parsedFrom = rangeFrom.trim() ? Number(rangeFrom) : null;
   const parsedTo = rangeTo.trim() ? Number(rangeTo) : null;
   const minYearFilter =
@@ -133,6 +157,40 @@ export function HistoryView({
       datasets
     };
   }, [allYearsChartData, chartLabels, filteredChartLabels]);
+  const filteredWealthChartLabels = useMemo(() => {
+    if (!hasRangeFilter) {
+      return wealthChartLabels;
+    }
+    return wealthChartLabels.filter((label) => {
+      const yearNumber = Number(label);
+      if (!Number.isFinite(yearNumber)) {
+        return false;
+      }
+      if (minYearFilter !== null && yearNumber < minYearFilter) {
+        return false;
+      }
+      if (maxYearFilter !== null && yearNumber > maxYearFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [hasRangeFilter, maxYearFilter, minYearFilter, wealthChartLabels]);
+  const filteredWealthChartData = useMemo<SeriesChartData>(() => {
+    const labelIndex = new Map(wealthChartLabels.map((label, index) => [label, index]));
+    const datasets: SeriesChartData['datasets'] = (allYearsWealthChartData.datasets ?? []).map((dataset) => {
+      const data = Array.isArray(dataset.data) ? (dataset.data as Array<number | null>) : [];
+      const nextData: Array<number | null> = filteredWealthChartLabels.map((label) => {
+        const index = labelIndex.get(label);
+        return index === undefined ? null : data[index] ?? null;
+      });
+      return { ...dataset, data: nextData } as SeriesChartData['datasets'][number];
+    });
+    return {
+      ...allYearsWealthChartData,
+      labels: filteredWealthChartLabels,
+      datasets
+    };
+  }, [allYearsWealthChartData, filteredWealthChartLabels, wealthChartLabels]);
   const { bestBenefitYear, worstBenefitYear } = useMemo(() => {
     if (filteredAllYears.length === 0) {
       return { bestBenefitYear: null, worstBenefitYear: null };
@@ -148,6 +206,39 @@ export function HistoryView({
       }
     }
     return { bestBenefitYear: best, worstBenefitYear: worst };
+  }, [filteredAllYears]);
+  const historyTotals = useMemo<HistoryTotals>(() => {
+    const totals = filteredAllYears.reduce<HistoryTotals>(
+      (acc, point) => ({
+        ...acc,
+        incomeCents: acc.incomeCents + point.incomeCents,
+        expenseCents: acc.expenseCents + point.expenseCents,
+        benefitCents: acc.benefitCents + point.benefitCents
+      }),
+      {
+        incomeCents: 0,
+        expenseCents: 0,
+        balanceCents: 0,
+        portfolioCents: 0,
+        totalWealthCents: 0,
+        benefitCents: 0
+      }
+    );
+    const latestPoint = filteredAllYears.reduce<AllYearsPoint | null>((latest, point) => {
+      if (!latest) {
+        return point;
+      }
+      return Number(point.year) > Number(latest.year) ? point : latest;
+    }, null);
+
+    return latestPoint
+      ? {
+          ...totals,
+          balanceCents: latestPoint.balanceCents,
+          portfolioCents: latestPoint.portfolioCents,
+          totalWealthCents: latestPoint.totalWealthCents
+        }
+      : totals;
   }, [filteredAllYears]);
   const hasFilteredData = hasAllYearsData && filteredAllYears.length > 0;
   const pageSizeValue = pageSize === 'all' ? filteredAllYears.length : Number(pageSize);
@@ -176,14 +267,16 @@ export function HistoryView({
     1 +
     Number(allYearsSeriesVisibility.income) +
     Number(allYearsSeriesVisibility.expense) +
+    Number(allYearsSeriesVisibility.benefit) +
     Number(allYearsSeriesVisibility.balance) +
-    Number(allYearsSeriesVisibility.benefit);
+    Number(allYearsSeriesVisibility.portfolio) +
+    Number(allYearsSeriesVisibility.totalWealth);
   const handleHistoryChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
       return;
     }
-    const seriesKey = BAR_TYPES[element.datasetIndex]?.key;
+    const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
     if (!seriesKey) {
       return;
     }
@@ -192,6 +285,21 @@ export function HistoryView({
   const historyChartOptionsWithClick: SeriesChartOptions = {
     ...allYearsChartOptions,
     onClick: handleHistoryChartClick
+  };
+  const handleHistoryWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+    const element = elements[0];
+    if (!element) {
+      return;
+    }
+    const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
+    if (!seriesKey) {
+      return;
+    }
+    showOnlyAllYearsSeries(seriesKey);
+  };
+  const historyWealthChartOptionsWithClick: SeriesChartOptions = {
+    ...allYearsChartOptions,
+    onClick: handleHistoryWealthChartClick
   };
   const compactHistoryChartOptions: SeriesChartOptions = isMobile
     ? {
@@ -216,7 +324,44 @@ export function HistoryView({
         }
       }
     : historyChartOptionsWithClick;
+  const compactHistoryWealthChartOptions: SeriesChartOptions = isMobile
+    ? {
+        ...historyWealthChartOptionsWithClick,
+        scales: {
+          ...historyWealthChartOptionsWithClick.scales,
+          x: {
+            ...(historyWealthChartOptionsWithClick.scales?.x ?? {}),
+            ticks: {
+              ...((historyWealthChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
+              autoSkip: true,
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            ...(historyWealthChartOptionsWithClick.scales?.y ?? {}),
+            ticks: {
+              ...((historyWealthChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
+              maxTicksLimit: 5
+            }
+          }
+        }
+      }
+    : historyWealthChartOptionsWithClick;
   const historyChartModalMinWidth = Math.max(360, filteredChartLabels.length * 56);
+  const historyRangeLabel = useMemo(() => {
+    if (filteredAllYears.length === 0) {
+      return t('labels.allYears');
+    }
+    const years = filteredAllYears.map((point) => Number(point.year)).filter(Number.isFinite);
+    if (years.length === 0) {
+      return t('labels.allYears');
+    }
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    return minYear === maxYear ? String(minYear) : `${minYear} - ${maxYear}`;
+  }, [filteredAllYears, t]);
+  const activeChartTitle =
+    activeChartPanel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart');
   return (
     <>
       <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
@@ -226,59 +371,152 @@ export function HistoryView({
             <ChevronIcon direction="right" />
           </span>
         </summary>
-        <div className="mt-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-2">
+          <div className={isMobile ? 'flex flex-col gap-4' : 'grid grid-cols-[1fr_auto_1fr] items-start gap-4'}>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
-                {t('labels.historyTotal')}
-              </p>
-              <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.allYears')}</h2>
+              <h2 className="text-xl font-semibold text-ink sm:text-2xl">{historyRangeLabel}</h2>
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-[10px] text-muted sm:text-xs">
-            <div className="grid grid-cols-2 gap-2">
-              {BAR_TYPES.map((item) => {
-                const seriesKey = item.key as SeriesKey;
-                const label = t(item.labelKey);
-                return (
-                  <span key={item.key} className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
-                    {label}
-                    <EyeToggle
-                      hidden={!allYearsSeriesVisibility[seriesKey]}
-                      onClick={() => toggleAllYearsSeries(seriesKey)}
-                      label={label}
-                    />
-                  </span>
-                );
-              })}
-            </div>
-            <div className={`${isMobile ? 'w-full' : ''}`}>
+            <div className={`${isMobile ? 'w-full' : 'justify-self-center flex items-center gap-2'} text-[10px] text-muted sm:text-xs`}>
               <span className="text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
                 {t('labels.yearRange')}
               </span>
-              <div className={`${isMobile ? 'mt-2 grid grid-cols-[1fr_auto_1fr] gap-2' : 'mt-0 inline-flex items-center gap-2 ml-2'}`}>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={t('labels.from')}
+              <div className={`${isMobile ? 'mt-2 grid grid-cols-[1fr_auto_1fr] gap-2' : 'inline-flex items-center gap-2'}`}>
+                <select
+                  aria-label={t('labels.from')}
                   value={rangeFrom}
                   onChange={(event) => setRangeFrom(event.target.value)}
-                  className={`rounded-lg border border-ink/10 bg-white text-ink text-center ${
-                    isMobile ? 'px-3 py-1.5 text-[10px]' : 'w-20 px-2 py-1 text-base sm:text-xs'
+                  className={`rounded-xl border border-ink/10 bg-white text-center text-ink shadow-sm focus:border-accent focus:outline-none ${
+                    isMobile ? 'px-3 py-2 text-[11px] leading-4' : 'w-24 px-3 py-2 text-base sm:text-sm'
                   }`}
-                />
+                >
+                  <option value="">{t('labels.from')}</option>
+                  {availableRangeYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
                 <span className="text-muted text-center">-</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={t('labels.to')}
+                <select
+                  aria-label={t('labels.to')}
                   value={rangeTo}
                   onChange={(event) => setRangeTo(event.target.value)}
-                  className={`rounded-lg border border-ink/10 bg-white text-ink text-center ${
-                    isMobile ? 'px-3 py-1.5 text-[10px]' : 'w-20 px-2 py-1 text-base sm:text-xs'
+                  className={`rounded-xl border border-ink/10 bg-white text-center text-ink shadow-sm focus:border-accent focus:outline-none ${
+                    isMobile ? 'px-3 py-2 text-[11px] leading-4' : 'w-24 px-3 py-2 text-base sm:text-sm'
                   }`}
-                />
+                >
+                  <option value="">{t('labels.to')}</option>
+                  {availableRangeYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {!isMobile ? <div aria-hidden="true"></div> : null}
+          </div>
+          <div className="mt-5 grid gap-5 sm:mt-6">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.cashFlow')}
+              </p>
+              <div className={`mt-3 grid grid-cols-1 gap-3 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalIncome')}</span>
+                    <EyeToggle
+                      hidden={!allYearsSeriesVisibility.income}
+                      onClick={() => toggleAllYearsSeries('income')}
+                      label={t('series.income')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="income" />
+                    <span>{formatCents(historyTotals.incomeCents)} EUR</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalExpense')}</span>
+                    <EyeToggle
+                      hidden={!allYearsSeriesVisibility.expense}
+                      onClick={() => toggleAllYearsSeries('expense')}
+                      label={t('series.expense')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="expense" />
+                    <span>{formatCents(historyTotals.expenseCents)} EUR</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalBenefit')}</span>
+                    <EyeToggle
+                      hidden={!allYearsSeriesVisibility.benefit}
+                      onClick={() => toggleAllYearsSeries('benefit')}
+                      label={t('series.benefit')}
+                    />
+                  </div>
+                  <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(historyTotals.benefitCents)}`}>
+                    <SeriesBullet seriesKey="benefit" valueCents={historyTotals.benefitCents} />
+                    <span>{formatCents(historyTotals.benefitCents)} EUR</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.wealth')}
+              </p>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.finalBalance')}</span>
+                    <EyeToggle
+                      hidden={!allYearsSeriesVisibility.balance}
+                      onClick={() => toggleAllYearsSeries('balance')}
+                      label={t('series.balance')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="balance" />
+                    <span>{formatCents(historyTotals.balanceCents)} EUR</span>
+                  </div>
+                </div>
+                {hasInvestmentPortfolio ? (
+                  <>
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                      <div className="flex items-center justify-between">
+                        <span>{t('labels.finalPortfolio')}</span>
+                        <EyeToggle
+                          hidden={!allYearsSeriesVisibility.portfolio}
+                          onClick={() => toggleAllYearsSeries('portfolio')}
+                          label={t('series.portfolio')}
+                        />
+                      </div>
+                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                        <SeriesBullet seriesKey="portfolio" />
+                        <span>{formatCents(historyTotals.portfolioCents)} EUR</span>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                      <div className="flex items-center justify-between">
+                        <span>{t('labels.finalWealth')}</span>
+                        <EyeToggle
+                          hidden={!allYearsSeriesVisibility.totalWealth}
+                          onClick={() => toggleAllYearsSeries('totalWealth')}
+                          label={t('series.totalWealth')}
+                        />
+                      </div>
+                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                        <SeriesBullet seriesKey="totalWealth" />
+                        <span>{formatCents(historyTotals.totalWealthCents)} EUR</span>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>
@@ -310,39 +548,62 @@ export function HistoryView({
           <div className="mt-5 rounded-2xl border border-ink/10 bg-white/90 p-3 sm:mt-6 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-                {t('labels.historyChart')}
+                {activeChartTitle}
               </p>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <ChartTypeToggle value={allYearsChartType} onChange={setAllYearsChartType} />
+                <div className="segmented">
+                  {(['summary', 'wealth'] as const).map((panel) => (
+                    <button
+                      key={panel}
+                      type="button"
+                      onClick={() => setActiveChartPanel(panel)}
+                      className={`segmented-option px-3 py-1.5 text-[10px] tracking-[0.12em] sm:text-[11px] ${
+                        activeChartPanel === panel ? 'segmented-option-active' : ''
+                      }`}
+                    >
+                      {panel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart')}
+                    </button>
+                  ))}
+                </div>
                 {isMobile ? (
                   <button
                     type="button"
                     onClick={() => setChartModalOpen(true)}
-                    className="rounded-full border border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                    className="btn btn-neutral px-3"
                   >
                     {t('actions.viewLarge')}
                   </button>
                 ) : null}
               </div>
             </div>
+            <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
+              {(activeChartPanel === 'summary' ? FLOW_TYPES : WEALTH_TYPES)
+                .filter((item) => allYearsSeriesVisibility[item.key])
+                .map((item) => (
+                  <span key={item.key} className="flex items-center gap-2">
+                    <SeriesBullet seriesKey={item.key} />
+                    {t(item.labelKey)}
+                  </span>
+                ))}
+            </div>
             <div className="mt-4">
               {!hasFilteredData ? (
                 <p className="text-sm text-muted">{t('messages.noChartData')}</p>
-              ) : (
+              ) : activeChartPanel === 'summary' ? (
                 <div className="h-[160px] sm:h-[360px]" ref={historyChartContainerRef}>
-                  {isAllYearsLine ? (
-                    <Line
-                      data={filteredChartData as ChartData<'line', Array<number | null>, string>}
-                      options={compactHistoryChartOptions as ChartOptions<'line'>}
-                      ref={historyChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
-                    />
-                  ) : (
-                    <Bar
-                      data={filteredChartData as ChartData<'bar', Array<number | null>, string>}
-                      options={compactHistoryChartOptions as ChartOptions<'bar'>}
-                      ref={historyChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
-                    />
-                  )}
+                  <Bar
+                    data={filteredChartData}
+                    options={compactHistoryChartOptions}
+                    ref={historyChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                  />
+                </div>
+              ) : (
+                <div className="h-[160px] sm:h-[360px]" ref={historyWealthChartContainerRef}>
+                  <Bar
+                    data={filteredWealthChartData}
+                    options={compactHistoryWealthChartOptions}
+                    ref={historyWealthChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                  />
                 </div>
               )}
             </div>
@@ -375,7 +636,7 @@ export function HistoryView({
           </label>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[520px] text-left text-xs sm:text-sm">
+          <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
             <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
@@ -418,6 +679,21 @@ export function HistoryView({
                     </button>
                   </th>
                 ) : null}
+                {allYearsSeriesVisibility.benefit ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('benefit')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.benefit')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'benefit'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
                 {allYearsSeriesVisibility.balance ? (
                   <th className="py-3 pr-4">
                     <button
@@ -433,16 +709,31 @@ export function HistoryView({
                     </button>
                   </th>
                 ) : null}
-                {allYearsSeriesVisibility.benefit ? (
+                {allYearsSeriesVisibility.portfolio ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAllYearsSort('portfolio')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.portfolio')}
+                      <SortIndicator
+                        active={allYearsTableSort.key === 'portfolio'}
+                        direction={allYearsTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
+                {allYearsSeriesVisibility.totalWealth ? (
                   <th className="py-3">
                     <button
                       type="button"
-                      onClick={() => handleAllYearsSort('benefit')}
+                      onClick={() => handleAllYearsSort('totalWealth')}
                       className="inline-flex items-center gap-1"
                     >
-                      {t('series.benefit')}
+                      {t('series.totalWealth')}
                       <SortIndicator
-                        active={allYearsTableSort.key === 'benefit'}
+                        active={allYearsTableSort.key === 'totalWealth'}
                         direction={allYearsTableSort.direction}
                       />
                     </button>
@@ -459,27 +750,56 @@ export function HistoryView({
                 </tr>
               ) : (
                 pagedAllYears.map((point) => {
-                  const trend = allYearsTrendByYear.get(point.year) ?? 'flat';
+                  const trends = allYearsTrendByYear.get(point.year);
                   return (
                     <tr key={point.year} className="border-b border-ink/5">
                       <td className="py-3 pr-4 text-muted">{point.year}</td>
                       {allYearsSeriesVisibility.income ? (
-                        <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.incomeCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.income} /> : null}
+                          </div>
+                        </td>
                       ) : null}
                       {allYearsSeriesVisibility.expense ? (
-                        <td className="py-3 pr-4 text-ink">{formatCents(point.expenseCents)} EUR</td>
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.expenseCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.expense} /> : null}
+                          </div>
+                        </td>
+                      ) : null}
+                      {allYearsSeriesVisibility.benefit ? (
+                        <td className={`py-3 pr-4 ${getBenefitClass(point.benefitCents)}`}>
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.benefitCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.benefit} /> : null}
+                          </div>
+                        </td>
                       ) : null}
                       {allYearsSeriesVisibility.balance ? (
                         <td className="py-3 pr-4 text-ink">
                           <div className="flex items-center gap-2">
                             <span>{formatCents(point.balanceCents)} EUR</span>
-                            <TrendIcon trend={trend} />
+                            {trends ? <TrendIcon trend={trends.balance} /> : null}
                           </div>
                         </td>
                       ) : null}
-                      {allYearsSeriesVisibility.benefit ? (
-                        <td className={`py-3 ${getBenefitClass(point.benefitCents)}`}>
-                          {formatCents(point.benefitCents)} EUR
+                      {allYearsSeriesVisibility.portfolio ? (
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.portfolioCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.portfolio} /> : null}
+                          </div>
+                        </td>
+                      ) : null}
+                      {allYearsSeriesVisibility.totalWealth ? (
+                        <td className="py-3 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.totalWealthCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.totalWealth} /> : null}
+                          </div>
                         </td>
                       ) : null}
                     </tr>
@@ -496,7 +816,7 @@ export function HistoryView({
                 type="button"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={page === 1}
-                className="rounded-full border border-ink/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                className="btn btn-neutral px-3 py-1 text-[10px] sm:text-[11px]"
               >
                 {t('actions.previous')}
               </button>
@@ -507,7 +827,7 @@ export function HistoryView({
                 type="button"
                 onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={page === totalPages}
-                className="rounded-full border border-ink/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                className="btn btn-neutral px-3 py-1 text-[10px] sm:text-[11px]"
               >
                 {t('actions.next')}
               </button>
@@ -517,7 +837,7 @@ export function HistoryView({
       </details>
       <ChartModal
         open={chartModalOpen}
-        title={t('labels.historyChart')}
+        title={activeChartTitle}
         closeLabel={t('actions.close')}
         onClose={() => setChartModalOpen(false)}
         fullScreen={isMobile}
@@ -531,16 +851,16 @@ export function HistoryView({
             ref={historyChartModalContainerRef}
           >
             {hasFilteredData ? (
-              isAllYearsLine ? (
-                <Line
-                  data={filteredChartData as ChartData<'line', Array<number | null>, string>}
-                  options={historyChartOptionsWithClick as ChartOptions<'line'>}
-                  ref={historyChartModalRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+              activeChartPanel === 'summary' ? (
+                <Bar
+                  data={filteredChartData}
+                  options={historyChartOptionsWithClick}
+                  ref={historyChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                 />
               ) : (
                 <Bar
-                  data={filteredChartData as ChartData<'bar', Array<number | null>, string>}
-                  options={historyChartOptionsWithClick as ChartOptions<'bar'>}
+                  data={filteredWealthChartData}
+                  options={historyWealthChartOptionsWithClick}
                   ref={historyChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                 />
               )

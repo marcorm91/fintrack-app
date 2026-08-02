@@ -1,19 +1,19 @@
-import { useMemo, useState } from 'react';
-import type { BalanceTrend, ChartType, SeriesKey, SortDirection, YearTableSortKey } from '../../types';
+import { useEffect, useMemo, useState } from 'react';
+import type { SeriesKey, SeriesTrendMap, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
 import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { ChartTypeToggle } from '../../components/ChartTypeToggle';
 import { ChartModal } from '../../components/ChartModal';
 import { EyeToggle } from '../../components/EyeToggle';
 import { InsightsPanel } from '../../components/InsightsPanel';
+import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { BAR_TYPES } from '../../constants';
+import { FLOW_TYPES, WEALTH_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftYearValue } from '../../utils/date';
 import type { InsightsPayload } from '../../types/insights';
@@ -22,11 +22,13 @@ type YearTotals = {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
   benefitCents: number;
 };
 
-type SeriesChartData = ChartData<'bar' | 'line', Array<number | null>, string>;
-type SeriesChartOptions = ChartOptions<'bar' | 'line'>;
+type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
+type SeriesChartOptions = ChartOptions<'bar'>;
 
 type YearViewProps = {
   yearValue: string;
@@ -34,21 +36,22 @@ type YearViewProps = {
   currentYearValue: string;
   isCurrentYear: boolean;
   availableYears: string[];
+  comparisonYears: string[];
+  yearComparisonValue: string;
+  setYearComparisonValue: (value: string) => void;
   yearTotals: YearTotals;
-  yearBenefitDotClass: string;
   yearSeriesVisibility: Record<SeriesKey, boolean>;
   toggleYearSeries: (key: SeriesKey) => void;
   showOnlyYearSeries: (key: SeriesKey) => void;
-  yearChartType: ChartType;
-  setYearChartType: (value: ChartType) => void;
+  hasInvestmentPortfolio: boolean;
   hasChartData: boolean;
   yearChartData: SeriesChartData;
+  yearWealthChartData: SeriesChartData;
   yearChartOptions: SeriesChartOptions;
   sortedYearSeries: MonthlySeriesPoint[];
   yearTableSort: { key: YearTableSortKey; direction: SortDirection };
   handleYearSort: (key: YearTableSortKey) => void;
-  yearTrendByMonth: Map<string, BalanceTrend>;
-  isYearLine: boolean;
+  yearTrendByMonth: Map<string, SeriesTrendMap>;
   yearInsights: InsightsPayload;
 };
 
@@ -58,34 +61,41 @@ export function YearView({
   currentYearValue,
   isCurrentYear,
   availableYears,
+  comparisonYears,
+  yearComparisonValue,
+  setYearComparisonValue,
   yearTotals,
-  yearBenefitDotClass,
   yearSeriesVisibility,
   toggleYearSeries,
   showOnlyYearSeries,
-  yearChartType,
-  setYearChartType,
+  hasInvestmentPortfolio,
   hasChartData,
   yearChartData,
+  yearWealthChartData,
   yearChartOptions,
   sortedYearSeries,
   yearTableSort,
   handleYearSort,
   yearTrendByMonth,
-  isYearLine,
   yearInsights
 }: YearViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const isMobile = useIsMobile();
   const [chartModalOpen, setChartModalOpen] = useState(false);
+  const [activeChartPanel, setActiveChartPanel] = useState<'summary' | 'wealth'>('summary');
   const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
-    'bar' | 'line',
+    'bar',
     Array<number | null>,
     string
   >();
   const { chartRef: yearChartModalRef, containerRef: yearChartModalContainerRef } = useChartResize<
-    'bar' | 'line',
+    'bar',
+    Array<number | null>,
+    string
+  >();
+  const { chartRef: yearWealthChartRef, containerRef: yearWealthChartContainerRef } = useChartResize<
+    'bar',
     Array<number | null>,
     string
   >();
@@ -105,18 +115,27 @@ export function YearView({
     }
     return { bestBenefitMonth: best, worstBenefitMonth: worst };
   }, [sortedYearSeries]);
+  const activeChartTitle =
+    activeChartPanel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart');
   const visibleColumns =
     1 +
     Number(yearSeriesVisibility.income) +
     Number(yearSeriesVisibility.expense) +
+    Number(yearSeriesVisibility.benefit) +
     Number(yearSeriesVisibility.balance) +
-    Number(yearSeriesVisibility.benefit);
+    Number(yearSeriesVisibility.portfolio) +
+    Number(yearSeriesVisibility.totalWealth);
+  useEffect(() => {
+    if (yearComparisonValue && !comparisonYears.includes(yearComparisonValue)) {
+      setYearComparisonValue('');
+    }
+  }, [comparisonYears, setYearComparisonValue, yearComparisonValue]);
   const handleYearChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
       return;
     }
-    const seriesKey = BAR_TYPES[element.datasetIndex]?.key;
+    const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
     if (!seriesKey) {
       return;
     }
@@ -125,6 +144,21 @@ export function YearView({
   const yearChartOptionsWithClick: SeriesChartOptions = {
     ...yearChartOptions,
     onClick: handleYearChartClick
+  };
+  const handleYearWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
+    const element = elements[0];
+    if (!element) {
+      return;
+    }
+    const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
+    if (!seriesKey) {
+      return;
+    }
+    showOnlyYearSeries(seriesKey);
+  };
+  const yearWealthChartOptionsWithClick: SeriesChartOptions = {
+    ...yearChartOptions,
+    onClick: handleYearWealthChartClick
   };
   const compactYearChartOptions: SeriesChartOptions = isMobile
     ? {
@@ -149,6 +183,29 @@ export function YearView({
         }
       }
     : yearChartOptionsWithClick;
+  const compactYearWealthChartOptions: SeriesChartOptions = isMobile
+    ? {
+        ...yearWealthChartOptionsWithClick,
+        scales: {
+          ...yearWealthChartOptionsWithClick.scales,
+          x: {
+            ...(yearWealthChartOptionsWithClick.scales?.x ?? {}),
+            ticks: {
+              ...((yearWealthChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
+              autoSkip: true,
+              maxTicksLimit: 6
+            }
+          },
+          y: {
+            ...(yearWealthChartOptionsWithClick.scales?.y ?? {}),
+            ticks: {
+              ...((yearWealthChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
+              maxTicksLimit: 5
+            }
+          }
+        }
+      }
+    : yearWealthChartOptionsWithClick;
   const yearChartModalMinWidth = Math.max(360, sortedYearSeries.length * 56);
   return (
     <>
@@ -159,7 +216,7 @@ export function YearView({
             <ChevronIcon direction="right" />
           </span>
         </summary>
-        <div className="mt-4">
+        <div className="mt-2">
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
             <div>
               <h2 className="text-xl font-semibold text-ink sm:text-2xl">{yearValue}</h2>
@@ -172,9 +229,7 @@ export function YearView({
                     onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
                     aria-label={t('actions.previousYear')}
                     title={t('actions.previousYear')}
-                    className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
-                      isMobile ? 'h-8 w-8 p-0' : 'p-1'
-                    }`}
+                    className={`btn btn-neutral text-muted hover:text-ink ${isMobile ? 'btn-icon' : 'btn-icon-sm'}`}
                   >
                     <ChevronIcon direction="left" />
                   </button>
@@ -197,9 +252,7 @@ export function YearView({
                     onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
                     aria-label={t('actions.nextYear')}
                     title={t('actions.nextYear')}
-                    className={`flex items-center justify-center rounded-full border border-ink/10 bg-white text-muted shadow-sm transition hover:border-accent hover:text-ink ${
-                      isMobile ? 'h-8 w-8 p-0' : 'p-1'
-                    }`}
+                    className={`btn btn-neutral text-muted hover:text-ink ${isMobile ? 'btn-icon' : 'btn-icon-sm'}`}
                   >
                     <ChevronIcon direction="right" />
                   </button>
@@ -208,7 +261,7 @@ export function YearView({
                   type="button"
                   onClick={() => setYearValue(currentYearValue)}
                   disabled={isCurrentYear}
-                  className={`w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition ${
+                  className={`btn btn-neutral w-full px-3 text-[9px] ${
                     isCurrentYear ? 'cursor-default opacity-60' : ' hover:border-accent hover:text-ink'
                   }`}
                 >
@@ -224,7 +277,7 @@ export function YearView({
                       onClick={() => setYearValue((prev) => shiftYearValue(prev, -1))}
                       aria-label={t('actions.previousYear')}
                       title={t('actions.previousYear')}
-                      className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                      className="btn btn-neutral btn-icon-sm text-muted hover:text-ink"
                     >
                       <ChevronIcon direction="left" />
                     </button>
@@ -247,7 +300,7 @@ export function YearView({
                       onClick={() => setYearValue((prev) => shiftYearValue(prev, 1))}
                       aria-label={t('actions.nextYear')}
                       title={t('actions.nextYear')}
-                      className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                      className="btn btn-neutral btn-icon-sm text-muted hover:text-ink"
                     >
                       <ChevronIcon direction="right" />
                     </button>
@@ -256,7 +309,7 @@ export function YearView({
                     type="button"
                     onClick={() => setYearValue(currentYearValue)}
                     disabled={isCurrentYear}
-                    className={`rounded-xl border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition sm:text-[11px] sm:tracking-[0.18em] ${
+                    className={`btn btn-neutral ${
                       isCurrentYear
                         ? 'cursor-default opacity-60'
                         : ' hover:border-accent hover:text-ink'
@@ -269,69 +322,107 @@ export function YearView({
               </>
             )}
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
-            {BAR_TYPES.map((item) => (
-              <span key={item.key} className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-sm ${item.colorClass}`} />
-                {t(item.labelKey)}
-              </span>
-            ))}
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
-            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-              <div className="flex items-center justify-between">
-                <span>{t('labels.totalIncome')}</span>
-                <EyeToggle
-                  hidden={!yearSeriesVisibility.income}
-                  onClick={() => toggleYearSeries('income')}
-                  label={t('series.income')}
-                />
-              </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
-                <span className="h-2.5 w-2.5 rounded-full bg-income" />
-                <span>{formatCents(yearTotals.incomeCents)} EUR</span>
+          <div className="mt-5 grid gap-5 sm:mt-6">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.cashFlow')}
+              </p>
+              <div className={`mt-3 grid grid-cols-1 gap-3 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalIncome')}</span>
+                    <EyeToggle
+                      hidden={!yearSeriesVisibility.income}
+                      onClick={() => toggleYearSeries('income')}
+                      label={t('series.income')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="income" />
+                    <span>{formatCents(yearTotals.incomeCents)} EUR</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalExpense')}</span>
+                    <EyeToggle
+                      hidden={!yearSeriesVisibility.expense}
+                      onClick={() => toggleYearSeries('expense')}
+                      label={t('series.expense')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="expense" />
+                    <span>{formatCents(yearTotals.expenseCents)} EUR</span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.totalBenefit')}</span>
+                    <EyeToggle
+                      hidden={!yearSeriesVisibility.benefit}
+                      onClick={() => toggleYearSeries('benefit')}
+                      label={t('series.benefit')}
+                    />
+                  </div>
+                  <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
+                    <SeriesBullet seriesKey="benefit" valueCents={yearTotals.benefitCents} />
+                    <span>{formatCents(yearTotals.benefitCents)} EUR</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-              <div className="flex items-center justify-between">
-                <span>{t('labels.totalExpense')}</span>
-                <EyeToggle
-                  hidden={!yearSeriesVisibility.expense}
-                  onClick={() => toggleYearSeries('expense')}
-                  label={t('series.expense')}
-                />
-              </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
-                <span className="h-2.5 w-2.5 rounded-full bg-expense" />
-                <span>{formatCents(yearTotals.expenseCents)} EUR</span>
-              </div>
-            </div>
-            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-              <div className="flex items-center justify-between">
-                <span>{t('labels.totalBenefit')}</span>
-                <EyeToggle
-                  hidden={!yearSeriesVisibility.benefit}
-                  onClick={() => toggleYearSeries('benefit')}
-                  label={t('series.benefit')}
-                />
-              </div>
-              <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
-                <span className={`h-2.5 w-2.5 rounded-full ${yearBenefitDotClass}`} />
-                <span>{formatCents(yearTotals.benefitCents)} EUR</span>
-              </div>
-            </div>
-            <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
-              <div className="flex items-center justify-between">
-                <span>{t('labels.finalBalance')}</span>
-                <EyeToggle
-                  hidden={!yearSeriesVisibility.balance}
-                  onClick={() => toggleYearSeries('balance')}
-                  label={t('series.balance')}
-                />
-              </div>
-              <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
-                <span className="h-2.5 w-2.5 rounded-full bg-balance" />
-                <span>{formatCents(yearTotals.balanceCents)} EUR</span>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+                {t('labels.wealth')}
+              </p>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t('labels.finalBalance')}</span>
+                    <EyeToggle
+                      hidden={!yearSeriesVisibility.balance}
+                      onClick={() => toggleYearSeries('balance')}
+                      label={t('series.balance')}
+                    />
+                  </div>
+                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                    <SeriesBullet seriesKey="balance" />
+                    <span>{formatCents(yearTotals.balanceCents)} EUR</span>
+                  </div>
+                </div>
+                {hasInvestmentPortfolio ? (
+                  <>
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                      <div className="flex items-center justify-between">
+                        <span>{t('labels.finalPortfolio')}</span>
+                        <EyeToggle
+                          hidden={!yearSeriesVisibility.portfolio}
+                          onClick={() => toggleYearSeries('portfolio')}
+                          label={t('series.portfolio')}
+                        />
+                      </div>
+                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                        <SeriesBullet seriesKey="portfolio" />
+                        <span>{formatCents(yearTotals.portfolioCents)} EUR</span>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                      <div className="flex items-center justify-between">
+                        <span>{t('labels.finalWealth')}</span>
+                        <EyeToggle
+                          hidden={!yearSeriesVisibility.totalWealth}
+                          onClick={() => toggleYearSeries('totalWealth')}
+                          label={t('series.totalWealth')}
+                        />
+                      </div>
+                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                        <SeriesBullet seriesKey="totalWealth" />
+                        <span>{formatCents(yearTotals.totalWealthCents)} EUR</span>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
               </div>
             </div>
           </div>
@@ -368,39 +459,62 @@ export function YearView({
           <div className="mt-5 rounded-2xl border border-ink/10 bg-white/90 p-3 sm:mt-6 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-                {t('labels.yearChart')}
+                {activeChartTitle}
               </p>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <ChartTypeToggle value={yearChartType} onChange={setYearChartType} />
+                <div className="segmented">
+                  {(['summary', 'wealth'] as const).map((panel) => (
+                    <button
+                      key={panel}
+                      type="button"
+                      onClick={() => setActiveChartPanel(panel)}
+                      className={`segmented-option px-3 py-1.5 text-[10px] tracking-[0.12em] sm:text-[11px] ${
+                        activeChartPanel === panel ? 'segmented-option-active' : ''
+                      }`}
+                    >
+                      {panel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart')}
+                    </button>
+                  ))}
+                </div>
                 {isMobile ? (
                   <button
                     type="button"
                     onClick={() => setChartModalOpen(true)}
-                    className="rounded-full border border-ink/10 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+                    className="btn btn-neutral px-3"
                   >
                     {t('actions.viewLarge')}
                   </button>
                 ) : null}
               </div>
             </div>
+            <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
+              {(activeChartPanel === 'summary' ? FLOW_TYPES : WEALTH_TYPES)
+                .filter((item) => yearSeriesVisibility[item.key])
+                .map((item) => (
+                  <span key={item.key} className="flex items-center gap-2">
+                    <SeriesBullet seriesKey={item.key} />
+                    {t(item.labelKey)}
+                  </span>
+                ))}
+            </div>
             <div className="mt-4">
               {!hasChartData ? (
                 <p className="text-sm text-muted">{t('messages.noChartData')}</p>
-              ) : (
+              ) : activeChartPanel === 'summary' ? (
                 <div className="h-[160px] sm:h-[320px]" ref={yearChartContainerRef}>
-                  {isYearLine ? (
-                    <Line
-                      data={yearChartData as ChartData<'line', Array<number | null>, string>}
-                      options={compactYearChartOptions as ChartOptions<'line'>}
-                      ref={yearChartRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
-                    />
-                  ) : (
-                    <Bar
-                      data={yearChartData as ChartData<'bar', Array<number | null>, string>}
-                      options={compactYearChartOptions as ChartOptions<'bar'>}
-                      ref={yearChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
-                    />
-                  )}
+                  <Bar
+                    data={yearChartData}
+                    options={compactYearChartOptions}
+                    ref={yearChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                  />
+                </div>
+              ) : (
+                <div className="h-[160px] sm:h-[320px]" ref={yearWealthChartContainerRef}>
+                  <Bar
+                    data={yearWealthChartData}
+                    options={compactYearWealthChartOptions}
+                    ref={yearWealthChartRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
+                  />
                 </div>
               )}
             </div>
@@ -421,7 +535,7 @@ export function YearView({
           </span>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[520px] text-left text-xs sm:text-sm">
+          <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
             <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
@@ -464,6 +578,21 @@ export function YearView({
                     </button>
                   </th>
                 ) : null}
+                {yearSeriesVisibility.benefit ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleYearSort('benefit')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.benefit')}
+                      <SortIndicator
+                        active={yearTableSort.key === 'benefit'}
+                        direction={yearTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
                 {yearSeriesVisibility.balance ? (
                   <th className="py-3 pr-4">
                     <button
@@ -479,16 +608,31 @@ export function YearView({
                     </button>
                   </th>
                 ) : null}
-                {yearSeriesVisibility.benefit ? (
+                {yearSeriesVisibility.portfolio ? (
+                  <th className="py-3 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => handleYearSort('portfolio')}
+                      className="inline-flex items-center gap-1"
+                    >
+                      {t('series.portfolio')}
+                      <SortIndicator
+                        active={yearTableSort.key === 'portfolio'}
+                        direction={yearTableSort.direction}
+                      />
+                    </button>
+                  </th>
+                ) : null}
+                {yearSeriesVisibility.totalWealth ? (
                   <th className="py-3">
                     <button
                       type="button"
-                      onClick={() => handleYearSort('benefit')}
+                      onClick={() => handleYearSort('totalWealth')}
                       className="inline-flex items-center gap-1"
                     >
-                      {t('series.benefit')}
+                      {t('series.totalWealth')}
                       <SortIndicator
-                        active={yearTableSort.key === 'benefit'}
+                        active={yearTableSort.key === 'totalWealth'}
                         direction={yearTableSort.direction}
                       />
                     </button>
@@ -505,27 +649,57 @@ export function YearView({
                 </tr>
               ) : (
                 sortedYearSeries.map((point) => {
-                  const trend = yearTrendByMonth.get(point.month) ?? 'flat';
+                  const trends = yearTrendByMonth.get(point.month);
+                  const hasPointData = Boolean(trends);
                   return (
                     <tr key={point.month} className="border-b border-ink/5">
                       <td className="py-3 pr-4 text-muted">{getMonthLabel(point.month, locale, 'long')}</td>
                       {yearSeriesVisibility.income ? (
-                        <td className="py-3 pr-4 text-ink">{formatCents(point.incomeCents)} EUR</td>
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.incomeCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.income} /> : null}
+                          </div>
+                        </td>
                       ) : null}
                       {yearSeriesVisibility.expense ? (
-                        <td className="py-3 pr-4 text-ink">{formatCents(point.expenseCents)} EUR</td>
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.expenseCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.expense} /> : null}
+                          </div>
+                        </td>
+                      ) : null}
+                      {yearSeriesVisibility.benefit ? (
+                        <td className={`py-3 pr-4 ${hasPointData ? getBenefitClass(point.benefitCents) : 'text-ink'}`}>
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.benefitCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.benefit} /> : null}
+                          </div>
+                        </td>
                       ) : null}
                       {yearSeriesVisibility.balance ? (
                         <td className="py-3 pr-4 text-ink">
                           <div className="flex items-center gap-2">
                             <span>{formatCents(point.balanceCents)} EUR</span>
-                            <TrendIcon trend={trend} />
+                            {trends ? <TrendIcon trend={trends.balance} /> : null}
                           </div>
                         </td>
                       ) : null}
-                      {yearSeriesVisibility.benefit ? (
-                        <td className={`py-3 ${getBenefitClass(point.benefitCents)}`}>
-                          {formatCents(point.benefitCents)} EUR
+                      {yearSeriesVisibility.portfolio ? (
+                        <td className="py-3 pr-4 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.portfolioCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.portfolio} /> : null}
+                          </div>
+                        </td>
+                      ) : null}
+                      {yearSeriesVisibility.totalWealth ? (
+                        <td className="py-3 text-ink">
+                          <div className="flex items-center gap-2">
+                            <span>{formatCents(point.totalWealthCents)} EUR</span>
+                            {trends ? <TrendIcon trend={trends.totalWealth} /> : null}
+                          </div>
                         </td>
                       ) : null}
                     </tr>
@@ -543,7 +717,7 @@ export function YearView({
             <ChevronIcon direction="right" />
           </span>
         </summary>
-        <div className="mt-4">
+        <div className="mt-2">
           <InsightsPanel
             title={yearInsights.title}
             comparisons={yearInsights.comparisons}
@@ -553,12 +727,30 @@ export function YearView({
             hasAnyData={yearInsights.hasAnyData}
             showTitle={false}
             containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"
+            suppressEmptyComparisonKeys={['selectedYear']}
+            comparisonHeaderControls={{
+              selectedYear: (
+                <select
+                  aria-label={t('labels.compareYear')}
+                  value={yearComparisonValue}
+                  onChange={(event) => setYearComparisonValue(event.target.value)}
+                  className="h-6 w-20 rounded-lg border border-ink/10 bg-white px-2 py-0 text-center text-xs font-normal normal-case tracking-normal text-ink shadow-sm focus:border-accent focus:outline-none"
+                >
+                  <option value="">{t('actions.none')}</option>
+                  {comparisonYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              )
+            }}
           />
         </div>
       </details>
       <ChartModal
         open={chartModalOpen}
-        title={t('labels.yearChart')}
+        title={activeChartTitle}
         closeLabel={t('actions.close')}
         onClose={() => setChartModalOpen(false)}
         fullScreen={isMobile}
@@ -568,16 +760,16 @@ export function YearView({
         <div className="h-full w-full overflow-x-auto">
           <div className="h-full" style={{ minWidth: `${yearChartModalMinWidth}px` }} ref={yearChartModalContainerRef}>
             {hasChartData ? (
-              isYearLine ? (
-                <Line
-                  data={yearChartData as ChartData<'line', Array<number | null>, string>}
-                  options={yearChartOptionsWithClick as ChartOptions<'line'>}
-                  ref={yearChartModalRef as RefObject<ChartInstance<'line', Array<number | null>, unknown>>}
+              activeChartPanel === 'summary' ? (
+                <Bar
+                  data={yearChartData}
+                  options={yearChartOptionsWithClick}
+                  ref={yearChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                 />
               ) : (
                 <Bar
-                  data={yearChartData as ChartData<'bar', Array<number | null>, string>}
-                  options={yearChartOptionsWithClick as ChartOptions<'bar'>}
+                  data={yearWealthChartData}
+                  options={yearWealthChartOptionsWithClick}
                   ref={yearChartModalRef as RefObject<ChartInstance<'bar', Array<number | null>, unknown>>}
                 />
               )

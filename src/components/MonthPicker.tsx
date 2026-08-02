@@ -52,7 +52,7 @@ export function MonthPicker({
         onClick={() => setOpen((prev) => !prev)}
         aria-label={label}
         title={label}
-        className={`flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-3 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none sm:px-4 sm:text-sm ${buttonClassName}`.trim()}
+        className={`btn btn-neutral normal-case tracking-normal text-base text-ink focus:border-accent focus:outline-none sm:px-4 sm:text-sm ${buttonClassName}`.trim()}
       >
         <span className={labelClassName}>
           {getMonthLabel(value, locale)} {year}
@@ -65,12 +65,12 @@ export function MonthPicker({
         </svg>
       </button>
       {open ? (
-        <div className="absolute z-20 mt-2 w-56 rounded-2xl border border-ink/10 bg-white p-3 shadow-card sm:w-64 sm:p-4">
+        <div className="absolute z-20 mt-2 w-56 rounded-2xl border border-ink/5 bg-white p-3 shadow-card sm:w-64 sm:p-4">
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => setViewYear((prev) => prev - 1)}
-              className="rounded-full border border-ink/10 bg-white px-2 py-1 text-sm text-muted"
+              className="btn btn-neutral btn-icon-sm text-sm text-muted"
             >
               -
             </button>
@@ -78,7 +78,7 @@ export function MonthPicker({
             <button
               type="button"
               onClick={() => setViewYear((prev) => prev + 1)}
-              className="rounded-full border border-ink/10 bg-white px-2 py-1 text-sm text-muted"
+              className="btn btn-neutral btn-icon-sm text-sm text-muted"
             >
               +
             </button>
@@ -95,10 +95,10 @@ export function MonthPicker({
                     onChange(formatMonthValue(viewYear, monthIndex));
                     setOpen(false);
                   }}
-                  className={`rounded-lg px-2 py-2 text-[10px] uppercase tracking-[0.14em] sm:text-xs sm:tracking-[0.16em] ${
+                  className={`rounded-lg px-2 py-2 text-[10px] uppercase tracking-[0.14em] transition sm:text-xs sm:tracking-[0.16em] ${
                     selected
-                      ? 'bg-accent text-white'
-                      : 'border border-ink/10 text-muted hover:border-accent'
+                      ? 'bg-ink text-white'
+                      : 'border border-ink/5 text-muted hover:border-ink/25 hover:text-ink'
                   }`}
                 >
                   {labelText}

@@ -1,10 +1,15 @@
 import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
-import { formatMonthValue } from '../utils/date';
 import schemaSql from './schema.sql?raw';
 
 export const DATABASE_FILENAME = 'finanzas.db';
+export const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
 const DB_PATH_STORAGE_KEY = 'fintrack.dbPath';
+const MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY = 'fintrack.mockInvestmentPortfolioEnabled';
+
+function shouldUseMockDatabase() {
+  return import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DB === 'true';
+}
 
 function loadStoredDatabasePath() {
   if (typeof window === 'undefined') {
@@ -18,12 +23,15 @@ function loadStoredDatabasePath() {
   return trimmed.length ? trimmed : null;
 }
 
-let dbPath: string | null = loadStoredDatabasePath();
+let dbPath: string | null = shouldUseMockDatabase() ? MOCK_DATABASE_FILENAME : loadStoredDatabasePath();
 let dbUrl: string | null = dbPath ? `sqlite:${dbPath}` : null;
 let dbUrlPromise: Promise<string> | null = null;
 let portableMode = false;
 
 export function getDatabasePath() {
+  if (shouldUseMockDatabase()) {
+    return MOCK_DATABASE_FILENAME;
+  }
   return dbPath;
 }
 
@@ -48,6 +56,9 @@ async function resolvePortableDatabasePath(): Promise<string | null> {
 }
 
 export async function resolveDatabasePath(): Promise<string | null> {
+  if (shouldUseMockDatabase()) {
+    return MOCK_DATABASE_FILENAME;
+  }
   if (dbPath) {
     return dbPath;
   }
@@ -62,6 +73,9 @@ export async function resolveDatabasePath(): Promise<string | null> {
 }
 
 async function resolveDatabaseUrl(): Promise<string> {
+  if (shouldUseMockDatabase()) {
+    return `sqlite:${MOCK_DATABASE_FILENAME}`;
+  }
   if (dbUrl) {
     return dbUrl;
   }
@@ -84,6 +98,9 @@ async function resolveDatabaseUrl(): Promise<string> {
 }
 
 export function setDatabasePath(path: string | null, options: { persist?: boolean; portable?: boolean } = {}) {
+  if (shouldUseMockDatabase()) {
+    return;
+  }
   const { persist = true, portable = false } = options;
   portableMode = portable;
   const trimmed = path ? path.trim() : '';
@@ -106,6 +123,8 @@ export interface MonthlySummary {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
   benefitCents: number;
 }
 
@@ -114,6 +133,8 @@ export interface MonthlySeriesPoint {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
   benefitCents: number;
 }
 
@@ -122,9 +143,8 @@ export interface MonthlySnapshotInput {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
+  portfolioCents: number;
 }
-
-const DEV_SEED_MONTHS = 18;
 
 function shouldSeedDevData() {
   if (typeof window === 'undefined') {
@@ -136,29 +156,8 @@ function shouldSeedDevData() {
   return import.meta.env.VITE_SEED_MOCKS !== 'false';
 }
 
-function buildMockSnapshots(): MonthlySnapshotInput[] {
-  const now = new Date();
-  const snapshots: MonthlySnapshotInput[] = [];
-  let balanceCents = 780_000;
-
-  for (let offset = DEV_SEED_MONTHS - 1; offset >= 0; offset -= 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const month = formatMonthValue(date.getFullYear(), date.getMonth() + 1);
-    const incomeBase = 230_000 + (offset % 6) * 6_500;
-    const expenseBase = 150_000 + (offset % 4) * 9_000;
-    const incomeCents = Math.max(0, Math.round(incomeBase + Math.sin(offset / 2) * 12_000));
-    const expenseCents = Math.max(0, Math.round(expenseBase + Math.cos(offset / 3) * 10_000));
-    balanceCents += incomeCents - expenseCents;
-
-    snapshots.push({
-      month,
-      incomeCents,
-      expenseCents,
-      balanceCents: Math.round(balanceCents)
-    });
-  }
-
-  return snapshots;
+function shouldResetDevMocks() {
+  return shouldUseMockDatabase() || import.meta.env.VITE_SEED_MOCKS === 'force';
 }
 
 const MONTHLY_SUMMARY_SQL = `
@@ -166,7 +165,8 @@ SELECT
   month,
   income_cents,
   expense_cents,
-  balance_cents
+  balance_cents,
+  portfolio_cents
 FROM monthly_snapshots
 WHERE month = ?;
 `;
@@ -176,18 +176,26 @@ SELECT
   month,
   income_cents,
   expense_cents,
-  balance_cents
+  balance_cents,
+  portfolio_cents
 FROM monthly_snapshots
 ORDER BY month;
 `;
 
 const UPSERT_MONTH_SQL = `
-INSERT INTO monthly_snapshots (month, income_cents, expense_cents, balance_cents)
-VALUES (?, ?, ?, ?)
+INSERT INTO monthly_snapshots (
+  month,
+  income_cents,
+  expense_cents,
+  balance_cents,
+  portfolio_cents
+)
+VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
-  balance_cents = excluded.balance_cents;
+  balance_cents = excluded.balance_cents,
+  portfolio_cents = excluded.portfolio_cents;
 `;
 
 const DELETE_MONTH_SQL = `
@@ -204,33 +212,95 @@ const DELETE_ALL_SQL = `
 DELETE FROM monthly_snapshots;
 `;
 
+const GET_APP_SETTING_SQL = `
+SELECT value
+FROM app_settings
+WHERE key = ?;
+`;
+
+const UPSERT_APP_SETTING_SQL = `
+INSERT INTO app_settings (key, value)
+VALUES (?, ?)
+ON CONFLICT(key) DO UPDATE SET
+  value = excluded.value;
+`;
+
+const INVESTMENT_PORTFOLIO_SETTING_KEY = 'investmentPortfolioEnabled';
+
 let dbPromise: Promise<Database> | null = null;
 let initPromise: Promise<void> | null = null;
 let devSeedPromise: Promise<void> | null = null;
+let mockSnapshotsPromise: Promise<MonthlySnapshotInput[]> | null = null;
+
+function summaryFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySummary {
+  return {
+    ...snapshot,
+    totalWealthCents: snapshot.balanceCents + snapshot.portfolioCents,
+    benefitCents: snapshot.incomeCents - snapshot.expenseCents
+  };
+}
+
+function seriesFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySeriesPoint {
+  return summaryFromSnapshot(snapshot);
+}
+
+async function getMockSnapshots(): Promise<MonthlySnapshotInput[]> {
+  if (!mockSnapshotsPromise) {
+    mockSnapshotsPromise = (async () => {
+      const { buildMockMonthlySnapshots } = await import('../mocks/monthlySnapshots');
+      return buildMockMonthlySnapshots();
+    })();
+  }
+  return mockSnapshotsPromise;
+}
 
 async function ensureDevSeeded(db: Database): Promise<void> {
-  if (!shouldSeedDevData()) {
+  if (!import.meta.env.DEV || !shouldSeedDevData()) {
     return;
   }
   if (!devSeedPromise) {
     devSeedPromise = (async () => {
+      if (shouldResetDevMocks()) {
+        await db.execute(DELETE_ALL_SQL);
+      }
       const rows = await db.select<{ count: number }>('SELECT COUNT(*) as count FROM monthly_snapshots;');
       const count = Number(rows[0]?.count ?? 0);
       if (Number.isFinite(count) && count > 0) {
         return;
       }
-      const snapshots = buildMockSnapshots();
+      const { buildMockMonthlySnapshots } = await import('../mocks/monthlySnapshots');
+      const snapshots = buildMockMonthlySnapshots();
       for (const snapshot of snapshots) {
         await db.execute(UPSERT_MONTH_SQL, [
           snapshot.month,
           snapshot.incomeCents,
           snapshot.expenseCents,
-          snapshot.balanceCents
+          snapshot.balanceCents,
+          snapshot.portfolioCents
         ]);
       }
     })();
   }
   await devSeedPromise;
+}
+
+async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
+  const columns = await db.select<{ name: string }>('PRAGMA table_info(monthly_snapshots);');
+  const existingColumns = new Set(columns.map((column) => column.name));
+  if (!existingColumns.has('portfolio_cents')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0);'
+    );
+  }
+}
+
+async function ensureAppSettingsTable(db: Database): Promise<void> {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
 }
 
 async function getDb(): Promise<Database> {
@@ -247,6 +317,8 @@ async function initDb(): Promise<Database> {
     initPromise = (async () => {
       await db.execute('PRAGMA foreign_keys = ON;');
       await db.execute(schemaSql);
+      await ensureMonthlySnapshotColumns(db);
+      await ensureAppSettingsTable(db);
       await ensureDevSeeded(db);
     })();
   }
@@ -255,12 +327,19 @@ async function initDb(): Promise<Database> {
 }
 
 export async function getMonthlySummary(month: string): Promise<MonthlySummary | null> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    const snapshot = snapshots.find((point) => point.month === month);
+    return snapshot ? summaryFromSnapshot(snapshot) : null;
+  }
+
   const db = await initDb();
   const rows = await db.select<{
     month: string;
     income_cents: number;
     expense_cents: number;
     balance_cents: number;
+    portfolio_cents?: number;
   }>(MONTHLY_SUMMARY_SQL, [month]);
 
   const row = rows[0];
@@ -270,60 +349,141 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
 
   const incomeCents = row.income_cents ?? 0;
   const expenseCents = row.expense_cents ?? 0;
+  const balanceCents = row.balance_cents ?? 0;
+  const portfolioCents = row.portfolio_cents ?? 0;
   const benefitCents = incomeCents - expenseCents;
 
   return {
     month: row.month,
     incomeCents,
     expenseCents,
-    balanceCents: row.balance_cents ?? 0,
+    balanceCents,
+    portfolioCents,
+    totalWealthCents: balanceCents + portfolioCents,
     benefitCents
   };
 }
 
+export async function getInvestmentPortfolioEnabled(): Promise<boolean> {
+  if (shouldUseMockDatabase()) {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+    return window.localStorage.getItem(MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY) !== 'false';
+  }
+
+  const db = await initDb();
+  const rows = await db.select<{ value: string }>(GET_APP_SETTING_SQL, [INVESTMENT_PORTFOLIO_SETTING_KEY]);
+  const value = rows[0]?.value;
+  if (value === 'false') {
+    return false;
+  }
+  return true;
+}
+
+export async function setInvestmentPortfolioEnabled(enabled: boolean): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY, enabled ? 'true' : 'false');
+    }
+    return;
+  }
+
+  const db = await initDb();
+  await db.execute(UPSERT_APP_SETTING_SQL, [
+    INVESTMENT_PORTFOLIO_SETTING_KEY,
+    enabled ? 'true' : 'false'
+  ]);
+}
+
 export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    return [...snapshots].sort((a, b) => a.month.localeCompare(b.month)).map(seriesFromSnapshot);
+  }
+
   const db = await initDb();
   const rows = await db.select<{
     month: string;
     income_cents: number;
     expense_cents: number;
     balance_cents: number;
+    portfolio_cents?: number;
   }>(MONTHLY_SERIES_SQL);
 
   return rows.map((row) => {
     const incomeCents = row.income_cents ?? 0;
     const expenseCents = row.expense_cents ?? 0;
+    const balanceCents = row.balance_cents ?? 0;
+    const portfolioCents = row.portfolio_cents ?? 0;
     return {
       month: row.month,
       incomeCents,
       expenseCents,
-      balanceCents: row.balance_cents ?? 0,
+      balanceCents,
+      portfolioCents,
+      totalWealthCents: balanceCents + portfolioCents,
       benefitCents: incomeCents - expenseCents
     };
   });
 }
 
 export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    const index = snapshots.findIndex((point) => point.month === input.month);
+    if (index >= 0) {
+      snapshots[index] = input;
+    } else {
+      snapshots.push(input);
+    }
+    snapshots.sort((a, b) => a.month.localeCompare(b.month));
+    return;
+  }
+
   const db = await initDb();
   await db.execute(UPSERT_MONTH_SQL, [
     input.month,
     input.incomeCents,
     input.expenseCents,
-    input.balanceCents
+    input.balanceCents,
+    input.portfolioCents
   ]);
 }
 
 export async function deleteMonthlySnapshot(month: string): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    const index = snapshots.findIndex((point) => point.month === month);
+    if (index >= 0) {
+      snapshots.splice(index, 1);
+    }
+    return;
+  }
+
   const db = await initDb();
   await db.execute(DELETE_MONTH_SQL, [month]);
 }
 
 export async function deleteMonthlySnapshotsForYear(year: string): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    const remaining = snapshots.filter((point) => !point.month.startsWith(`${year}-`));
+    snapshots.splice(0, snapshots.length, ...remaining);
+    return;
+  }
+
   const db = await initDb();
   await db.execute(DELETE_YEAR_SQL, [`${year}-%`]);
 }
 
 export async function deleteAllMonthlySnapshots(): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    const snapshots = await getMockSnapshots();
+    snapshots.splice(0, snapshots.length);
+    return;
+  }
+
   const db = await initDb();
   await db.execute(DELETE_ALL_SQL);
 }

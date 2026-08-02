@@ -43,7 +43,7 @@ export function EyeToggle({
       onClick={onClick}
       aria-label={actionLabel}
       title={actionLabel}
-      className="rounded-full border border-ink/10 bg-white p-1 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+      className="btn btn-neutral btn-icon-sm text-muted hover:text-ink"
     >
       <EyeIcon hidden={hidden} />
     </button>

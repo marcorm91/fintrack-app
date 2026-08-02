@@ -89,7 +89,7 @@ export function ChartModal({
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="rounded-full border border-ink/10 bg-white p-2 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+            className="btn btn-neutral btn-icon text-muted hover:text-ink"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

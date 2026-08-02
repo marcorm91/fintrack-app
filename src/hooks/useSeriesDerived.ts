@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import type {
   AllTableSortKey,
-  BalanceTrend,
+  SeriesKey,
+  SeriesTrendMap,
   SortDirection,
   YearTableSortKey
 } from '../types';
@@ -14,6 +15,8 @@ export type AllYearsPoint = {
   expenseCents: number;
   benefitCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
 };
 
 export type YearTotals = {
@@ -21,7 +24,30 @@ export type YearTotals = {
   expenseCents: number;
   benefitCents: number;
   balanceCents: number;
+  portfolioCents: number;
+  totalWealthCents: number;
 };
+
+const SERIES_VALUE_GETTERS: Record<SeriesKey, (point: MonthlySeriesPoint | AllYearsPoint) => number> = {
+  income: (point) => point.incomeCents,
+  expense: (point) => point.expenseCents,
+  benefit: (point) => point.benefitCents,
+  balance: (point) => point.balanceCents,
+  portfolio: (point) => point.portfolioCents,
+  totalWealth: (point) => point.totalWealthCents
+};
+
+const buildTrendMap = (
+  current: MonthlySeriesPoint | AllYearsPoint,
+  previous: MonthlySeriesPoint | AllYearsPoint
+): SeriesTrendMap => ({
+  income: getBalanceTrend(SERIES_VALUE_GETTERS.income(current), SERIES_VALUE_GETTERS.income(previous)),
+  expense: getBalanceTrend(SERIES_VALUE_GETTERS.expense(current), SERIES_VALUE_GETTERS.expense(previous)),
+  benefit: getBalanceTrend(SERIES_VALUE_GETTERS.benefit(current), SERIES_VALUE_GETTERS.benefit(previous)),
+  balance: getBalanceTrend(SERIES_VALUE_GETTERS.balance(current), SERIES_VALUE_GETTERS.balance(previous)),
+  portfolio: getBalanceTrend(SERIES_VALUE_GETTERS.portfolio(current), SERIES_VALUE_GETTERS.portfolio(previous)),
+  totalWealth: getBalanceTrend(SERIES_VALUE_GETTERS.totalWealth(current), SERIES_VALUE_GETTERS.totalWealth(previous))
+});
 
 type UseSeriesDerivedOptions = {
   series: MonthlySeriesPoint[];
@@ -43,18 +69,36 @@ export function useSeriesDerived({
   const allYears = useMemo<AllYearsPoint[]>(() => {
     const map = new Map<
       string,
-      { income: number; expense: number; benefit: number; balance: number; latestMonth: string }
+      {
+        income: number;
+        expense: number;
+        benefit: number;
+        balance: number;
+        portfolio: number;
+        totalWealth: number;
+        latestMonth: string;
+      }
     >();
     for (const point of series) {
       const year = point.month.slice(0, 4);
       const entry =
-        map.get(year) ?? { income: 0, expense: 0, benefit: 0, balance: 0, latestMonth: '' };
+        map.get(year) ?? {
+          income: 0,
+          expense: 0,
+          benefit: 0,
+          balance: 0,
+          portfolio: 0,
+          totalWealth: 0,
+          latestMonth: ''
+        };
       entry.income += point.incomeCents;
       entry.expense += point.expenseCents;
       entry.benefit += point.benefitCents;
       if (point.month > entry.latestMonth) {
         entry.latestMonth = point.month;
         entry.balance = point.balanceCents;
+        entry.portfolio = point.portfolioCents;
+        entry.totalWealth = point.totalWealthCents;
       }
       map.set(year, entry);
     }
@@ -65,7 +109,9 @@ export function useSeriesDerived({
         incomeCents: data.income,
         expenseCents: data.expense,
         benefitCents: data.benefit,
-        balanceCents: data.balance
+        balanceCents: data.balance,
+        portfolioCents: data.portfolio,
+        totalWealthCents: data.totalWealth
       }));
   }, [series]);
 
@@ -79,37 +125,50 @@ export function useSeriesDerived({
       },
       { income: 0, expense: 0, benefit: 0 }
     );
-    const lastBalance =
-      [...yearSeries].reverse().find((point) => point.balanceCents !== 0)?.balanceCents ?? 0;
+    const lastWealthSnapshot =
+      [...yearSeries]
+        .reverse()
+        .find(
+          (point) =>
+            point.balanceCents !== 0 || point.portfolioCents !== 0 || point.totalWealthCents !== 0
+        ) ?? null;
     return {
       incomeCents: totals.income,
       expenseCents: totals.expense,
       benefitCents: totals.benefit,
-      balanceCents: lastBalance
+      balanceCents: lastWealthSnapshot?.balanceCents ?? 0,
+      portfolioCents: lastWealthSnapshot?.portfolioCents ?? 0,
+      totalWealthCents: lastWealthSnapshot?.totalWealthCents ?? 0
     };
   }, [yearSeries]);
 
-  const previousYearDecemberBalance = useMemo(() => {
-    const previousYear = String(Number(yearValue) - 1);
-    const previousMonth = `${previousYear}-12`;
-    return series.find((point) => point.month === previousMonth)?.balanceCents ?? 0;
-  }, [series, yearValue]);
+  const realPointByMonth = useMemo(
+    () => new Map(series.map((point) => [point.month, point])),
+    [series]
+  );
 
   const yearTrendByMonth = useMemo(() => {
-    const map = new Map<string, BalanceTrend>();
+    const map = new Map<string, SeriesTrendMap>();
     yearSeries.forEach((point, index) => {
-      const previousBalance =
-        index > 0 ? yearSeries[index - 1].balanceCents : previousYearDecemberBalance;
-      map.set(point.month, getBalanceTrend(point.balanceCents, previousBalance));
+      const currentPoint = realPointByMonth.get(point.month);
+      const previousMonth = index > 0 ? yearSeries[index - 1].month : `${Number(yearValue) - 1}-12`;
+      const previousPoint = realPointByMonth.get(previousMonth);
+      if (!currentPoint || !previousPoint) {
+        return;
+      }
+      map.set(point.month, buildTrendMap(currentPoint, previousPoint));
     });
     return map;
-  }, [yearSeries, previousYearDecemberBalance]);
+  }, [realPointByMonth, yearSeries, yearValue]);
 
   const allYearsTrendByYear = useMemo(() => {
-    const map = new Map<string, BalanceTrend>();
+    const map = new Map<string, SeriesTrendMap>();
     allYears.forEach((point, index) => {
-      const previousBalance = index > 0 ? allYears[index - 1].balanceCents : point.balanceCents;
-      map.set(point.year, getBalanceTrend(point.balanceCents, previousBalance));
+      if (index === 0) {
+        return;
+      }
+      const previousPoint = allYears[index - 1];
+      map.set(point.year, buildTrendMap(point, previousPoint));
     });
     return map;
   }, [allYears]);
@@ -127,6 +186,10 @@ export function useSeriesDerived({
         compare = a.expenseCents - b.expenseCents;
       } else if (key === 'balance') {
         compare = a.balanceCents - b.balanceCents;
+      } else if (key === 'portfolio') {
+        compare = a.portfolioCents - b.portfolioCents;
+      } else if (key === 'totalWealth') {
+        compare = a.totalWealthCents - b.totalWealthCents;
       } else {
         compare = a.benefitCents - b.benefitCents;
       }
@@ -148,6 +211,10 @@ export function useSeriesDerived({
         compare = a.expenseCents - b.expenseCents;
       } else if (key === 'balance') {
         compare = a.balanceCents - b.balanceCents;
+      } else if (key === 'portfolio') {
+        compare = a.portfolioCents - b.portfolioCents;
+      } else if (key === 'totalWealth') {
+        compare = a.totalWealthCents - b.totalWealthCents;
       } else {
         compare = a.benefitCents - b.benefitCents;
       }
@@ -170,6 +237,8 @@ export function useSeriesDerived({
           point.incomeCents !== 0 ||
           point.expenseCents !== 0 ||
           point.balanceCents !== 0 ||
+          point.portfolioCents !== 0 ||
+          point.totalWealthCents !== 0 ||
           point.benefitCents !== 0
       ),
     [yearSeries]
@@ -182,6 +251,8 @@ export function useSeriesDerived({
           point.incomeCents !== 0 ||
           point.expenseCents !== 0 ||
           point.balanceCents !== 0 ||
+          point.portfolioCents !== 0 ||
+          point.totalWealthCents !== 0 ||
           point.benefitCents !== 0
       ),
     [allYears]

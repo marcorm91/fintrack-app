@@ -22,6 +22,7 @@
     "deleteMonth": "Eliminar datos mes",
     "deleteYear": "Eliminar datos año",
     "deleteAll": "Eliminar datos",
+    "deleteHistory": "Eliminar histórico",
     "confirm": "Confirmar",
     "import": "Importar",
     "cancel": "Cancelar",
@@ -43,7 +44,8 @@
     "viewAll": "Ver todos",
     "viewLarge": "Ver grande",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "none": "Ninguno"
   },
   "settings": {
     "title": "Configuracion de datos",
@@ -61,6 +63,8 @@
     "dialogUnavailable": "El selector de carpetas no esta disponible en esta version.",
     "readOnlyTitle": "Modo solo lectura",
     "readOnlyDescription": "Desactiva guardar, importar y eliminar datos.",
+    "investmentPortfolioTitle": "Cartera de inversión",
+    "investmentPortfolioDescription": "Activa cartera, patrimonio total y sus cálculos.",
     "updatesTitle": "Actualizaciones",
     "tabsData": "Base de datos",
     "tabsUpdates": "Actualizaciones",
@@ -105,8 +109,15 @@
   },
   "labels": {
     "summary": "Resumen",
+    "cashFlow": "Flujo de efectivo",
+    "cashFlowInputs": "Ingresos y gastos de efectivo",
+    "monthCashFlow": "Ingresos y gastos del mes",
+    "closingBalanceInput": "Saldo al cierre",
+    "wealth": "Patrimonio",
     "monthSummary": "Resumen del mes",
     "monthChart": "Gráfica del mes",
+    "cashFlowChart": "Ingresos y gastos",
+    "wealthChart": "Patrimonio",
     "yearChart": "Gráfica anual",
     "historyChart": "Gráfica histórica",
     "monthDetail": "Detalle por mes",
@@ -119,7 +130,9 @@
     "worstBenefitMonth": "Peor mes de beneficio: {{month}}",
     "bestBenefitYear": "Mejor año de beneficio: {{year}}",
     "worstBenefitYear": "Peor año de beneficio: {{year}}",
-    "finalBalance": "Saldo al cierre final",
+    "finalBalance": "Efectivo final",
+    "finalPortfolio": "Cartera final",
+    "finalWealth": "Patrimonio final",
     "yearDetail": "Detalle por año",
     "month": "Mes",
     "year": "Año",
@@ -132,14 +145,16 @@
     "showRows": "Mostrar",
     "from": "Desde",
     "to": "Hasta",
-    "page": "Pagina"
+    "page": "Pagina",
+    "asOf": "a",
+    "compareYear": "Comparar con"
   },
   "insights": {
     "title": "Comparativas",
     "previousMonth": "Vs mes anterior",
     "previousYear": "Vs mismo mes del año anterior",
     "previousYearTotal": "Vs año anterior",
-    "latestVsPreviousYear": "Último año vs anterior",
+    "selectedYearPrefix": "Vs",
     "current": "Actual",
     "previous": "Anterior",
     "noCurrentData": "Sin datos registrados en el mes actual.",
@@ -148,11 +163,13 @@
   "series": {
     "income": "Ingresos",
     "expense": "Gastos",
-    "balance": "Saldo al cierre",
-    "benefit": "Beneficio"
+    "balance": "Efectivo",
+    "benefit": "Beneficio",
+    "portfolio": "Cartera inversión",
+    "totalWealth": "Patrimonio total"
   },
   "descriptions": {
-    "monthSave": "Introduce ingresos, gastos y saldo al cierre según tu banco."
+    "monthSave": "Introduce ingresos, gastos, efectivo y cartera al cierre."
   },
   "messages": {
     "noChartData": "Sin datos para mostrar gráfica.",
@@ -203,49 +220,50 @@
       "month": {
         "title": "Importar mes actual",
         "description": "Pega una sola fila del mes actual o un CSV con cabecera.",
-        "placeholder": "ingresos;gastos;saldo al cierre\n2288,65;2187,92;3463,50"
+        "placeholder": "ingresos;gastos;saldo al cierre;cartera al cierre\n2288,65;2187,92;3463,50;1200,00"
       },
       "year": {
         "title": "Importar año {{year}}",
         "description": "Pega un CSV con meses del año seleccionado.",
-        "placeholder": "mes;ingresos;gastos;saldo al cierre\n2025-01;2288,65;2187,92;3463,50"
+        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre\n2025-01;2288,65;2187,92;3463,50;1200,00"
       },
       "all": {
         "title": "Importar histórico",
         "description": "Pega un CSV con meses de varios años.",
-        "placeholder": "mes;ingresos;gastos;saldo al cierre\n2024-12;2100,00;2000,00;3500,00"
+        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre\n2024-12;2100,00;2000,00;3500,00;1200,00"
       }
     }
   },
   "info": {
     "month": {
       "title": "Formato CSV (mes actual)",
-      "line1": "Una sola fila con ingresos, gastos y saldo al cierre.",
+      "line1": "Una sola fila con ingresos, gastos, saldo al cierre y cartera.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "ingresos;gastos;saldo al cierre",
-      "exampleRow": "2288,65;2187,92;3463,50"
+      "exampleHeader": "ingresos;gastos;saldo al cierre;cartera al cierre",
+      "exampleRow": "2288,65;2187,92;3463,50;1200,00"
     },
     "year": {
       "title": "Formato CSV (año actual)",
       "line1": "Una fila por mes. Columna mes en formato 2025-01 o ene 2025.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "mes;ingresos;gastos;saldo al cierre",
-      "exampleRow": "2025-01;2288,65;2187,92;3463,50"
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre",
+      "exampleRow": "2025-01;2288,65;2187,92;3463,50;1200,00"
     },
     "all": {
       "title": "Formato CSV (todos los años)",
       "line1": "Múltiples años en un solo archivo, una fila por mes.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "mes;ingresos;gastos;saldo al cierre",
-      "exampleRow1": "2024-12;2100,00;2000,00;3500,00",
-      "exampleRow2": "2025-01;2288,65;2187,92;3463,50"
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre",
+      "exampleRow1": "2024-12;2100,00;2000,00;3500,00;1200,00",
+      "exampleRow2": "2025-01;2288,65;2187,92;3463,50;1350,00"
     }
   },
   "errors": {
     "loadData": "No se pudo cargar la base de datos. Revisa la ruta de la .db en ajustes.",
     "invalidIncome": "Ingresos inválidos",
     "invalidExpense": "Gastos inválidos",
-    "invalidBalance": "Saldo al cierre invalido",
+    "invalidBalance": "Efectivo invalido",
+    "invalidPortfolio": "Cartera al cierre invalida",
     "saveSummary": "Error guardando resumen",
     "importType": "No se pudo determinar el tipo de importación.",
     "importFile": "Error importando archivo",

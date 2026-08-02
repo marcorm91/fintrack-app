@@ -7,7 +7,23 @@ export function summaryFromSeries(point: MonthlySeriesPoint): MonthlySummary {
     incomeCents: point.incomeCents,
     expenseCents: point.expenseCents,
     balanceCents: point.balanceCents,
+    portfolioCents: point.portfolioCents,
+    totalWealthCents: point.totalWealthCents,
     benefitCents: point.benefitCents
+  };
+}
+
+export function applyInvestmentPortfolioSetting<T extends MonthlySummary | MonthlySeriesPoint>(
+  point: T,
+  enabled: boolean
+): T {
+  if (enabled) {
+    return point;
+  }
+  return {
+    ...point,
+    portfolioCents: 0,
+    totalWealthCents: point.balanceCents
   };
 }
 
@@ -23,6 +39,8 @@ export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): Mon
         incomeCents: 0,
         expenseCents: 0,
         balanceCents: 0,
+        portfolioCents: 0,
+        totalWealthCents: 0,
         benefitCents: 0
       }
     );

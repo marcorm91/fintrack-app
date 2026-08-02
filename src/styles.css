@@ -9,6 +9,65 @@
   }
 
   body {
-    @apply font-sans text-ink;
+    @apply font-sans text-ink antialiased;
+    background: #f6fbf8;
+  }
+
+  input,
+  select,
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em];
+    border-radius: 10px;
+    box-shadow: 0 14px 28px -24px rgba(33, 48, 71, 0.75);
+  }
+
+  .btn:hover:not(:disabled) {
+    box-shadow: 0 18px 34px -26px rgba(33, 48, 71, 0.85);
+  }
+
+  .btn-primary {
+    @apply border-ink bg-ink text-white hover:border-ink hover:bg-ink/95;
+  }
+
+  .btn-neutral {
+    @apply border-ink/10 bg-white/90 text-muted hover:border-ink/25 hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100;
+  }
+
+  .btn-icon {
+    @apply h-8 w-8 shrink-0 p-0;
+  }
+
+  .btn-icon-sm {
+    @apply h-7 w-7 shrink-0 p-0;
+  }
+
+  .segmented {
+    @apply inline-flex gap-1 border border-ink/10 bg-white/75 p-1;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 14px 36px -30px rgba(33, 48, 71, 0.55);
+  }
+
+  .segmented-option {
+    @apply relative px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:bg-white hover:text-ink sm:text-xs sm:tracking-[0.18em];
+    border-radius: 8px;
+  }
+
+  .segmented-option-active {
+    @apply bg-ink text-white;
+    box-shadow: 0 12px 24px -18px rgba(33, 48, 71, 0.9);
+  }
+
+  .segmented-option-active:hover {
+    @apply bg-ink text-white;
   }
 }

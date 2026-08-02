@@ -6,15 +6,19 @@ export type SeriesVisibility = Record<SeriesKey, boolean>;
 const buildAllVisibility = (): SeriesVisibility => ({
   income: true,
   expense: true,
+  benefit: true,
   balance: true,
-  benefit: true
+  portfolio: true,
+  totalWealth: true
 });
 
 const buildSoloVisibility = (key: SeriesKey): SeriesVisibility => ({
   income: key === 'income',
   expense: key === 'expense',
+  benefit: key === 'benefit',
   balance: key === 'balance',
-  benefit: key === 'benefit'
+  portfolio: key === 'portfolio',
+  totalWealth: key === 'totalWealth'
 });
 
 const toggleSoloVisibility = (prev: SeriesVisibility, key: SeriesKey): SeriesVisibility => {

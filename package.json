@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mocks": "set VITE_USE_MOCK_DB=true&& set VITE_SEED_MOCKS=force&& vite",
     "build": "vite build",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings=0",
     "preview": "vite preview",

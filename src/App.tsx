@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,
-  PointElement,
   Tooltip,
   Legend
 } from 'chart.js';
@@ -20,6 +18,7 @@ import { useMonthlyForm } from './hooks/useMonthlyForm';
 import { useMonthlyInsights } from './hooks/useMonthlyInsights';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
 import { useYearInsights } from './hooks/useYearInsights';
+import { useInvestmentPortfolioSetting } from './hooks/useInvestmentPortfolioSetting';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
 import { useSafeAreaInsets } from './hooks/useSafeAreaInsets';
@@ -28,14 +27,14 @@ import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
 import { useUpdateStatus } from './hooks/useUpdateStatus';
 import type {
   AllTableSortKey,
-  ChartType,
   SortDirection,
   TabKey,
   YearTableSortKey
 } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
-import { summaryFromSeries } from './utils/series';
+import { applyInvestmentPortfolioSetting, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
+import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
@@ -44,14 +43,11 @@ import { HistoryView } from './features/history/HistoryView';
 import { MonthView } from './features/month/MonthView';
 import { YearView } from './features/year/YearView';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function App() {
   useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('month');
-  const [monthChartType, setMonthChartType] = useState<ChartType>('bar');
-  const [yearChartType, setYearChartType] = useState<ChartType>('bar');
-  const [allYearsChartType, setAllYearsChartType] = useState<ChartType>('bar');
   const [appReady, setAppReady] = useState(false);
   const {
     monthValue,
@@ -66,9 +62,7 @@ export default function App() {
   const { readOnly, toggleReadOnly } = useReadOnlySetting();
   const { toast, setToast } = useToastAutoDismiss();
   const {
-    visibility: monthSeriesVisibility,
-    toggleSeries: toggleMonthSeries,
-    showOnlySeries: showOnlyMonthSeries
+    visibility: monthSeriesVisibility
   } = useSeriesVisibility();
   const {
     visibility: yearSeriesVisibility,
@@ -88,6 +82,7 @@ export default function App() {
     key: 'year',
     direction: 'desc'
   });
+  const [yearComparisonValue, setYearComparisonValue] = useState('');
   const { t, i18n } = useTranslation();
   const language = i18n.language;
   const activeLanguage = language.startsWith('en') ? 'en' : 'es';
@@ -102,6 +97,42 @@ export default function App() {
     deleteAll,
     setError
   } = useMonthlyData({ loadErrorMessage: t('errors.loadData'), readOnly });
+  const portfolioSettingError = useCallback((message: string) => {
+    setError(message || t('errors.saveSummary'));
+  }, [setError, t]);
+  const {
+    enabled: hasInvestmentPortfolio,
+    setEnabled: setHasInvestmentPortfolio
+  } = useInvestmentPortfolioSetting({ onError: portfolioSettingError });
+  const effectiveSeries = useMemo(
+    () => series.map((point) => applyInvestmentPortfolioSetting(point, hasInvestmentPortfolio)),
+    [hasInvestmentPortfolio, series]
+  );
+  const effectiveSummary = useMemo(
+    () => (summary ? applyInvestmentPortfolioSetting(summary, hasInvestmentPortfolio) : null),
+    [hasInvestmentPortfolio, summary]
+  );
+  const effectiveMonthSeriesVisibility = useMemo(
+    () =>
+      hasInvestmentPortfolio
+        ? monthSeriesVisibility
+        : { ...monthSeriesVisibility, portfolio: false, totalWealth: false },
+    [hasInvestmentPortfolio, monthSeriesVisibility]
+  );
+  const effectiveYearSeriesVisibility = useMemo(
+    () =>
+      hasInvestmentPortfolio
+        ? yearSeriesVisibility
+        : { ...yearSeriesVisibility, portfolio: false, totalWealth: false },
+    [hasInvestmentPortfolio, yearSeriesVisibility]
+  );
+  const effectiveAllYearsSeriesVisibility = useMemo(
+    () =>
+      hasInvestmentPortfolio
+        ? allYearsSeriesVisibility
+        : { ...allYearsSeriesVisibility, portfolio: false, totalWealth: false },
+    [allYearsSeriesVisibility, hasInvestmentPortfolio]
+  );
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
   const {
@@ -126,7 +157,8 @@ export default function App() {
     refreshData,
     setError,
     t,
-    readOnly
+    readOnly,
+    hasInvestmentPortfolio
   });
   const {
     importInputRef,
@@ -182,16 +214,16 @@ export default function App() {
     hasChartData,
     hasAllYearsData
   } = useSeriesDerived({
-    series,
+    series: effectiveSeries,
     yearValue,
     monthValue,
     yearTableSort,
     allYearsTableSort
   });
 
-  const monthPoint = series.find((point) => point.month === monthValue);
+  const monthPoint = effectiveSeries.find((point) => point.month === monthValue);
   const displaySummary =
-    summary ??
+    effectiveSummary ??
     (monthPoint
       ? summaryFromSeries(monthPoint)
       : summaryFromSeries({
@@ -199,20 +231,18 @@ export default function App() {
           incomeCents: 0,
           expenseCents: 0,
           balanceCents: 0,
+          portfolioCents: 0,
+          totalWealthCents: 0,
           benefitCents: 0
         }));
 
-  const hasMonthData =
-    displaySummary.incomeCents !== 0 ||
-    displaySummary.expenseCents !== 0 ||
-    displaySummary.balanceCents !== 0 ||
-    displaySummary.benefitCents !== 0;
+  const hasMonthData = Boolean(summary || series.find((point) => point.month === monthValue));
 
   const monthInsights = useMonthlyInsights({
     monthValue,
     displaySummary,
-    series,
-    monthSeriesVisibility,
+    series: effectiveSeries,
+    monthSeriesVisibility: effectiveMonthSeriesVisibility,
     hasMonthData,
     isCurrentMonth,
     t
@@ -221,34 +251,27 @@ export default function App() {
     yearValue,
     yearTotals,
     allYears,
-    yearSeriesVisibility,
+    yearSeriesVisibility: effectiveYearSeriesVisibility,
+    compareYearValue: yearComparisonValue,
     t
   });
+  const yearComparisonYears = useMemo(
+    () => allYears.map((point) => point.year).filter((year) => year !== yearValue),
+    [allYears, yearValue]
+  );
 
   const {
-    monthChartData,
-    monthChartOptions,
-    benefitChartData,
-    benefitChartOptions,
     yearChartData,
+    yearWealthChartData,
     yearChartOptions,
     allYearsChartData,
-    allYearsChartOptions,
-    isMonthLine,
-    isYearLine,
-    isAllYearsLine,
-    hasVisibleMonthBars,
-    showMonthBenefit
+    allYearsWealthChartData,
+    allYearsChartOptions
   } = useCharts({
     language,
     t,
-    displaySummary,
-    monthSeriesVisibility,
-    monthChartType,
-    yearSeriesVisibility,
-    yearChartType,
-    allYearsSeriesVisibility,
-    allYearsChartType,
+    yearSeriesVisibility: effectiveYearSeriesVisibility,
+    allYearsSeriesVisibility: effectiveAllYearsSeriesVisibility,
     yearSeries,
     allYears
   });
@@ -322,8 +345,14 @@ export default function App() {
     );
   };
 
-  const monthBenefitDotClass = displaySummary.benefitCents < 0 ? 'bg-benefitNegative' : 'bg-benefit';
-  const yearBenefitDotClass = yearTotals.benefitCents < 0 ? 'bg-benefitNegative' : 'bg-benefit';
+  const globalWealthSummary = useMemo(
+    () =>
+      effectiveSeries.reduce<typeof displaySummary>(
+        (latest, point) => (point.month > latest.month ? summaryFromSeries(point) : latest),
+        displaySummary
+      ),
+    [displaySummary, effectiveSeries]
+  );
 
   return (
     <AppLayout
@@ -335,6 +364,14 @@ export default function App() {
       t={t}
       importInputRef={importInputRef}
       onFileChange={onFileChange}
+      overview={
+        <GlobalWealthSummary
+          totalWealthCents={globalWealthSummary.totalWealthCents}
+          balanceCents={globalWealthSummary.balanceCents}
+          portfolioCents={globalWealthSummary.portfolioCents}
+          hasInvestmentPortfolio={hasInvestmentPortfolio}
+        />
+      }
       tabs={
         <TabsBar
           activeTab={activeTab}
@@ -394,6 +431,10 @@ export default function App() {
             error={databasePathError}
             readOnly={readOnly}
             onToggleReadOnly={toggleReadOnly}
+            hasInvestmentPortfolio={hasInvestmentPortfolio}
+            onToggleInvestmentPortfolio={(value) => {
+              void setHasInvestmentPortfolio(value);
+            }}
             updateStatus={updateStatus}
             isOnline={isOnline}
             currentVersion={currentVersion}
@@ -426,26 +467,13 @@ export default function App() {
             currentMonthValue={currentMonthValue}
             isCurrentMonth={isCurrentMonth}
             displaySummary={displaySummary}
-            monthSeriesVisibility={monthSeriesVisibility}
-            toggleMonthSeries={toggleMonthSeries}
-            showOnlyMonthSeries={showOnlyMonthSeries}
-            monthBenefitDotClass={monthBenefitDotClass}
-            monthChartType={monthChartType}
-            setMonthChartType={setMonthChartType}
-            monthChartData={monthChartData}
-            monthChartOptions={monthChartOptions}
-            benefitChartData={benefitChartData}
-            benefitChartOptions={benefitChartOptions}
-            hasMonthData={hasMonthData}
-            hasVisibleMonthBars={hasVisibleMonthBars}
-            showMonthBenefit={showMonthBenefit}
-            isMonthLine={isMonthLine}
             form={form}
             onFormChange={handleChange}
             onSubmit={handleSubmit}
             saving={saving}
             error={error}
             readOnly={readOnly}
+            hasInvestmentPortfolio={hasInvestmentPortfolio}
             onOpenSettings={openSettings}
           />
           <InsightsPanel
@@ -465,39 +493,39 @@ export default function App() {
           currentYearValue={currentYearValue}
           isCurrentYear={isCurrentYear}
           availableYears={availableYears}
+          comparisonYears={yearComparisonYears}
+          yearComparisonValue={yearComparisonValue}
+          setYearComparisonValue={setYearComparisonValue}
           yearTotals={yearTotals}
-          yearBenefitDotClass={yearBenefitDotClass}
-          yearSeriesVisibility={yearSeriesVisibility}
+          yearSeriesVisibility={effectiveYearSeriesVisibility}
           toggleYearSeries={toggleYearSeries}
           showOnlyYearSeries={showOnlyYearSeries}
-          yearChartType={yearChartType}
-          setYearChartType={setYearChartType}
+          hasInvestmentPortfolio={hasInvestmentPortfolio}
           hasChartData={hasChartData}
           yearChartData={yearChartData}
+          yearWealthChartData={yearWealthChartData}
           yearChartOptions={yearChartOptions}
           sortedYearSeries={sortedYearSeries}
           yearTableSort={yearTableSort}
           handleYearSort={handleYearSort}
           yearTrendByMonth={yearTrendByMonth}
-          isYearLine={isYearLine}
           yearInsights={yearInsights}
         />
       ) : null}
       {activeTab === 'all' ? (
         <HistoryView
-          allYearsSeriesVisibility={allYearsSeriesVisibility}
+          allYearsSeriesVisibility={effectiveAllYearsSeriesVisibility}
           toggleAllYearsSeries={toggleAllYearsSeries}
           showOnlyAllYearsSeries={showOnlyAllYearsSeries}
+          hasInvestmentPortfolio={hasInvestmentPortfolio}
           hasAllYearsData={hasAllYearsData}
           allYearsChartData={allYearsChartData}
+          allYearsWealthChartData={allYearsWealthChartData}
           allYearsChartOptions={allYearsChartOptions}
-          allYearsChartType={allYearsChartType}
-          setAllYearsChartType={setAllYearsChartType}
           sortedAllYears={sortedAllYears}
           allYearsTableSort={allYearsTableSort}
           handleAllYearsSort={handleAllYearsSort}
           allYearsTrendByYear={allYearsTrendByYear}
-          isAllYearsLine={isAllYearsLine}
         />
       ) : null}
     </AppLayout>

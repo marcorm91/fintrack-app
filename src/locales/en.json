@@ -22,6 +22,7 @@
     "deleteMonth": "Delete month data",
     "deleteYear": "Delete year data",
     "deleteAll": "Delete data",
+    "deleteHistory": "Delete history",
     "confirm": "Confirm",
     "import": "Import",
     "cancel": "Cancel",
@@ -43,7 +44,8 @@
     "viewAll": "View all",
     "viewLarge": "View large",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "none": "None"
   },
   "settings": {
     "title": "Database settings",
@@ -61,6 +63,8 @@
     "dialogUnavailable": "Folder picker is unavailable in this build.",
     "readOnlyTitle": "Read-only mode",
     "readOnlyDescription": "Disables saving, importing, and deleting data.",
+    "investmentPortfolioTitle": "Investment portfolio",
+    "investmentPortfolioDescription": "Enables portfolio, total wealth, and related calculations.",
     "updatesTitle": "Updates",
     "tabsData": "Database",
     "tabsUpdates": "Updates",
@@ -105,8 +109,15 @@
   },
   "labels": {
     "summary": "Summary",
+    "cashFlow": "Cash flow",
+    "cashFlowInputs": "Cash income and expenses",
+    "monthCashFlow": "Monthly income and expenses",
+    "closingBalanceInput": "Closing cash balance",
+    "wealth": "Wealth",
     "monthSummary": "Monthly summary",
     "monthChart": "Monthly chart",
+    "cashFlowChart": "Income and expenses",
+    "wealthChart": "Wealth",
     "yearChart": "Annual chart",
     "historyChart": "History chart",
     "monthDetail": "Detail by month",
@@ -119,7 +130,9 @@
     "worstBenefitMonth": "Worst profit month: {{month}}",
     "bestBenefitYear": "Top profit year: {{year}}",
     "worstBenefitYear": "Worst profit year: {{year}}",
-    "finalBalance": "Final closing balance",
+    "finalBalance": "Final cash",
+    "finalPortfolio": "Final portfolio value",
+    "finalWealth": "Final wealth",
     "yearDetail": "Year detail",
     "month": "Month",
     "year": "Year",
@@ -132,14 +145,16 @@
     "showRows": "Show",
     "from": "From",
     "to": "To",
-    "page": "Page"
+    "page": "Page",
+    "asOf": "as of",
+    "compareYear": "Compare with"
   },
   "insights": {
     "title": "Comparisons",
     "previousMonth": "Vs previous month",
     "previousYear": "Vs same month last year",
     "previousYearTotal": "Vs previous year",
-    "latestVsPreviousYear": "Latest year vs previous year",
+    "selectedYearPrefix": "Vs",
     "current": "Current",
     "previous": "Previous",
     "noCurrentData": "No data recorded for the current month.",
@@ -148,11 +163,13 @@
   "series": {
     "income": "Income",
     "expense": "Expenses",
-    "balance": "Closing balance",
-    "benefit": "Profit"
+    "balance": "Cash",
+    "benefit": "Profit",
+    "portfolio": "Investment portfolio",
+    "totalWealth": "Total wealth"
   },
   "descriptions": {
-    "monthSave": "Enter income, expenses, and closing balance from your bank."
+    "monthSave": "Enter income, expenses, cash, and portfolio closing value."
   },
   "messages": {
     "noChartData": "No data to chart.",
@@ -203,49 +220,50 @@
       "month": {
         "title": "Import current month",
         "description": "Paste a single row for the current month or a CSV with headers.",
-        "placeholder": "income;expenses;closing balance\n2288.65;2187.92;3463.50"
+        "placeholder": "income;expenses;closing balance;portfolio closing value\n2288.65;2187.92;3463.50;1200.00"
       },
       "year": {
         "title": "Import year {{year}}",
         "description": "Paste a CSV with months for the selected year.",
-        "placeholder": "month;income;expenses;closing balance\n2025-01;2288.65;2187.92;3463.50"
+        "placeholder": "month;income;expenses;closing balance;portfolio closing value\n2025-01;2288.65;2187.92;3463.50;1200.00"
       },
       "all": {
         "title": "Import history",
         "description": "Paste a CSV with months from multiple years.",
-        "placeholder": "month;income;expenses;closing balance\n2024-12;2100.00;2000.00;3500.00"
+        "placeholder": "month;income;expenses;closing balance;portfolio closing value\n2024-12;2100.00;2000.00;3500.00;1200.00"
       }
     }
   },
   "info": {
     "month": {
       "title": "CSV format (current month)",
-      "line1": "Single row with income, expenses, and closing balance.",
+      "line1": "Single row with income, expenses, closing balance, and portfolio value.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "income;expenses;closing balance",
-      "exampleRow": "2288.65;2187.92;3463.50"
+      "exampleHeader": "income;expenses;closing balance;portfolio closing value",
+      "exampleRow": "2288.65;2187.92;3463.50;1200.00"
     },
     "year": {
       "title": "CSV format (current year)",
       "line1": "One row per month. Month column in format 2025-01 or Jan 2025.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "month;income;expenses;closing balance",
-      "exampleRow": "2025-01;2288.65;2187.92;3463.50"
+      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value",
+      "exampleRow": "2025-01;2288.65;2187.92;3463.50;1200.00"
     },
     "all": {
       "title": "CSV format (all years)",
       "line1": "Multiple years in a single file, one row per month.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "month;income;expenses;closing balance",
-      "exampleRow1": "2024-12;2100.00;2000.00;3500.00",
-      "exampleRow2": "2025-01;2288.65;2187.92;3463.50"
+      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value",
+      "exampleRow1": "2024-12;2100.00;2000.00;3500.00;1200.00",
+      "exampleRow2": "2025-01;2288.65;2187.92;3463.50;1350.00"
     }
   },
   "errors": {
     "loadData": "Could not load the database. Check the .db path in settings.",
     "invalidIncome": "Invalid income",
     "invalidExpense": "Invalid expenses",
-    "invalidBalance": "Invalid closing balance",
+    "invalidBalance": "Invalid cash amount",
+    "invalidPortfolio": "Invalid portfolio closing value",
     "saveSummary": "Error saving summary",
     "importType": "Could not determine the import type.",
     "importFile": "Error importing file",

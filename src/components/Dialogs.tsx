@@ -35,14 +35,14 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+            className="btn btn-neutral text-xs"
           >
             {t('actions.cancel')}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition hover:shadow-md"
+            className="btn btn-primary text-xs"
           >
             {confirmLabel}
           </button>
@@ -77,7 +77,7 @@ export function InfoDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+            className="btn btn-neutral text-xs"
           >
             {t('actions.close')}
           </button>
@@ -129,7 +129,7 @@ export function TextImportDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted shadow-sm transition hover:border-accent hover:text-ink"
+            className="btn btn-neutral text-xs"
           >
             {t('actions.cancel')}
           </button>
@@ -137,7 +137,7 @@ export function TextImportDialog({
             type="button"
             onClick={onConfirm}
             disabled={isEmpty}
-            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary text-xs"
           >
             {t('actions.prepareImport')}
           </button>
@@ -157,6 +157,8 @@ export function DatabaseSettingsDialog({
   error,
   readOnly,
   onToggleReadOnly,
+  hasInvestmentPortfolio,
+  onToggleInvestmentPortfolio,
   updateStatus,
   isOnline,
   currentVersion,
@@ -186,6 +188,8 @@ export function DatabaseSettingsDialog({
   error: string | null;
   readOnly: boolean;
   onToggleReadOnly: (value: boolean) => void;
+  hasInvestmentPortfolio: boolean;
+  onToggleInvestmentPortfolio: (value: boolean) => void;
   updateStatus: UpdateStatus;
   isOnline: boolean;
   currentVersion: string | null;
@@ -290,29 +294,25 @@ export function DatabaseSettingsDialog({
           type="button"
           onClick={() => void handleClose()}
           aria-label={t('actions.close')}
-          className="absolute right-4 top-4 rounded-full border border-ink/10 bg-white p-2 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+          className="btn btn-neutral btn-icon absolute right-4 top-4 text-muted hover:text-ink"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
         <h3 className="text-lg font-semibold text-ink">{t('settings.title')}</h3>
-        <div className="mt-4 mr-auto inline-flex rounded-full border border-ink/10 bg-white p-1 text-[10px] font-semibold uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
+        <div className="segmented mt-4 mr-auto text-[10px] sm:text-[11px]">
           <button
             type="button"
             onClick={() => setActiveTab('data')}
-            className={`rounded-full px-4 py-2 transition ${
-              activeTab === 'data' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-ink'
-            }`}
+            className={`segmented-option ${activeTab === 'data' ? 'segmented-option-active' : ''}`}
           >
             {t('settings.tabsData')}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('updates')}
-            className={`rounded-full px-4 py-2 transition ${
-              activeTab === 'updates' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-ink'
-            }`}
+            className={`segmented-option ${activeTab === 'updates' ? 'segmented-option-active' : ''}`}
           >
             {t('settings.tabsUpdates')}
           </button>
@@ -347,7 +347,7 @@ export function DatabaseSettingsDialog({
                 type="button"
                 onClick={onReset}
                 disabled={loading}
-                className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-xs sm:tracking-[0.18em]"
+                className="btn btn-neutral text-[10px] sm:text-xs"
               >
                 {t('settings.useDefault')}
               </button>
@@ -366,7 +366,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onBrowse}
                   disabled={loading}
-                  className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[10px] sm:tracking-[0.18em]"
+                  className="btn btn-neutral text-[9px] sm:text-[10px]"
                 >
                   {t('settings.browse')}
                 </button>
@@ -389,7 +389,27 @@ export function DatabaseSettingsDialog({
                   onChange={(event) => onToggleReadOnly(event.target.checked)}
                   className="peer sr-only"
                 />
-                <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-accent" />
+                <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
+                <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+              </label>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-white px-3 py-3">
+              <div>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-ink">
+                  {t('settings.investmentPortfolioTitle')}
+                </p>
+                <p className="mt-1 text-[10px] text-muted sm:text-xs">
+                  {t('settings.investmentPortfolioDescription')}
+                </p>
+              </div>
+              <label className="relative inline-flex h-6 w-11 items-center">
+                <input
+                  type="checkbox"
+                  checked={hasInvestmentPortfolio}
+                  onChange={(event) => onToggleInvestmentPortfolio(event.target.checked)}
+                  className="peer sr-only"
+                />
+                <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
                 <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
               </label>
             </div>
@@ -407,7 +427,7 @@ export function DatabaseSettingsDialog({
                     type="button"
                     onClick={onExportCsv}
                     disabled={exportDisabled}
-                    className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
                   >
                     {exportingCsv ? t('settings.exportingCsv') : t('settings.exportCsv')}
                   </button>
@@ -415,7 +435,7 @@ export function DatabaseSettingsDialog({
                     type="button"
                     onClick={onExportSql}
                     disabled={exportDisabled}
-                    className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
                   >
                     {exportingSql ? t('settings.exportingSql') : t('settings.exportSql')}
                   </button>
@@ -435,7 +455,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onBackupDatabase}
                   disabled={backupDisabled}
-                  className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
                 >
                   {backingUp ? t('settings.backupRunning') : t('settings.backupAction')}
                 </button>
@@ -455,7 +475,7 @@ export function DatabaseSettingsDialog({
                 type="button"
                 onClick={() => void handleSave()}
                 disabled={loading}
-                className="rounded-full bg-accent px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 sm:text-xs sm:tracking-[0.18em]"
+                className="btn btn-primary text-[10px] sm:text-xs"
               >
                 {t('settings.savePath')}
               </button>
@@ -478,7 +498,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onCheckUpdates}
                   disabled={!isOnline || updateStatus === 'checking'}
-                  className="rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 sm:text-[11px] sm:tracking-[0.18em]"
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
                 >
                   {updateActionLabel}
                 </button>
@@ -498,7 +518,7 @@ export function DatabaseSettingsDialog({
                     href={latestReleaseUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex rounded-full border border-ink/10 bg-white px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink sm:text-[11px] sm:tracking-[0.18em]"
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
                   >
                     {t('settings.openRelease')}
                   </a>
@@ -513,14 +533,14 @@ export function DatabaseSettingsDialog({
             <a
               href="https://github.com/marcorm91"
               onClick={(event) => handleExternalLink(event, 'https://github.com/marcorm91')}
-              className="font-semibold text-ink transition hover:text-accent"
+              className="font-semibold text-ink transition hover:text-muted"
             >
               GitHub
             </a>
             <a
               href="https://www.linkedin.com/in/marcorm91/"
               onClick={(event) => handleExternalLink(event, 'https://www.linkedin.com/in/marcorm91/')}
-              className="font-semibold text-ink transition hover:text-accent"
+              className="font-semibold text-ink transition hover:text-muted"
             >
               LinkedIn
             </a>

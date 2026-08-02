@@ -10,16 +10,26 @@ type UseYearInsightsOptions = {
   yearTotals: YearTotals;
   allYears: AllYearsPoint[];
   yearSeriesVisibility: Record<SeriesKey, boolean>;
+  compareYearValue?: string;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
-const SERIES_KEYS: SeriesKey[] = ['income', 'expense', 'balance', 'benefit'];
+const SERIES_KEYS: SeriesKey[] = [
+  'income',
+  'expense',
+  'benefit',
+  'balance',
+  'portfolio',
+  'totalWealth'
+];
 
 const getSeriesValues = (point: YearTotals | AllYearsPoint): SeriesValues => ({
   income: point.incomeCents,
   expense: point.expenseCents,
+  benefit: point.benefitCents,
   balance: point.balanceCents,
-  benefit: point.benefitCents
+  portfolio: point.portfolioCents,
+  totalWealth: point.totalWealthCents
 });
 
 export function useYearInsights({
@@ -27,6 +37,7 @@ export function useYearInsights({
   yearTotals,
   allYears,
   yearSeriesVisibility,
+  compareYearValue = '',
   t
 }: UseYearInsightsOptions) {
   return useMemo<InsightsPayload>(() => {
@@ -35,6 +46,10 @@ export function useYearInsights({
     const yearNumber = Number(yearValue);
     const previousYearValue = Number.isFinite(yearNumber) ? String(yearNumber - 1) : '';
     const previousYear = allYears.find((point) => point.year === previousYearValue) ?? null;
+    const compareYear =
+      compareYearValue && compareYearValue !== yearValue
+        ? allYears.find((point) => point.year === compareYearValue) ?? null
+        : null;
 
     const buildDeltas = (point: AllYearsPoint | null) => {
       if (!point || visibleKeys.length === 0) {
@@ -65,6 +80,11 @@ export function useYearInsights({
         key: 'previousYearTotal',
         label: t('insights.previousYearTotal'),
         ...previousYearData
+      },
+      {
+        key: 'selectedYear',
+        label: t('insights.selectedYearPrefix'),
+        ...buildDeltas(compareYear)
       }
     ];
 
@@ -78,5 +98,5 @@ export function useYearInsights({
       previousLabel: t('insights.previous'),
       hasAnyData
     };
-  }, [allYears, t, yearSeriesVisibility, yearTotals, yearValue]);
+  }, [allYears, compareYearValue, t, yearSeriesVisibility, yearTotals, yearValue]);
 }

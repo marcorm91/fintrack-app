@@ -51,7 +51,7 @@ function ImportMenu({
         disabled={disabled}
         aria-label={t('actions.importOptions')}
         title={t('actions.importOptions')}
-        className="rounded-full border border-accent/30 bg-white/80 p-2 text-accent shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn btn-neutral btn-icon text-ink"
       >
         <DotsVerticalIcon />
       </button>
@@ -119,7 +119,7 @@ export function TabActions({
     },
     all: {
       scope: 'all',
-      deleteLabelKey: 'actions.deleteAll',
+      deleteLabelKey: 'actions.deleteHistory',
       deleting: deletingAll,
       onDelete: openDeleteAll
     }
@@ -147,8 +147,8 @@ export function TabActions({
         <button
           type="button"
           onClick={() => setInfoScope(activeConfig.scope)}
-        className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm transition hover:border-accent hover:text-ink sm:text-[11px] sm:tracking-[0.2em]"
-      >
+          className="btn btn-neutral px-3"
+        >
           <InfoIcon />
           <span>{t('actions.info')}</span>
         </button>
@@ -157,7 +157,7 @@ export function TabActions({
         type="button"
         onClick={activeConfig.onDelete}
         disabled={importDisabled}
-        className="rounded-full border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-red-700 shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-xs sm:tracking-[0.18em]"
+        className="btn btn-danger px-3 sm:px-4"
       >
         {activeConfig.deleting ? t('actions.deleting') : t(activeConfig.deleteLabelKey)}
       </button>

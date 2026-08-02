@@ -12,12 +12,14 @@ type UseMonthlyFormOptions = {
   setError: (message: string | null) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   readOnly?: boolean;
+  hasInvestmentPortfolio?: boolean;
 };
 
 const emptyForm: FormState = {
   income: '',
   expense: '',
-  balance: ''
+  balance: '',
+  portfolio: ''
 };
 
 export function useMonthlyForm({
@@ -27,7 +29,8 @@ export function useMonthlyForm({
   refreshData,
   setError,
   t,
-  readOnly = false
+  readOnly = false,
+  hasInvestmentPortfolio = true
 }: UseMonthlyFormOptions) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -47,7 +50,8 @@ export function useMonthlyForm({
     setForm({
       income: summary.incomeCents ? formatInputCents(summary.incomeCents) : '',
       expense: summary.expenseCents ? formatInputCents(summary.expenseCents) : '',
-      balance: summary.balanceCents ? formatInputCents(summary.balanceCents) : ''
+      balance: summary.balanceCents ? formatInputCents(summary.balanceCents) : '',
+      portfolio: summary.portfolioCents ? formatInputCents(summary.portfolioCents) : ''
     });
   }, [summary, monthValue, resetForm]);
 
@@ -87,13 +91,22 @@ export function useMonthlyForm({
         return;
       }
 
+      const portfolioValue = hasInvestmentPortfolio ? parseAmount(form.portfolio) : null;
+      if (hasInvestmentPortfolio && (portfolioValue === null || portfolioValue < 0)) {
+          setError(t('errors.invalidPortfolio'));
+          return;
+      }
+
       setSaving(true);
       try {
         await saveSnapshot({
           month: monthValue,
           incomeCents: Math.round(incomeValue * 100),
           expenseCents: Math.round(expenseValue * 100),
-          balanceCents: Math.round(balanceValue * 100)
+          balanceCents: Math.round(balanceValue * 100),
+          portfolioCents: hasInvestmentPortfolio
+            ? Math.round((portfolioValue ?? 0) * 100)
+            : summary?.portfolioCents ?? 0
         });
         await refreshData();
       } catch (err) {
@@ -108,7 +121,7 @@ export function useMonthlyForm({
         setSaving(false);
       }
     },
-    [form, monthValue, refreshData, readOnly, saveSnapshot, setError, t]
+    [form, hasInvestmentPortfolio, monthValue, refreshData, readOnly, saveSnapshot, setError, summary, t]
   );
 
   return {

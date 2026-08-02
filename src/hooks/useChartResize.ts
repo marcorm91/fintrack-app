@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import type { Chart, ChartType } from 'chart.js';
+import type { Chart } from 'chart.js';
 
-type ChartKinds = Extract<ChartType, 'bar' | 'line'>;
+type ChartKinds = 'bar';
 
-export type ChartInstance<TType extends ChartType, TData, TLabel> =
+export type ChartInstance<TType extends ChartKinds, TData, TLabel> =
   | Chart<TType, TData, TLabel>
   | undefined;
 

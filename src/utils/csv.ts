@@ -51,7 +51,8 @@ const IMPORT_HEADER_ALIASES = {
   year: ['year', 'ano'],
   income: ['income', 'ingresos'],
   expense: ['expense', 'gastos'],
-  balance: ['balance', 'saldo', 'acumulacion', 'saldo al cierre', 'saldo cierre']
+  balance: ['balance', 'saldo', 'efectivo', 'acumulacion', 'saldo al cierre', 'saldo cierre'],
+  portfolio: ['portfolio', 'cartera', 'inversiones', 'cartera al cierre']
 };
 
 function normalizeHeader(value: string) {
@@ -144,6 +145,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
   let incomeIndex = 1;
   let expenseIndex = 2;
   let balanceIndex = 3;
+  let portfolioIndex = 4;
   let yearIndex = -1;
 
   if (hasHeader) {
@@ -153,6 +155,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     incomeIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.income);
     expenseIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.expense);
     balanceIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.balance);
+    portfolioIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolio);
     if (monthIndex < 0 || incomeIndex < 0 || expenseIndex < 0 || balanceIndex < 0) {
       throw new Error(i18n.t('errors.missingColumns'));
     }
@@ -171,14 +174,22 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     const income = parseLooseNumber(row[incomeIndex] ?? '');
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
-    if (income === null || expense === null || balance === null) {
+    const portfolio =
+      portfolioIndex >= 0 ? parseLooseNumber(row[portfolioIndex] ?? '') : 0;
+    if (
+      income === null ||
+      expense === null ||
+      balance === null ||
+      portfolio === null
+    ) {
       throw new Error(i18n.t('errors.invalidValuesLine', { line: i + 1 }));
     }
     snapshots.push({
       month: monthValue,
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
-      balanceCents: Math.round(balance * 100)
+      balanceCents: Math.round(balance * 100),
+      portfolioCents: Math.round(portfolio * 100)
     });
   }
 
@@ -215,6 +226,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
   let incomeIndex = 0;
   let expenseIndex = 1;
   let balanceIndex = 2;
+  let portfolioIndex = 3;
   let yearIndex = -1;
 
   if (hasHeader) {
@@ -224,6 +236,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
     incomeIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.income);
     expenseIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.expense);
     balanceIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.balance);
+    portfolioIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolio);
     if (incomeIndex < 0 || expenseIndex < 0 || balanceIndex < 0) {
       throw new Error(i18n.t('errors.missingColumnsMonth'));
     }
@@ -251,14 +264,22 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
     const income = parseLooseNumber(row[incomeIndex] ?? '');
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
-    if (income === null || expense === null || balance === null) {
+    const portfolio =
+      portfolioIndex >= 0 ? parseLooseNumber(row[portfolioIndex] ?? '') : 0;
+    if (
+      income === null ||
+      expense === null ||
+      balance === null ||
+      portfolio === null
+    ) {
       throw new Error(i18n.t('errors.invalidValuesLine', { line: startIndex + i + 1 }));
     }
     snapshots.push({
       month,
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
-      balanceCents: Math.round(balance * 100)
+      balanceCents: Math.round(balance * 100),
+      portfolioCents: Math.round(portfolio * 100)
     });
   }
 

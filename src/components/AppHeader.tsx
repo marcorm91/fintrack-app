@@ -14,17 +14,17 @@ export function AppHeader({
   t
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/10 bg-white/90 backdrop-blur">
-      <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-6">
-        <div className="min-w-0">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
-            {t('app.tagline')}
-          </p>
-          <h1 className="truncate text-xl font-semibold text-ink sm:text-4xl">{t('app.title')}</h1>
+    <header className="sticky top-0 z-40 rounded-b-2xl border-b border-ink/5 bg-white/95 shadow-card backdrop-blur">
+      <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <img src="/app-icon.svg" alt="" className="h-9 w-9 shrink-0 rounded-2xl shadow-sm" />
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold text-ink sm:text-3xl">{t('app.title')}</h1>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div
-            className="flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 p-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted shadow-sm sm:text-[10px]"
+            className="segmented text-[9px] sm:text-[10px]"
             role="group"
             aria-label={t('language.label')}
           >
@@ -32,10 +32,8 @@ export function AppHeader({
               type="button"
               onClick={() => onLanguageChange('es')}
               aria-pressed={activeLanguage === 'es'}
-              className={`rounded-full px-3 py-1 transition ${
-                activeLanguage === 'es'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'text-muted hover:text-ink'
+              className={`segmented-option px-3 py-1 text-[9px] sm:text-[10px] ${
+                activeLanguage === 'es' ? 'segmented-option-active' : ''
               }`}
             >
               {t('language.es')}
@@ -44,10 +42,8 @@ export function AppHeader({
               type="button"
               onClick={() => onLanguageChange('en')}
               aria-pressed={activeLanguage === 'en'}
-              className={`rounded-full px-3 py-1 transition ${
-                activeLanguage === 'en'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'text-muted hover:text-ink'
+              className={`segmented-option px-3 py-1 text-[9px] sm:text-[10px] ${
+                activeLanguage === 'en' ? 'segmented-option-active' : ''
               }`}
             >
               {t('language.en')}
@@ -58,7 +54,7 @@ export function AppHeader({
             onClick={onOpenSettings}
             aria-label={t('actions.settings')}
             title={t('actions.settings')}
-            className="rounded-full border border-ink/10 bg-white/80 p-2 text-muted shadow-sm transition hover:border-accent hover:text-ink"
+            className="btn btn-neutral btn-icon text-muted hover:text-ink"
           >
             <SettingsIcon />
           </button>
