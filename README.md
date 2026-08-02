@@ -1,31 +1,41 @@
 # Fintrack
 
-Aplicación para control mensual/anual de finanzas personales con gráficas, tablas e importación de datos.
+Aplicación local para control mensual, anual e histórico de finanzas personales con entradas agregadas, gráficas, tablas e importación de datos.
 
 > **Motivación**  
 > Este proyecto nace de una necesidad personal: dejar de gestionar mis finanzas en hojas de Excel que con el tiempo se volvieron difíciles de mantener, propensas a errores y poco prácticas para analizar el histórico.  
-> Fintrack surge como una alternativa local, sencilla y mantenible para controlar ingresos, gastos y saldo acumulado sin depender de herramientas externas.
+> Fintrack surge como una alternativa local, sencilla y mantenible para controlar ingresos, gastos, efectivo y patrimonio sin depender de herramientas externas.
 
 ## Características
 - Vista mensual, anual e histórico.
 - Importación desde CSV o pegado de texto.
 - Exportación CSV y SQL desde ajustes.
-- Gráficas de barras/línea con control de series visibles.
+- Gráficas de barras para flujo de efectivo y patrimonio.
 - Ordenación de columnas en tablas.
 - Idiomas ES/EN.
 - Datos locales con SQLite (Tauri plugin).
 - Filtros por rango y paginación en histórico.
 - Configuración de ruta de base de datos desde la app.
+- Modo solo lectura desde ajustes.
+- Cartera de inversión opcional: si se desactiva, la app no la muestra ni la incluye en cálculos de patrimonio.
+- Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_x64-setup.exe)
-- Windows (MSI): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_aarch64.dmg)
-- Linux (AppImage): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_amd64.AppImage)
-- Linux (DEB): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_amd64.deb)
-- Linux (RPM): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2-1.x86_64.rpm)
-- Android (APK): [Fintrack 1.1.2](https://github.com/marcorm91/fintrack-app/releases/latest/download/Fintrack_1.1.2_android.apk)
+- Windows (instalador .exe): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0-1.x86_64.rpm)
+- Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
+
+## Novedades 2.0.0
+- Rediseño visual de la app con una interfaz más compacta y consistente.
+- Vista mensual centrada en ingresos, gastos y beneficio de efectivo, sin gastos individualizados.
+- Cartera de inversión opcional desde ajustes; al desactivarla no se muestra ni participa en cálculos.
+- Nuevas comparativas anual e histórica, histórico mock desde 2019 y gráficas de barras unificadas.
+- Icono de app renovado para instaladores y ejecutables generados.
 
 ## Stack
 - React + Vite + TypeScript
@@ -53,6 +63,13 @@ npm run lint
 ```bash
 npm run dev
 ```
+
+## Desarrollo con mocks
+```bash
+npm run dev:mocks
+```
+
+Este modo usa `finanzas.mocks.db`, rellena datos simulados en cada arranque y no toca `finanzas.db` ni la ruta guardada en ajustes.
 
 ## Desarrollo desktop (Tauri)
 ```bash
@@ -99,7 +116,8 @@ Cabeceras reconocidas:
 - año: `year`, `ano`
 - ingresos: `income`, `ingresos`
 - gastos: `expense`, `gastos`
-- saldo: `balance`, `saldo`, `acumulacion`, `saldo al cierre`, `saldo cierre`
+- saldo/efectivo: `balance`, `saldo`, `efectivo`, `acumulacion`, `saldo al cierre`, `saldo cierre`
+- cartera inversión: `portfolio`, `cartera`, `inversiones`, `cartera al cierre`
 
 Formatos de mes aceptados:
 - `YYYY-MM` o `YYYY/MM`
@@ -109,13 +127,14 @@ Formatos de mes aceptados:
 Notas:
 - En vista mensual se espera una sola fila (si no se incluye la columna de mes).
 - Si se repite un mes en la importación, se sobrescribe el snapshot de ese mes.
+- La columna de cartera es opcional para compatibilidad con históricos antiguos; si falta, se importa como `0`.
 
 ## Estructura del proyecto
 - `src/`: UI, hooks, features, utils y locales.
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v1.1.0`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*` (por ejemplo `v2.0.0`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Ejemplo de uso
 
@@ -123,18 +142,18 @@ Al subir un tag `v*` (por ejemplo `v1.1.0`), GitHub Actions genera builds para W
 
 <img width="1919" height="1079" alt="imagen" src="https://github.com/user-attachments/assets/b9fe34a7-1258-42ef-b44b-dcc6b78cdd95" />
 Vista principal de la aplicación.
-Permite registrar ingresos, gastos y saldo al cierre de cada mes, mostrando gráficas y métricas clave para validar los datos sin depender de hojas de cálculo.
+Permite registrar ingresos, gastos, saldo al cierre y, si está activada, cartera de inversión. La vista mensual usa una dona para ingresos/gastos de efectivo y muestra el beneficio calculado sin registrar gastos individualizados.
 
 ### Resumen anual (Vista)
 
 <img width="1891" height="884" alt="imagen" src="https://github.com/user-attachments/assets/4d95e332-ce02-49a1-b195-40fdd2bbee3c" />
 <img width="1881" height="765" alt="imagen" src="https://github.com/user-attachments/assets/2beba6ee-9298-43de-bacd-e3f7646773ed" />
-Resumen global del año seleccionado, con agregados de ingresos, gastos, beneficio y saldo final, junto con una gráfica comparativa mes a mes.
+Resumen global del año seleccionado, con agregados de ingresos, gastos, beneficio, efectivo final, cartera final y patrimonio final. Incluye comparativas contra el año anterior o contra un año seleccionado.
 
 ### Histórico (Vista)
 
 <img width="1884" height="797" alt="imagen" src="https://github.com/user-attachments/assets/6e36fbfe-7867-49b6-89f8-f67d50636391" />
-Vista global de todos los años registrados, con agregados anuales de ingresos, gastos, beneficio y saldo al cierre.
+Vista global de todos los años registrados, con agregados anuales de ingresos, gastos, beneficio y patrimonio. Permite filtrar por rango de años y paginar la tabla.
 
 ### Explicación de los campos de entrada
 
@@ -142,9 +161,10 @@ Introduce los importes tal y como aparecen en tu banco al final de cada mes:
 
 - Ingresos: todo lo que ha entrado en el mes.
 - Gastos: todo lo que ha salido en el mes.
-- Saldo al cierre: el dinero total que queda en la cuenta al finalizar el mes.
+- Saldo al cierre: efectivo disponible al finalizar el mes.
+- Cartera inversión: valor de la cartera al cierre del mes, si la opción está activada.
 
-El beneficio se calcula automáticamente.
+El beneficio se calcula automáticamente como ingresos menos gastos. El patrimonio total se calcula como efectivo más cartera cuando la cartera está activada.
 
 ### Extra
 
@@ -162,7 +182,7 @@ Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o m
 
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  
-Este archivo es el origen de todos los datos de la aplicación: meses, histórico y saldo acumulado.
+Este archivo es el origen de todos los datos de la aplicación: meses, histórico, efectivo, cartera y ajustes.
 
 Es importante que la aplicación esté **apuntando al archivo `.db` correcto** para poder ver, guardar o recuperar tu información.  
 Cambiar de archivo implica cambiar de conjunto de datos.
