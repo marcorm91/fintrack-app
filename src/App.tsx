@@ -32,7 +32,7 @@ import type {
   YearTableSortKey
 } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
-import { applyInvestmentPortfolioSetting, summaryFromSeries } from './utils/series';
+import { applyInvestmentPortfolioSetting, getLatestSeriesPointAtOrBefore, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { InsightsPanel } from './components/InsightsPanel';
@@ -150,8 +150,16 @@ export default function App() {
     error: databasePathError,
     browsePath
   } = useDatabaseSettings({ onPathChange: refreshData });
+  const fallbackWealthSummary = useMemo(() => {
+    if (effectiveSummary?.month === monthValue) {
+      return null;
+    }
+    const latestPoint = getLatestSeriesPointAtOrBefore(effectiveSeries, monthValue);
+    return latestPoint ? summaryFromSeries(latestPoint) : null;
+  }, [effectiveSeries, effectiveSummary?.month, monthValue]);
   const { form, saving, handleChange, handleSubmit, resetForm } = useMonthlyForm({
     summary,
+    fallbackWealthSummary,
     monthValue,
     saveSnapshot,
     refreshData,
@@ -345,14 +353,20 @@ export default function App() {
     );
   };
 
-  const globalWealthSummary = useMemo(
-    () =>
-      effectiveSeries.reduce<typeof displaySummary>(
-        (latest, point) => (point.month > latest.month ? summaryFromSeries(point) : latest),
-        displaySummary
-      ),
-    [displaySummary, effectiveSeries]
-  );
+  const globalWealthSummary = useMemo(() => {
+    const latestPoint = getLatestSeriesPointAtOrBefore(effectiveSeries, currentMonthValue);
+    return latestPoint
+      ? summaryFromSeries(latestPoint)
+      : summaryFromSeries({
+          month: currentMonthValue,
+          incomeCents: 0,
+          expenseCents: 0,
+          balanceCents: 0,
+          portfolioCents: 0,
+          totalWealthCents: 0,
+          benefitCents: 0
+        });
+  }, [currentMonthValue, effectiveSeries]);
 
   return (
     <AppLayout

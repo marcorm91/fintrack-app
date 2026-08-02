@@ -62,6 +62,14 @@ function getDonutTooltipPosition(items: MonthlyInputMixItem[], key: MonthlyInput
   return { left: '50%', top: '50%' };
 }
 
+function getDonutItemPercent(items: MonthlyInputMixItem[], cents: number) {
+  const total = items.reduce((sum, item) => sum + Math.abs(item.cents), 0);
+  if (total <= 0) {
+    return '0%';
+  }
+  return `${Math.round((Math.abs(cents) / total) * 100)}%`;
+}
+
 type MonthViewProps = {
   monthValue: string;
   setMonthValue: (value: string | ((prev: string) => string)) => void;
@@ -119,6 +127,8 @@ export function MonthView({
   const donutGradient = getDonutGradient(donutItems);
   const incomeItem = monthlyFlowMix[0];
   const expenseItem = monthlyFlowMix[1];
+  const incomePercent = getDonutItemPercent(monthlyFlowMix, incomeItem.cents);
+  const expensePercent = getDonutItemPercent(monthlyFlowMix, expenseItem.cents);
   const incomeTooltipPosition = getDonutTooltipPosition(monthlyFlowMix, 'income');
   const expenseTooltipPosition = getDonutTooltipPosition(monthlyFlowMix, 'expense');
   return (
@@ -224,27 +234,27 @@ export function MonthView({
             <div className="mt-4 grid place-items-center">
               <div className="relative h-[300px] w-full max-w-[360px] sm:h-[340px]">
                 <div
-                  className="pointer-events-none absolute z-10 min-w-[104px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
+                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
                   style={incomeTooltipPosition}
                 >
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-income" />
                     {incomeItem.label}
                   </span>
-                  <p className="mt-1 whitespace-nowrap font-semibold text-ink">
-                    {formatCents(incomeItem.cents)} EUR
+                  <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                    {formatCents(incomeItem.cents)} EUR <span className="text-muted">({incomePercent})</span>
                   </p>
                 </div>
                 <div
-                  className="pointer-events-none absolute z-10 min-w-[104px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
+                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
                   style={expenseTooltipPosition}
                 >
                   <span className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-expense" />
                     {expenseItem.label}
                   </span>
-                  <p className="mt-1 whitespace-nowrap font-semibold text-ink">
-                    {formatCents(expenseItem.cents)} EUR
+                  <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                    {formatCents(expenseItem.cents)} EUR <span className="text-muted">({expensePercent})</span>
                   </p>
                 </div>
                 <div className="absolute left-1/2 top-1/2 grid h-56 w-56 -translate-x-1/2 -translate-y-1/2 place-items-center sm:h-64 sm:w-64">

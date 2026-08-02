@@ -47,6 +47,17 @@ export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): Mon
   });
 }
 
+export function getLatestSeriesPointAtOrBefore(
+  series: MonthlySeriesPoint[],
+  monthValue: string
+): MonthlySeriesPoint | null {
+  return series.reduce<MonthlySeriesPoint | null>(
+    (latest, point) =>
+      point.month <= monthValue && (!latest || point.month > latest.month) ? point : latest,
+    null
+  );
+}
+
 export function getBalanceTrend(current: number, previous: number): BalanceTrend {
   if (current > previous) return 'up';
   if (current < previous) return 'down';

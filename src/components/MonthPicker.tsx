@@ -52,7 +52,7 @@ export function MonthPicker({
         onClick={() => setOpen((prev) => !prev)}
         aria-label={label}
         title={label}
-        className={`btn btn-neutral normal-case tracking-normal text-base text-ink focus:border-accent focus:outline-none sm:px-4 sm:text-sm ${buttonClassName}`.trim()}
+        className={`btn btn-neutral min-w-[136px] justify-between normal-case tracking-normal text-base text-ink focus:border-accent focus:outline-none sm:px-4 sm:text-sm ${buttonClassName}`.trim()}
       >
         <span className={labelClassName}>
           {getMonthLabel(value, locale)} {year}

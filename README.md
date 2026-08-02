@@ -21,21 +21,22 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.0/Fintrack_2.0.0-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
 
-## Novedades 2.0.0
-- Rediseño visual de la app con una interfaz más compacta y consistente.
-- Vista mensual centrada en ingresos, gastos y beneficio de efectivo, sin gastos individualizados.
-- Cartera de inversión opcional desde ajustes; al desactivarla no se muestra ni participa en cálculos.
-- Nuevas comparativas anual e histórica, histórico mock desde 2019 y gráficas de barras unificadas.
-- Icono de app renovado para instaladores y ejecutables generados.
+## Novedades 2.0.1
+- Mantiene patrimonio, efectivo y cartera al navegar a meses sin datos.
+- Precarga saldo al cierre y cartera inversión con el último valor conocido en meses nuevos.
+- Evita perder el valor interno de cartera cuando la cartera de inversión está desactivada.
+- Fija el ancho del selector de mes para evitar saltos visuales al cambiar de mes.
+- Añade el porcentaje de ingresos y gastos en la dona mensual.
+- Mantiene los cambios principales de 2.0.0: nuevo diseño, cartera opcional, comparativas anual/histórica, mocks desde 2019 e icono renovado.
 
 ## Stack
 - React + Vite + TypeScript
@@ -134,7 +135,7 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v2.0.0`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*` (por ejemplo `v2.0.1`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Ejemplo de uso
 

@@ -6,6 +6,7 @@ import { formatInputCents, parseAmount } from '../utils/format';
 
 type UseMonthlyFormOptions = {
   summary: MonthlySummary | null;
+  fallbackWealthSummary?: MonthlySummary | null;
   monthValue: string;
   saveSnapshot: (snapshot: MonthlySnapshotInput) => Promise<void>;
   refreshData: () => Promise<void> | void;
@@ -24,6 +25,7 @@ const emptyForm: FormState = {
 
 export function useMonthlyForm({
   summary,
+  fallbackWealthSummary = null,
   monthValue,
   saveSnapshot,
   refreshData,
@@ -40,20 +42,29 @@ export function useMonthlyForm({
   }, []);
 
   useEffect(() => {
-    if (!summary) {
-      resetForm();
+    const monthSummary = summary?.month === monthValue ? summary : null;
+    if (monthSummary) {
+      setForm({
+        income: monthSummary.incomeCents ? formatInputCents(monthSummary.incomeCents) : '',
+        expense: monthSummary.expenseCents ? formatInputCents(monthSummary.expenseCents) : '',
+        balance: monthSummary.balanceCents ? formatInputCents(monthSummary.balanceCents) : '',
+        portfolio: monthSummary.portfolioCents ? formatInputCents(monthSummary.portfolioCents) : ''
+      });
       return;
     }
-    if (summary.month !== monthValue) {
+
+    if (fallbackWealthSummary) {
+      setForm({
+        income: '',
+        expense: '',
+        balance: fallbackWealthSummary.balanceCents ? formatInputCents(fallbackWealthSummary.balanceCents) : '',
+        portfolio: fallbackWealthSummary.portfolioCents ? formatInputCents(fallbackWealthSummary.portfolioCents) : ''
+      });
       return;
     }
-    setForm({
-      income: summary.incomeCents ? formatInputCents(summary.incomeCents) : '',
-      expense: summary.expenseCents ? formatInputCents(summary.expenseCents) : '',
-      balance: summary.balanceCents ? formatInputCents(summary.balanceCents) : '',
-      portfolio: summary.portfolioCents ? formatInputCents(summary.portfolioCents) : ''
-    });
-  }, [summary, monthValue, resetForm]);
+
+    resetForm();
+  }, [fallbackWealthSummary, summary, monthValue, resetForm]);
 
   const handleChange = useCallback(
     (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +117,7 @@ export function useMonthlyForm({
           balanceCents: Math.round(balanceValue * 100),
           portfolioCents: hasInvestmentPortfolio
             ? Math.round((portfolioValue ?? 0) * 100)
-            : summary?.portfolioCents ?? 0
+            : summary?.portfolioCents ?? fallbackWealthSummary?.portfolioCents ?? 0
         });
         await refreshData();
       } catch (err) {
@@ -121,7 +132,7 @@ export function useMonthlyForm({
         setSaving(false);
       }
     },
-    [form, hasInvestmentPortfolio, monthValue, refreshData, readOnly, saveSnapshot, setError, summary, t]
+    [fallbackWealthSummary, form, hasInvestmentPortfolio, monthValue, refreshData, readOnly, saveSnapshot, setError, summary, t]
   );
 
   return {
