@@ -86,6 +86,35 @@ function parseLooseNumber(value: string) {
   return amount;
 }
 
+function hasNonZeroPortfolioValues(rows: string[][], startIndex: number, portfolioIndex: number) {
+  if (portfolioIndex < 0) {
+    return false;
+  }
+  return rows.slice(startIndex).some((row) => {
+    const cell = (row[portfolioIndex] ?? '').trim();
+    if (!cell) {
+      return false;
+    }
+    const value = parseLooseNumber(cell);
+    return value !== null && value !== 0;
+  });
+}
+
+function parsePortfolioValue(row: string[], portfolioIndex: number, usePortfolioColumn: boolean) {
+  if (portfolioIndex < 0) {
+    return undefined;
+  }
+  const cell = (row[portfolioIndex] ?? '').trim();
+  if (!cell) {
+    return undefined;
+  }
+  const value = parseLooseNumber(cell);
+  if (value === null) {
+    return null;
+  }
+  return usePortfolioColumn ? value : undefined;
+}
+
 function parseYearValue(value: string | undefined) {
   if (!value) return null;
   const digits = value.replace(/[^\d]/g, '');
@@ -161,6 +190,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     }
   }
 
+  const usePortfolioColumn = hasNonZeroPortfolioValues(rows, startIndex, portfolioIndex);
   const snapshots: MonthlySnapshotInput[] = [];
   for (let i = startIndex; i < rows.length; i += 1) {
     const row = rows[i];
@@ -174,8 +204,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     const income = parseLooseNumber(row[incomeIndex] ?? '');
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
-    const portfolio =
-      portfolioIndex >= 0 ? parseLooseNumber(row[portfolioIndex] ?? '') : 0;
+    const portfolio = parsePortfolioValue(row, portfolioIndex, usePortfolioColumn);
     if (
       income === null ||
       expense === null ||
@@ -184,12 +213,15 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     ) {
       throw new Error(i18n.t('errors.invalidValuesLine', { line: i + 1 }));
     }
+    if (income === 0 && expense === 0 && balance === 0 && (portfolio === undefined || portfolio === 0)) {
+      continue;
+    }
     snapshots.push({
       month: monthValue,
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
       balanceCents: Math.round(balance * 100),
-      portfolioCents: Math.round(portfolio * 100)
+      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100)
     });
   }
 
@@ -251,6 +283,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
     throw new Error(i18n.t('errors.monthImportSingleRow'));
   }
 
+  const usePortfolioColumn = hasNonZeroPortfolioValues(rowsToParse, 0, portfolioIndex);
   const snapshots: MonthlySnapshotInput[] = [];
   for (let i = 0; i < rowsToParse.length; i += 1) {
     const row = rowsToParse[i];
@@ -264,8 +297,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
     const income = parseLooseNumber(row[incomeIndex] ?? '');
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
-    const portfolio =
-      portfolioIndex >= 0 ? parseLooseNumber(row[portfolioIndex] ?? '') : 0;
+    const portfolio = parsePortfolioValue(row, portfolioIndex, usePortfolioColumn);
     if (
       income === null ||
       expense === null ||
@@ -279,7 +311,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
       balanceCents: Math.round(balance * 100),
-      portfolioCents: Math.round(portfolio * 100)
+      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100)
     });
   }
 

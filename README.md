@@ -21,21 +21,21 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.1/Fintrack_2.0.1-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
 
-## Novedades 2.0.1
-- Mantiene patrimonio, efectivo y cartera al navegar a meses sin datos.
-- Precarga saldo al cierre y cartera inversión con el último valor conocido en meses nuevos.
-- Evita perder el valor interno de cartera cuando la cartera de inversión está desactivada.
-- Fija el ancho del selector de mes para evitar saltos visuales al cambiar de mes.
-- Añade el porcentaje de ingresos y gastos en la dona mensual.
+## Novedades 2.0.2
+- Mantiene patrimonio, efectivo y cartera desde el último mes con saldo al cierre informado.
+- Evita que meses posteriores sin datos o con saldo al cierre `0` corten el patrimonio acumulado.
+- Precarga saldo al cierre y cartera inversión en meses nuevos desde el último cierre real.
+- Mejora la importación de CSV antiguos: ignora filas vacías con todo a `0` y no usa una columna de cartera completamente a `0` para sobrescribir cartera existente.
+- Mantiene las mejoras de 2.0.1: ancho estable del selector de mes y porcentaje de ingresos/gastos en la dona mensual.
 - Mantiene los cambios principales de 2.0.0: nuevo diseño, cartera opcional, comparativas anual/histórica, mocks desde 2019 e icono renovado.
 
 ## Stack
@@ -128,14 +128,15 @@ Formatos de mes aceptados:
 Notas:
 - En vista mensual se espera una sola fila (si no se incluye la columna de mes).
 - Si se repite un mes en la importación, se sobrescribe el snapshot de ese mes.
-- La columna de cartera es opcional para compatibilidad con históricos antiguos; si falta, se importa como `0`.
+- La columna de cartera es opcional para compatibilidad con históricos antiguos; si falta o viene vacía, se conserva la cartera ya guardada para ese mes o la del último mes anterior con saldo al cierre informado.
+- Si la columna de cartera existe pero todos sus valores son `0`, se trata como una columna heredada y no se usa para sobrescribir la cartera existente.
 
 ## Estructura del proyecto
 - `src/`: UI, hooks, features, utils y locales.
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v2.0.1`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*` (por ejemplo `v2.0.2`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Ejemplo de uso
 

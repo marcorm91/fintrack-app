@@ -47,13 +47,21 @@ export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): Mon
   });
 }
 
-export function getLatestSeriesPointAtOrBefore(
+export function hasClosingBalanceEntry(point: Pick<MonthlySeriesPoint, 'balanceCents'>) {
+  return point.balanceCents !== 0;
+}
+
+export function getLatestClosingBalancePointAtOrBefore(
   series: MonthlySeriesPoint[],
   monthValue: string
 ): MonthlySeriesPoint | null {
   return series.reduce<MonthlySeriesPoint | null>(
     (latest, point) =>
-      point.month <= monthValue && (!latest || point.month > latest.month) ? point : latest,
+      point.month <= monthValue &&
+      hasClosingBalanceEntry(point) &&
+      (!latest || point.month > latest.month)
+        ? point
+        : latest,
     null
   );
 }

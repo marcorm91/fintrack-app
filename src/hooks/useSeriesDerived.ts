@@ -7,7 +7,7 @@ import type {
   YearTableSortKey
 } from '../types';
 import type { MonthlySeriesPoint } from '../db';
-import { buildYearSeries, getBalanceTrend } from '../utils/series';
+import { buildYearSeries, getBalanceTrend, hasClosingBalanceEntry } from '../utils/series';
 
 export type AllYearsPoint = {
   year: string;
@@ -76,7 +76,7 @@ export function useSeriesDerived({
         balance: number;
         portfolio: number;
         totalWealth: number;
-        latestMonth: string;
+        latestClosingBalanceMonth: string;
       }
     >();
     for (const point of series) {
@@ -89,13 +89,13 @@ export function useSeriesDerived({
           balance: 0,
           portfolio: 0,
           totalWealth: 0,
-          latestMonth: ''
+          latestClosingBalanceMonth: ''
         };
       entry.income += point.incomeCents;
       entry.expense += point.expenseCents;
       entry.benefit += point.benefitCents;
-      if (point.month > entry.latestMonth) {
-        entry.latestMonth = point.month;
+      if (hasClosingBalanceEntry(point) && point.month > entry.latestClosingBalanceMonth) {
+        entry.latestClosingBalanceMonth = point.month;
         entry.balance = point.balanceCents;
         entry.portfolio = point.portfolioCents;
         entry.totalWealth = point.totalWealthCents;
@@ -128,10 +128,7 @@ export function useSeriesDerived({
     const lastWealthSnapshot =
       [...yearSeries]
         .reverse()
-        .find(
-          (point) =>
-            point.balanceCents !== 0 || point.portfolioCents !== 0 || point.totalWealthCents !== 0
-        ) ?? null;
+        .find((point) => hasClosingBalanceEntry(point)) ?? null;
     return {
       incomeCents: totals.income,
       expenseCents: totals.expense,

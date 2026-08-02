@@ -143,7 +143,7 @@ export interface MonthlySnapshotInput {
   incomeCents: number;
   expenseCents: number;
   balanceCents: number;
-  portfolioCents: number;
+  portfolioCents?: number;
 }
 
 function shouldSeedDevData() {
@@ -180,6 +180,20 @@ SELECT
   portfolio_cents
 FROM monthly_snapshots
 ORDER BY month;
+`;
+
+const MONTHLY_WEALTH_SQL = `
+SELECT balance_cents, portfolio_cents
+FROM monthly_snapshots
+WHERE month = ?;
+`;
+
+const LATEST_PORTFOLIO_BEFORE_MONTH_SQL = `
+SELECT portfolio_cents
+FROM monthly_snapshots
+WHERE month < ? AND balance_cents <> 0
+ORDER BY month DESC
+LIMIT 1;
 `;
 
 const UPSERT_MONTH_SQL = `
@@ -232,10 +246,16 @@ let initPromise: Promise<void> | null = null;
 let devSeedPromise: Promise<void> | null = null;
 let mockSnapshotsPromise: Promise<MonthlySnapshotInput[]> | null = null;
 
+function snapshotPortfolioCents(snapshot: MonthlySnapshotInput) {
+  return snapshot.portfolioCents ?? 0;
+}
+
 function summaryFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySummary {
+  const portfolioCents = snapshotPortfolioCents(snapshot);
   return {
     ...snapshot,
-    totalWealthCents: snapshot.balanceCents + snapshot.portfolioCents,
+    portfolioCents,
+    totalWealthCents: snapshot.balanceCents + portfolioCents,
     benefitCents: snapshot.incomeCents - snapshot.expenseCents
   };
 }
@@ -432,22 +452,47 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
   if (shouldUseMockDatabase()) {
     const snapshots = await getMockSnapshots();
     const index = snapshots.findIndex((point) => point.month === input.month);
+    const existingPortfolioCents =
+      index >= 0 && snapshots[index].balanceCents !== 0 ? snapshotPortfolioCents(snapshots[index]) : undefined;
+    const latestPreviousPortfolioCents = [...snapshots]
+      .filter((point) => point.month < input.month && point.balanceCents !== 0)
+      .sort((a, b) => b.month.localeCompare(a.month))[0]?.portfolioCents;
+    const previousPortfolioCents =
+      input.portfolioCents ?? existingPortfolioCents ?? latestPreviousPortfolioCents ?? 0;
+    const nextInput = {
+      ...input,
+      portfolioCents: previousPortfolioCents
+    };
     if (index >= 0) {
-      snapshots[index] = input;
+      snapshots[index] = nextInput;
     } else {
-      snapshots.push(input);
+      snapshots.push(nextInput);
     }
     snapshots.sort((a, b) => a.month.localeCompare(b.month));
     return;
   }
 
   const db = await initDb();
+  let portfolioCents = input.portfolioCents;
+  if (portfolioCents === undefined) {
+    const existingRows = await db.select<{ balance_cents?: number; portfolio_cents?: number }>(MONTHLY_WEALTH_SQL, [
+      input.month
+    ]);
+    const existingRow = existingRows[0];
+    portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+  }
+  if (portfolioCents === undefined) {
+    const previousRows = await db.select<{ portfolio_cents?: number }>(LATEST_PORTFOLIO_BEFORE_MONTH_SQL, [
+      input.month
+    ]);
+    portfolioCents = previousRows[0]?.portfolio_cents ?? 0;
+  }
   await db.execute(UPSERT_MONTH_SQL, [
     input.month,
     input.incomeCents,
     input.expenseCents,
     input.balanceCents,
-    input.portfolioCents
+    portfolioCents
   ]);
 }
 

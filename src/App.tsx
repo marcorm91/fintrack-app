@@ -32,7 +32,7 @@ import type {
   YearTableSortKey
 } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
-import { applyInvestmentPortfolioSetting, getLatestSeriesPointAtOrBefore, summaryFromSeries } from './utils/series';
+import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { InsightsPanel } from './components/InsightsPanel';
@@ -154,7 +154,7 @@ export default function App() {
     if (effectiveSummary?.month === monthValue) {
       return null;
     }
-    const latestPoint = getLatestSeriesPointAtOrBefore(effectiveSeries, monthValue);
+    const latestPoint = getLatestClosingBalancePointAtOrBefore(effectiveSeries, monthValue);
     return latestPoint ? summaryFromSeries(latestPoint) : null;
   }, [effectiveSeries, effectiveSummary?.month, monthValue]);
   const { form, saving, handleChange, handleSubmit, resetForm } = useMonthlyForm({
@@ -354,7 +354,7 @@ export default function App() {
   };
 
   const globalWealthSummary = useMemo(() => {
-    const latestPoint = getLatestSeriesPointAtOrBefore(effectiveSeries, currentMonthValue);
+    const latestPoint = getLatestClosingBalancePointAtOrBefore(effectiveSeries, currentMonthValue);
     return latestPoint
       ? summaryFromSeries(latestPoint)
       : summaryFromSeries({
