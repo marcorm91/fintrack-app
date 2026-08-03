@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/app-icon.svg" alt="Fintrack" width="96" height="96" />
+</p>
+
 # Fintrack
 
 Aplicación local para control mensual, anual e histórico de finanzas personales con entradas agregadas, gráficas, tablas e importación de datos.
@@ -21,14 +25,26 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.2/Fintrack_2.0.2-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
+
+## Novedades 2.0.3
+- Extiende el swipe mensual a todo el contenido de la pestaña de mes.
+- Elimina los chevrons flotantes móviles y deja el swipe como gesto lateral principal.
+- Mueve el botón flotante `+` a un portal para evitar problemas con padres transformados.
+- Añade animación de entrada al botón `+` y mantiene su posición fixed durante el swipe.
+- Corrige el overflow horizontal de la vista anual móvil al cambiar a años con datos.
+- Abre los modales de gráficas anual e histórico a pantalla completa también en desktop.
+- Permite cerrar los modales de gráficas con la tecla `Escape`.
+- Añade el año seleccionado al título del modal de gráfica anual.
+- Elimina constantes de series y props obsoletas sin uso.
+- Refuerza tipados de resultados SQL, tooltips de gráficas, bloqueo de orientación e imports de insights.
 
 ## Novedades 2.0.2
 - Mantiene patrimonio, efectivo y cartera desde el último mes con saldo al cierre informado.
@@ -91,7 +107,7 @@ Recomendado:
 - Ofrecer un ZIP con el ejecutable.
 - Incluir un checksum SHA256 para verificar integridad.
 
-Ejemplo para generar checksum:
+Comando para generar checksum:
 ```bash
 Get-FileHash -Algorithm SHA256 .\src-tauri\target\release\fintrack-app.exe
 ```
@@ -137,28 +153,9 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*` (por ejemplo `v2.0.2`), GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*`, como `v2.0.3`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
-## Ejemplo de uso
-
-### Resumen mensual (Vista)
-
-<img width="1919" height="1079" alt="imagen" src="https://github.com/user-attachments/assets/b9fe34a7-1258-42ef-b44b-dcc6b78cdd95" />
-Vista principal de la aplicación.
-Permite registrar ingresos, gastos, saldo al cierre y, si está activada, cartera de inversión. La vista mensual usa una dona para ingresos/gastos de efectivo y muestra el beneficio calculado sin registrar gastos individualizados.
-
-### Resumen anual (Vista)
-
-<img width="1891" height="884" alt="imagen" src="https://github.com/user-attachments/assets/4d95e332-ce02-49a1-b195-40fdd2bbee3c" />
-<img width="1881" height="765" alt="imagen" src="https://github.com/user-attachments/assets/2beba6ee-9298-43de-bacd-e3f7646773ed" />
-Resumen global del año seleccionado, con agregados de ingresos, gastos, beneficio, efectivo final, cartera final y patrimonio final. Incluye comparativas contra el año anterior o contra un año seleccionado.
-
-### Histórico (Vista)
-
-<img width="1884" height="797" alt="imagen" src="https://github.com/user-attachments/assets/6e36fbfe-7867-49b6-89f8-f67d50636391" />
-Vista global de todos los años registrados, con agregados anuales de ingresos, gastos, beneficio y patrimonio. Permite filtrar por rango de años y paginar la tabla.
-
-### Explicación de los campos de entrada
+## Campos de entrada
 
 Introduce los importes tal y como aparecen en tu banco al final de cada mes:
 
@@ -169,16 +166,15 @@ Introduce los importes tal y como aparecen en tu banco al final de cada mes:
 
 El beneficio se calcula automáticamente como ingresos menos gastos. El patrimonio total se calcula como efectivo más cartera cuando la cartera está activada.
 
-### Extra
+## Operaciones
 
 **Importar CSV** <br/>
 Puedes importar un archivo CSV con tus datos históricos.
 El importador detecta automáticamente el delimitador (coma o punto y coma) y reconoce cabeceras en español o inglés.
 
 **Pegar datos** <br/>
-También puedes pegar directamente los datos como texto, tal y como se muestran en el ejemplo del campo.
-El formato de los datos depende de la vista desde la que se realiza la importación (mensual, anual o histórico).
-Cada vista muestra un ejemplo de formato en el campo de texto, que debe respetarse al pegar los datos.
+También puedes pegar directamente los datos como texto.
+El formato depende de la vista desde la que se realiza la importación: mensual, anual o histórico.
 
 **Exportar CSV/SQL** <br/>
 Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o migraciones.
@@ -194,8 +190,6 @@ Cambiar de archivo implica cambiar de conjunto de datos.
 Ventaja clave: los datos **no se alojan en ningun servidor**, no hace falta registro ni cuenta, y todo queda en tu equipo.
 Fintrack busca llevar tus cuentas de forma puntual y **lo mas simple posible**.
 
-<img width="1282" height="710" alt="imagen" src="https://github.com/user-attachments/assets/21637a76-1dd8-44d4-bbd9-14e0e7504304" />
-
 Para enlazar o cambiar el archivo de datos:
 
 1. Abre **Ajustes** desde el icono de configuración.
@@ -203,8 +197,6 @@ Para enlazar o cambiar el archivo de datos:
 3. Guarda la nueva ubicación.
 
 A partir de ese momento, Fintrack utilizará ese archivo como fuente de datos.
-
-> Los datos utilizados en las capturas y ejemplos son datos simulados con fines demostrativos.
 
 ## Licencia
 MIT. Ver `LICENSE`.
