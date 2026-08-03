@@ -1,4 +1,4 @@
-import type { SeriesKey } from './types';
+import type { SeriesKey } from '../types';
 
 export type InsightDelta = {
   key: SeriesKey;

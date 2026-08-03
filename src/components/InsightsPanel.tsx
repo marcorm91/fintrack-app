@@ -99,7 +99,7 @@ export function InsightsPanel({
                     className="flex items-center justify-between gap-4 rounded-lg px-2 py-2 odd:bg-ink/5"
                   >
                     <span className="flex items-center gap-2 text-muted">
-                      <SeriesBullet seriesKey={delta.key} valueCents={delta.currentCents} />
+                      <SeriesBullet seriesKey={delta.key} />
                       {delta.label}
                     </span>
                     <div className="text-right">

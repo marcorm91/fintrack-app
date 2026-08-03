@@ -84,6 +84,8 @@ export function YearView({
   const isMobile = useIsMobile();
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [activeChartPanel, setActiveChartPanel] = useState<'summary' | 'wealth'>('summary');
+  const [yearSwipeStart, setYearSwipeStart] = useState<{ x: number; y: number } | null>(null);
+  const [yearSlideDirection, setYearSlideDirection] = useState<'next' | 'previous' | null>(null);
   const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
     'bar',
     Array<number | null>,
@@ -117,6 +119,7 @@ export function YearView({
   }, [sortedYearSeries]);
   const activeChartTitle =
     activeChartPanel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart');
+  const activeYearChartModalTitle = `${activeChartTitle} ${yearValue}`;
   const visibleColumns =
     1 +
     Number(yearSeriesVisibility.income) +
@@ -133,6 +136,7 @@ export function YearView({
   const handleYearChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
+      setChartModalOpen(true);
       return;
     }
     const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
@@ -148,6 +152,7 @@ export function YearView({
   const handleYearWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
+      setChartModalOpen(true);
       return;
     }
     const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
@@ -159,6 +164,22 @@ export function YearView({
   const yearWealthChartOptionsWithClick: SeriesChartOptions = {
     ...yearChartOptions,
     onClick: handleYearWealthChartClick
+  };
+  const handleYearSwipeEnd = (clientX: number, clientY: number) => {
+    if (!isMobile || !yearSwipeStart) {
+      setYearSwipeStart(null);
+      return;
+    }
+
+    const deltaX = clientX - yearSwipeStart.x;
+    const deltaY = clientY - yearSwipeStart.y;
+    if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY) * 1.6) {
+      const direction = deltaX < 0 ? 'next' : 'previous';
+      setYearSlideDirection(direction);
+      setYearValue((prev) => shiftYearValue(prev, direction === 'next' ? 1 : -1));
+      window.setTimeout(() => setYearSlideDirection(null), 180);
+    }
+    setYearSwipeStart(null);
   };
   const compactYearChartOptions: SeriesChartOptions = isMobile
     ? {
@@ -208,15 +229,46 @@ export function YearView({
     : yearWealthChartOptionsWithClick;
   const yearChartModalMinWidth = Math.max(360, sortedYearSeries.length * 56);
   return (
-    <>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
-          <span>{t('labels.yearChart')}</span>
-          <span className="text-muted transition group-open:rotate-90">
-            <ChevronIcon direction="right" />
-          </span>
-        </summary>
-        <div className="mt-2">
+    <div
+      className="min-w-0 overflow-x-hidden"
+      onTouchStart={(event) => {
+        if (!isMobile || chartModalOpen) {
+          return;
+        }
+        const target = event.target as HTMLElement;
+        if (target.closest('button, input, select, textarea, canvas, [role="button"]')) {
+          return;
+        }
+        const touch = event.touches[0];
+        if (touch) {
+          setYearSwipeStart({ x: touch.clientX, y: touch.clientY });
+        }
+      }}
+      onTouchEnd={(event) => {
+        const touch = event.changedTouches[0];
+        if (touch) {
+          handleYearSwipeEnd(touch.clientX, touch.clientY);
+        }
+      }}
+      onTouchCancel={() => setYearSwipeStart(null)}
+    >
+      <div
+        className={`grid min-w-0 gap-4 overflow-x-hidden transition duration-150 ease-out sm:gap-6 ${
+          yearSlideDirection === 'next'
+            ? '-translate-x-4 opacity-75'
+            : yearSlideDirection === 'previous'
+              ? 'translate-x-4 opacity-75'
+              : 'opacity-100'
+        }`}
+      >
+        <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
+          <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
+            <span>{t('labels.yearChart')}</span>
+            <span className="text-muted transition group-open:rotate-90">
+              <ChevronIcon direction="right" />
+            </span>
+          </summary>
+          <div className="mt-2">
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
             <div>
               <h2 className="text-xl font-semibold text-ink sm:text-2xl">{yearValue}</h2>
@@ -327,8 +379,8 @@ export function YearView({
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
                 {t('labels.cashFlow')}
               </p>
-              <div className={`mt-3 grid grid-cols-1 gap-3 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className={`mt-3 grid grid-cols-2 gap-2 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
+                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalIncome')}</span>
                     <EyeToggle
@@ -337,12 +389,12 @@ export function YearView({
                       label={t('series.income')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="income" />
-                    <span>{formatCents(yearTotals.incomeCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(yearTotals.incomeCents)} EUR</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalExpense')}</span>
                     <EyeToggle
@@ -351,12 +403,12 @@ export function YearView({
                       label={t('series.expense')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="expense" />
-                    <span>{formatCents(yearTotals.expenseCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(yearTotals.expenseCents)} EUR</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalBenefit')}</span>
                     <EyeToggle
@@ -365,9 +417,9 @@ export function YearView({
                       label={t('series.benefit')}
                     />
                   </div>
-                  <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
-                    <SeriesBullet seriesKey="benefit" valueCents={yearTotals.benefitCents} />
-                    <span>{formatCents(yearTotals.benefitCents)} EUR</span>
+                  <div className={`mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight sm:gap-2 sm:text-lg ${getBenefitClass(yearTotals.benefitCents)}`}>
+                    <SeriesBullet seriesKey="benefit" />
+                    <span className="min-w-0 break-words">{formatCents(yearTotals.benefitCents)} EUR</span>
                   </div>
                 </div>
               </div>
@@ -376,8 +428,8 @@ export function YearView({
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
                 {t('labels.wealth')}
               </p>
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
+                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.finalBalance')}</span>
                     <EyeToggle
@@ -386,14 +438,14 @@ export function YearView({
                       label={t('series.balance')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="balance" />
-                    <span>{formatCents(yearTotals.balanceCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(yearTotals.balanceCents)} EUR</span>
                   </div>
                 </div>
                 {hasInvestmentPortfolio ? (
                   <>
-                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                    <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalPortfolio')}</span>
                         <EyeToggle
@@ -402,12 +454,12 @@ export function YearView({
                           label={t('series.portfolio')}
                         />
                       </div>
-                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                         <SeriesBullet seriesKey="portfolio" />
-                        <span>{formatCents(yearTotals.portfolioCents)} EUR</span>
+                        <span className="min-w-0 break-words">{formatCents(yearTotals.portfolioCents)} EUR</span>
                       </div>
                     </div>
-                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                    <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalWealth')}</span>
                         <EyeToggle
@@ -416,9 +468,9 @@ export function YearView({
                           label={t('series.totalWealth')}
                         />
                       </div>
-                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                         <SeriesBullet seriesKey="totalWealth" />
-                        <span>{formatCents(yearTotals.totalWealthCents)} EUR</span>
+                        <span className="min-w-0 break-words">{formatCents(yearTotals.totalWealthCents)} EUR</span>
                       </div>
                     </div>
                   </>
@@ -476,15 +528,6 @@ export function YearView({
                     </button>
                   ))}
                 </div>
-                {isMobile ? (
-                  <button
-                    type="button"
-                    onClick={() => setChartModalOpen(true)}
-                    className="btn btn-neutral px-3"
-                  >
-                    {t('actions.viewLarge')}
-                  </button>
-                ) : null}
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
@@ -501,7 +544,7 @@ export function YearView({
               {!hasChartData ? (
                 <p className="text-sm text-muted">{t('messages.noChartData')}</p>
               ) : activeChartPanel === 'summary' ? (
-                <div className="h-[160px] sm:h-[320px]" ref={yearChartContainerRef}>
+                <div className="chart-shell h-[160px] sm:h-[320px]" ref={yearChartContainerRef}>
                   <Bar
                     data={yearChartData}
                     options={compactYearChartOptions}
@@ -509,7 +552,7 @@ export function YearView({
                   />
                 </div>
               ) : (
-                <div className="h-[160px] sm:h-[320px]" ref={yearWealthChartContainerRef}>
+                <div className="chart-shell h-[160px] sm:h-[320px]" ref={yearWealthChartContainerRef}>
                   <Bar
                     data={yearWealthChartData}
                     options={compactYearWealthChartOptions}
@@ -519,23 +562,23 @@ export function YearView({
               )}
             </div>
           </div>
-        </div>
-      </details>
+          </div>
+        </details>
 
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
-          <span>{t('labels.monthDetail')}</span>
-          <span className="text-muted transition group-open:rotate-90">
-            <ChevronIcon direction="right" />
-          </span>
-        </summary>
-        <div className="mt-4 flex items-center justify-end">
-          <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-            {yearValue}
-          </span>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
+        <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
+            <span>{t('labels.monthDetail')}</span>
+            <span className="text-muted transition group-open:rotate-90">
+              <ChevronIcon direction="right" />
+            </span>
+          </summary>
+          <div className="mt-4 flex items-center justify-end">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+              {yearValue}
+            </span>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
             <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
                 <th className="py-3 pr-4">
@@ -710,7 +753,7 @@ export function YearView({
           </table>
         </div>
       </details>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+      <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
         <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
           <span>{t('insights.title')}</span>
           <span className="text-muted transition group-open:rotate-90">
@@ -748,12 +791,13 @@ export function YearView({
           />
         </div>
       </details>
+      </div>
       <ChartModal
         open={chartModalOpen}
-        title={activeChartTitle}
+        title={activeYearChartModalTitle}
         closeLabel={t('actions.close')}
         onClose={() => setChartModalOpen(false)}
-        fullScreen={isMobile}
+        fullScreen
         requestLandscape={isMobile}
         rotateHint={t('messages.rotateDevice')}
       >
@@ -781,6 +825,6 @@ export function YearView({
           </div>
         </div>
       </ChartModal>
-    </>
+    </div>
   );
 }

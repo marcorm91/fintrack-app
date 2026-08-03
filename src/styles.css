@@ -51,6 +51,19 @@
     @apply h-7 w-7 shrink-0 p-0;
   }
 
+  .mobile-fab {
+    animation: mobile-fab-enter 180ms ease-out;
+    will-change: transform, opacity;
+  }
+
+  .chart-shell {
+    @apply relative min-w-0 overflow-hidden;
+  }
+
+  .chart-shell canvas {
+    max-width: 100% !important;
+  }
+
   .segmented {
     @apply inline-flex gap-1 border border-ink/10 bg-white/75 p-1;
     border-radius: 12px;
@@ -69,5 +82,17 @@
 
   .segmented-option-active:hover {
     @apply bg-ink text-white;
+  }
+}
+
+@keyframes mobile-fab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

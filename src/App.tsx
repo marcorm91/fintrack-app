@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from './hooks/useSafeAreaInsets';
 import { useReadOnlySetting } from './hooks/useReadOnlySetting';
 import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
 import { useUpdateStatus } from './hooks/useUpdateStatus';
+import { useIsMobile } from './hooks/useIsMobile';
 import type {
   AllTableSortKey,
   SortDirection,
@@ -32,6 +33,7 @@ import type {
   YearTableSortKey
 } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
+import { shiftMonthValue } from './utils/date';
 import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
@@ -49,6 +51,10 @@ export default function App() {
   useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
+  const [monthContentSlideDirection, setMonthContentSlideDirection] = useState<'next' | 'previous' | null>(null);
+  const [monthSwipeStart, setMonthSwipeStart] = useState<{ x: number; y: number } | null>(null);
+  const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
+  const isMobile = useIsMobile();
   const {
     monthValue,
     setMonthValue,
@@ -61,9 +67,6 @@ export default function App() {
   } = usePeriodSelection();
   const { readOnly, toggleReadOnly } = useReadOnlySetting();
   const { toast, setToast } = useToastAutoDismiss();
-  const {
-    visibility: monthSeriesVisibility
-  } = useSeriesVisibility();
   const {
     visibility: yearSeriesVisibility,
     toggleSeries: toggleYearSeries,
@@ -112,12 +115,16 @@ export default function App() {
     () => (summary ? applyInvestmentPortfolioSetting(summary, hasInvestmentPortfolio) : null),
     [hasInvestmentPortfolio, summary]
   );
-  const effectiveMonthSeriesVisibility = useMemo(
-    () =>
-      hasInvestmentPortfolio
-        ? monthSeriesVisibility
-        : { ...monthSeriesVisibility, portfolio: false, totalWealth: false },
-    [hasInvestmentPortfolio, monthSeriesVisibility]
+  const monthInsightsVisibility = useMemo(
+    () => ({
+      income: true,
+      expense: true,
+      benefit: true,
+      balance: true,
+      portfolio: hasInvestmentPortfolio,
+      totalWealth: hasInvestmentPortfolio
+    }),
+    [hasInvestmentPortfolio]
   );
   const effectiveYearSeriesVisibility = useMemo(
     () =>
@@ -135,6 +142,25 @@ export default function App() {
   );
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
+  const handleMonthSwipeAnimation = useCallback((direction: 'next' | 'previous') => {
+    setMonthContentSlideDirection(direction);
+    window.setTimeout(() => setMonthContentSlideDirection(null), 180);
+  }, []);
+  const handleMonthSwipeEnd = useCallback((clientX: number, clientY: number) => {
+    if (!isMobile || monthSwipeBlocked || !monthSwipeStart) {
+      setMonthSwipeStart(null);
+      return;
+    }
+
+    const deltaX = clientX - monthSwipeStart.x;
+    const deltaY = clientY - monthSwipeStart.y;
+    if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY) * 1.6) {
+      const direction = deltaX < 0 ? 'next' : 'previous';
+      handleMonthSwipeAnimation(direction);
+      setMonthValue((prev) => shiftMonthValue(prev, direction === 'next' ? 1 : -1));
+    }
+    setMonthSwipeStart(null);
+  }, [handleMonthSwipeAnimation, isMobile, monthSwipeBlocked, monthSwipeStart, setMonthValue]);
   const {
     settingsOpen,
     openSettings,
@@ -250,7 +276,7 @@ export default function App() {
     monthValue,
     displaySummary,
     series: effectiveSeries,
-    monthSeriesVisibility: effectiveMonthSeriesVisibility,
+    monthSeriesVisibility: monthInsightsVisibility,
     hasMonthData,
     isCurrentMonth,
     t
@@ -474,7 +500,35 @@ export default function App() {
       toast={toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
     >
       {activeTab === 'month' ? (
-        <>
+        <div
+          className={`grid gap-4 transition duration-150 ease-out sm:gap-6 ${
+            monthContentSlideDirection === 'next'
+              ? '-translate-x-4 opacity-75'
+              : monthContentSlideDirection === 'previous'
+                ? 'translate-x-4 opacity-75'
+                : 'opacity-100'
+          }`}
+          onTouchStart={(event) => {
+            if (!isMobile || monthSwipeBlocked) {
+              return;
+            }
+            const target = event.target as HTMLElement;
+            if (target.closest('button, input, select, textarea, [role="button"]')) {
+              return;
+            }
+            const touch = event.touches[0];
+            if (touch) {
+              setMonthSwipeStart({ x: touch.clientX, y: touch.clientY });
+            }
+          }}
+          onTouchEnd={(event) => {
+            const touch = event.changedTouches[0];
+            if (touch) {
+              handleMonthSwipeEnd(touch.clientX, touch.clientY);
+            }
+          }}
+          onTouchCancel={() => setMonthSwipeStart(null)}
+        >
           <MonthView
             monthValue={monthValue}
             setMonthValue={setMonthValue}
@@ -489,6 +543,7 @@ export default function App() {
             readOnly={readOnly}
             hasInvestmentPortfolio={hasInvestmentPortfolio}
             onOpenSettings={openSettings}
+            onMobileFormOpenChange={setMonthSwipeBlocked}
           />
           <InsightsPanel
             title={monthInsights.title}
@@ -498,7 +553,7 @@ export default function App() {
             previousLabel={monthInsights.previousLabel}
             hasAnyData={monthInsights.hasAnyData}
           />
-        </>
+        </div>
       ) : null}
       {activeTab === 'year' ? (
         <YearView

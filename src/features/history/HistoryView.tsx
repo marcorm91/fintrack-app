@@ -274,6 +274,7 @@ export function HistoryView({
   const handleHistoryChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
+      setChartModalOpen(true);
       return;
     }
     const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
@@ -289,6 +290,7 @@ export function HistoryView({
   const handleHistoryWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
     const element = elements[0];
     if (!element) {
+      setChartModalOpen(true);
       return;
     }
     const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
@@ -421,8 +423,8 @@ export function HistoryView({
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
                 {t('labels.cashFlow')}
               </p>
-              <div className={`mt-3 grid grid-cols-1 gap-3 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className={`mt-3 grid grid-cols-2 gap-2 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalIncome')}</span>
                     <EyeToggle
@@ -431,12 +433,12 @@ export function HistoryView({
                       label={t('series.income')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="income" />
-                    <span>{formatCents(historyTotals.incomeCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(historyTotals.incomeCents)} EUR</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalExpense')}</span>
                     <EyeToggle
@@ -445,12 +447,12 @@ export function HistoryView({
                       label={t('series.expense')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="expense" />
-                    <span>{formatCents(historyTotals.expenseCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(historyTotals.expenseCents)} EUR</span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalBenefit')}</span>
                     <EyeToggle
@@ -459,9 +461,9 @@ export function HistoryView({
                       label={t('series.benefit')}
                     />
                   </div>
-                  <div className={`mt-2 font-semibold flex items-center gap-2 text-base sm:text-lg ${getBenefitClass(historyTotals.benefitCents)}`}>
-                    <SeriesBullet seriesKey="benefit" valueCents={historyTotals.benefitCents} />
-                    <span>{formatCents(historyTotals.benefitCents)} EUR</span>
+                  <div className={`mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight sm:gap-2 sm:text-lg ${getBenefitClass(historyTotals.benefitCents)}`}>
+                    <SeriesBullet seriesKey="benefit" />
+                    <span className="min-w-0 break-words">{formatCents(historyTotals.benefitCents)} EUR</span>
                   </div>
                 </div>
               </div>
@@ -470,8 +472,8 @@ export function HistoryView({
               <p className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
                 {t('labels.wealth')}
               </p>
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.finalBalance')}</span>
                     <EyeToggle
@@ -480,14 +482,14 @@ export function HistoryView({
                       label={t('series.balance')}
                     />
                   </div>
-                  <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                  <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                     <SeriesBullet seriesKey="balance" />
-                    <span>{formatCents(historyTotals.balanceCents)} EUR</span>
+                    <span className="min-w-0 break-words">{formatCents(historyTotals.balanceCents)} EUR</span>
                   </div>
                 </div>
                 {hasInvestmentPortfolio ? (
                   <>
-                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalPortfolio')}</span>
                         <EyeToggle
@@ -496,12 +498,12 @@ export function HistoryView({
                           label={t('series.portfolio')}
                         />
                       </div>
-                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                         <SeriesBullet seriesKey="portfolio" />
-                        <span>{formatCents(historyTotals.portfolioCents)} EUR</span>
+                        <span className="min-w-0 break-words">{formatCents(historyTotals.portfolioCents)} EUR</span>
                       </div>
                     </div>
-                    <div className="rounded-xl border border-ink/10 bg-white/90 p-3 text-sm text-muted">
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalWealth')}</span>
                         <EyeToggle
@@ -510,9 +512,9 @@ export function HistoryView({
                           label={t('series.totalWealth')}
                         />
                       </div>
-                      <div className="mt-2 font-semibold flex items-center gap-2 text-base text-ink sm:text-lg">
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold leading-tight text-ink sm:gap-2 sm:text-lg">
                         <SeriesBullet seriesKey="totalWealth" />
-                        <span>{formatCents(historyTotals.totalWealthCents)} EUR</span>
+                        <span className="min-w-0 break-words">{formatCents(historyTotals.totalWealthCents)} EUR</span>
                       </div>
                     </div>
                   </>
@@ -565,15 +567,6 @@ export function HistoryView({
                     </button>
                   ))}
                 </div>
-                {isMobile ? (
-                  <button
-                    type="button"
-                    onClick={() => setChartModalOpen(true)}
-                    className="btn btn-neutral px-3"
-                  >
-                    {t('actions.viewLarge')}
-                  </button>
-                ) : null}
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-3 text-[10px] text-muted sm:text-xs">
@@ -840,7 +833,7 @@ export function HistoryView({
         title={activeChartTitle}
         closeLabel={t('actions.close')}
         onClose={() => setChartModalOpen(false)}
-        fullScreen={isMobile}
+        fullScreen
         requestLandscape={isMobile}
         rotateHint={t('messages.rotateDevice')}
       >

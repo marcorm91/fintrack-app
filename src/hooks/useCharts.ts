@@ -134,7 +134,7 @@ export function useCharts({
         tooltip: {
           callbacks: {
             label: (context: TooltipItem<'bar'>) =>
-              `${context.dataset.label}: ${formatEuro(context.parsed.y)} EUR`
+              `${context.dataset.label}: ${formatEuro(context.parsed.y ?? 0)} EUR`
           }
         }
       },
@@ -251,7 +251,7 @@ export function useCharts({
         tooltip: {
           callbacks: {
             label: (context: TooltipItem<'bar'>) =>
-              `${context.dataset.label}: ${formatEuro(context.parsed.y)} EUR`
+              `${context.dataset.label}: ${formatEuro(context.parsed.y ?? 0)} EUR`
           }
         }
       },

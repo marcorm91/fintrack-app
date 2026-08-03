@@ -1,9 +1,10 @@
 import type { FormState, SeriesKey } from '../../types';
 import type { MonthlySummary } from '../../db';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MonthPicker } from '../../components/MonthPicker';
-import { ChevronIcon } from '../../components/icons';
+import { ChevronIcon, PlusIcon } from '../../components/icons';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftMonthValue } from '../../utils/date';
@@ -18,7 +19,6 @@ type MonthlyInputMixItem = {
   label: string;
   cents: number;
   color: string;
-  colorClass: string;
 };
 
 function getDonutGradient(items: MonthlyInputMixItem[]) {
@@ -84,6 +84,7 @@ type MonthViewProps = {
   readOnly?: boolean;
   hasInvestmentPortfolio: boolean;
   onOpenSettings?: () => void;
+  onMobileFormOpenChange?: (open: boolean) => void;
 };
 
 export function MonthView({
@@ -99,26 +100,27 @@ export function MonthView({
   error,
   readOnly = false,
   hasInvestmentPortfolio,
-  onOpenSettings
+  onOpenSettings,
+  onMobileFormOpenChange
 }: MonthViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const isMobile = useIsMobile();
+  const [mobileFormOpen, setMobileFormOpen] = useState(false);
+  const [sheetTouchStartY, setSheetTouchStartY] = useState<number | null>(null);
   const monthlyFlowMix = useMemo<MonthlyInputMixItem[]>(
     () => [
       {
         key: 'income',
         label: t('series.income'),
         cents: displaySummary.incomeCents,
-        color: MONTH_INPUT_COLORS.income,
-        colorClass: 'bg-income'
+        color: MONTH_INPUT_COLORS.income
       },
       {
         key: 'expense',
         label: t('series.expense'),
         cents: displaySummary.expenseCents,
-        color: MONTH_INPUT_COLORS.expense,
-        colorClass: 'bg-expense'
+        color: MONTH_INPUT_COLORS.expense
       }
     ],
     [displaySummary.expenseCents, displaySummary.incomeCents, t]
@@ -131,10 +133,177 @@ export function MonthView({
   const expensePercent = getDonutItemPercent(monthlyFlowMix, expenseItem.cents);
   const incomeTooltipPosition = getDonutTooltipPosition(monthlyFlowMix, 'income');
   const expenseTooltipPosition = getDonutTooltipPosition(monthlyFlowMix, 'expense');
+  useEffect(() => {
+    onMobileFormOpenChange?.(mobileFormOpen);
+    return () => onMobileFormOpenChange?.(false);
+  }, [mobileFormOpen, onMobileFormOpenChange]);
+  const handleSheetTouchEnd = (clientY: number) => {
+    if (sheetTouchStartY !== null && clientY - sheetTouchStartY > 70) {
+      setMobileFormOpen(false);
+    }
+    setSheetTouchStartY(null);
+  };
+  const formContent = (
+    <>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
+        {isMobile ? (
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            {monthValue.slice(5, 7)}/{monthValue.slice(0, 4)}
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-2 text-sm text-muted sm:text-sm">
+        {t('descriptions.monthSave')}
+      </p>
+      {readOnly ? (
+        <div className="mt-3 rounded-xl border border-ink/5 bg-ink/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-xs">
+          {t('messages.readOnlyActive')}
+        </div>
+      ) : null}
+      <form onSubmit={onSubmit} className="mt-6 grid gap-4">
+        <fieldset className="rounded-2xl border border-income/15 bg-[#f7fff9] p-3 shadow-sm">
+          <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+            {t('labels.monthCashFlow')}
+          </legend>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-income" />
+                {t('series.income')}
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                placeholder={t('placeholders.amount')}
+                value={form.income}
+                onChange={onFormChange('income')}
+                disabled={readOnly}
+                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+              />
+            </label>
+            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-expense" />
+                {t('series.expense')}
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                placeholder={t('placeholders.amount')}
+                value={form.expense}
+                onChange={onFormChange('expense')}
+                disabled={readOnly}
+                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+              />
+            </label>
+          </div>
+        </fieldset>
+        <fieldset className="rounded-2xl border border-balance/15 bg-[#f7fbff] p-3 shadow-sm">
+          <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
+            {t('labels.wealth')}
+          </legend>
+          <div className={`mt-3 grid gap-3 ${hasInvestmentPortfolio ? 'sm:grid-cols-2' : ''}`}>
+            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-balance" />
+                {t('labels.closingBalanceInput')}
+              </span>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                placeholder={t('placeholders.amount')}
+                value={form.balance}
+                onChange={onFormChange('balance')}
+                disabled={readOnly}
+                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+              />
+            </label>
+            {hasInvestmentPortfolio ? (
+              <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-portfolio" />
+                  {t('series.portfolio')}
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder={t('placeholders.amount')}
+                  value={form.portfolio}
+                  onChange={onFormChange('portfolio')}
+                  disabled={readOnly}
+                  className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+                />
+              </label>
+            ) : null}
+          </div>
+        </fieldset>
+        <button
+          type="submit"
+          disabled={saving || readOnly}
+          className="btn btn-primary sticky bottom-0 z-10 mt-2 py-3 text-[11px] shadow-card sm:static sm:text-sm sm:shadow-none md:w-auto"
+        >
+          {saving ? t('actions.saving') : t('actions.saveMonth')}
+        </button>
+      </form>
+      {error ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-100 px-4 py-2 text-sm text-red-700">
+          <span>{error}</span>
+          {onOpenSettings ? (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="btn btn-danger px-3 py-1 text-[10px] sm:text-xs"
+            >
+              {t('actions.openSettings')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
+  const mobileControls = isMobile ? (
+    <>
+      <button
+        type="button"
+        onClick={() => setMobileFormOpen(true)}
+        className="btn btn-primary mobile-fab fixed right-4 z-30 grid h-12 w-12 place-items-center rounded-full p-0 shadow-card"
+        style={{ bottom: 'calc(var(--app-safe-bottom) + 5.25rem)' }}
+        aria-label={t('labels.saveMonth')}
+        title={t('labels.saveMonth')}
+      >
+        <PlusIcon />
+      </button>
+      {mobileFormOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end bg-ink/35" onClick={() => setMobileFormOpen(false)}>
+          <div
+            className="max-h-[86vh] w-full overflow-y-auto rounded-t-2xl border border-ink/10 bg-white p-4 pb-[calc(var(--app-safe-bottom)+1rem)] shadow-card"
+            onClick={(event) => event.stopPropagation()}
+            onTouchStart={(event) => setSheetTouchStartY(event.touches[0]?.clientY ?? null)}
+            onTouchEnd={(event) => handleSheetTouchEnd(event.changedTouches[0]?.clientY ?? 0)}
+          >
+            <button
+              type="button"
+              className="mx-auto mb-4 block h-1.5 w-12 rounded-full bg-ink/15"
+              onClick={() => setMobileFormOpen(false)}
+              aria-label={t('actions.close')}
+              title={t('actions.close')}
+            />
+            {formContent}
+          </div>
+        </div>
+      ) : null}
+    </>
+  ) : null;
   return (
-    <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <section className="order-2 min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:p-6 lg:order-1">
-        <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
+    <div>
+      <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <section className="order-1 min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:p-6 lg:order-1">
+          <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
               {t('labels.monthSummary')}
@@ -225,179 +394,90 @@ export function MonthView({
               <div aria-hidden="true"></div>
             </>
           )}
-        </div>
-        <div className="mt-5">
-          <div className="rounded-2xl border border-ink/5 bg-[#f7fff9] p-4 shadow-card">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-muted sm:text-xs">
-              {t('labels.monthCashFlow')}
-            </p>
-            <div className="mt-4 grid place-items-center">
-              <div className="relative h-[300px] w-full max-w-[360px] sm:h-[340px]">
-                <div
-                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
-                  style={incomeTooltipPosition}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-income" />
-                    {incomeItem.label}
-                  </span>
-                  <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
-                    {formatCents(incomeItem.cents)} EUR <span className="text-muted">({incomePercent})</span>
-                  </p>
-                </div>
-                <div
-                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
-                  style={expenseTooltipPosition}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-expense" />
-                    {expenseItem.label}
-                  </span>
-                  <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
-                    {formatCents(expenseItem.cents)} EUR <span className="text-muted">({expensePercent})</span>
-                  </p>
-                </div>
-                <div className="absolute left-1/2 top-1/2 grid h-56 w-56 -translate-x-1/2 -translate-y-1/2 place-items-center sm:h-64 sm:w-64">
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(33,48,71,0.04)]"
-                    style={{ background: donutGradient }}
-                  />
-                  <div className="absolute inset-[15%] rounded-full bg-[#f7fff9] shadow-[0_12px_34px_-28px_rgba(33,48,71,0.9)]" />
-                  <div className="relative px-6 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-muted">{t('series.benefit')}</p>
-                    <p className={`mt-1 text-2xl font-semibold ${getBenefitClass(displaySummary.benefitCents)}`}>
-                      {formatCents(displaySummary.benefitCents)} EUR
-                    </p>
+          </div>
+          <div className="mt-5">
+            <div className="rounded-2xl border border-ink/5 bg-[#f7fff9] p-4 shadow-card">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-muted sm:text-xs">
+                {t('labels.monthCashFlow')}
+              </p>
+              <div className="mt-4 grid place-items-center">
+                <div className="relative h-[248px] w-full max-w-[360px] sm:h-[340px]">
+                  {!isMobile ? (
+                    <>
+                      <div
+                        className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
+                        style={incomeTooltipPosition}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full bg-income" />
+                          {incomeItem.label}
+                        </span>
+                        <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                          {formatCents(incomeItem.cents)} EUR <span className="text-muted">({incomePercent})</span>
+                        </p>
+                      </div>
+                      <div
+                        className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card"
+                        style={expenseTooltipPosition}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full bg-expense" />
+                          {expenseItem.label}
+                        </span>
+                        <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                          {formatCents(expenseItem.cents)} EUR <span className="text-muted">({expensePercent})</span>
+                        </p>
+                      </div>
+                    </>
+                  ) : null}
+                  <div className="absolute left-1/2 top-1/2 grid h-52 w-52 -translate-x-1/2 -translate-y-1/2 place-items-center sm:h-64 sm:w-64">
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(33,48,71,0.04)]"
+                      style={{ background: donutGradient }}
+                    />
+                    <div className="absolute inset-[15%] rounded-full bg-[#f7fff9] shadow-[0_12px_34px_-28px_rgba(33,48,71,0.9)]" />
+                    <div className="relative max-w-[68%] px-3 text-center">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-muted">{t('series.benefit')}</p>
+                      <p className={`mt-1 break-words text-xl font-semibold leading-tight sm:text-2xl ${getBenefitClass(displaySummary.benefitCents)}`}>
+                        {formatCents(displaySummary.benefitCents)} EUR
+                      </p>
+                    </div>
                   </div>
                 </div>
+                {isMobile ? (
+                  <div className="mt-3 grid w-full grid-cols-2 gap-2">
+                    <div className="min-w-0 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card">
+                      <span className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-income" />
+                        {incomeItem.label}
+                      </span>
+                      <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                        {formatCents(incomeItem.cents)} EUR <span className="text-muted">({incomePercent})</span>
+                      </p>
+                    </div>
+                    <div className="min-w-0 rounded-xl border border-ink/5 bg-white/95 px-3 py-2 text-xs text-muted shadow-card">
+                      <span className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-expense" />
+                        {expenseItem.label}
+                      </span>
+                      <p className="mt-1 whitespace-nowrap text-[11px] font-semibold text-ink">
+                        {formatCents(expenseItem.cents)} EUR <span className="text-muted">({expensePercent})</span>
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="order-1 min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:p-6 lg:order-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
-          {isMobile ? (
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-              {monthValue.slice(5, 7)}/{monthValue.slice(0, 4)}
-            </span>
-          ) : null}
-        </div>
-        <p className="mt-2 text-sm text-muted sm:text-sm">
-          {t('descriptions.monthSave')}
-        </p>
-        {readOnly ? (
-          <div className="mt-3 rounded-xl border border-ink/5 bg-ink/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-xs">
-            {t('messages.readOnlyActive')}
-          </div>
-        ) : null}
-        <form onSubmit={onSubmit} className="mt-6 grid gap-4">
-          <fieldset className="rounded-2xl border border-income/15 bg-[#f7fff9] p-3 shadow-sm">
-            <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-              {t('labels.monthCashFlow')}
-            </legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
-                <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-income" />
-                  {t('series.income')}
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder={t('placeholders.amount')}
-                  value={form.income}
-                  onChange={onFormChange('income')}
-                  disabled={readOnly}
-                  className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
-                />
-              </label>
-              <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
-                <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-expense" />
-                  {t('series.expense')}
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder={t('placeholders.amount')}
-                  value={form.expense}
-                  onChange={onFormChange('expense')}
-                  disabled={readOnly}
-                  className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
-                />
-              </label>
-            </div>
-          </fieldset>
-          <fieldset className="rounded-2xl border border-balance/15 bg-[#f7fbff] p-3 shadow-sm">
-            <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-              {t('labels.wealth')}
-            </legend>
-            <div className={`mt-3 grid gap-3 ${hasInvestmentPortfolio ? 'sm:grid-cols-2' : ''}`}>
-              <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
-                <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-balance" />
-                  {t('labels.closingBalanceInput')}
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder={t('placeholders.amount')}
-                  value={form.balance}
-                  onChange={onFormChange('balance')}
-                  disabled={readOnly}
-                  className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
-                />
-              </label>
-              {hasInvestmentPortfolio ? (
-                <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-portfolio" />
-                    {t('series.portfolio')}
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    inputMode="decimal"
-                    placeholder={t('placeholders.amount')}
-                    value={form.portfolio}
-                    onChange={onFormChange('portfolio')}
-                    disabled={readOnly}
-                    className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
-                  />
-                </label>
-              ) : null}
-            </div>
-          </fieldset>
-          <button
-            type="submit"
-            disabled={saving || readOnly}
-            className="btn btn-primary mt-2 py-3 text-[11px] sm:text-sm md:w-auto"
-          >
-            {saving ? t('actions.saving') : t('actions.saveMonth')}
-          </button>
-        </form>
-        {error ? (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-100 px-4 py-2 text-sm text-red-700">
-            <span>{error}</span>
-            {onOpenSettings ? (
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                className="btn btn-danger px-3 py-1 text-[10px] sm:text-xs"
-              >
-                {t('actions.openSettings')}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
+        <section className="order-2 hidden min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:block sm:p-6 lg:order-2">
+          {formContent}
+        </section>
+      </div>
+
+      {mobileControls ? createPortal(mobileControls, document.body) : null}
     </div>
   );
 }

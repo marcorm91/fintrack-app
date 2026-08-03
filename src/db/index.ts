@@ -283,7 +283,7 @@ async function ensureDevSeeded(db: Database): Promise<void> {
       if (shouldResetDevMocks()) {
         await db.execute(DELETE_ALL_SQL);
       }
-      const rows = await db.select<{ count: number }>('SELECT COUNT(*) as count FROM monthly_snapshots;');
+      const rows = await db.select<Array<{ count: number }>>('SELECT COUNT(*) as count FROM monthly_snapshots;');
       const count = Number(rows[0]?.count ?? 0);
       if (Number.isFinite(count) && count > 0) {
         return;
@@ -305,7 +305,7 @@ async function ensureDevSeeded(db: Database): Promise<void> {
 }
 
 async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
-  const columns = await db.select<{ name: string }>('PRAGMA table_info(monthly_snapshots);');
+  const columns = await db.select<Array<{ name: string }>>('PRAGMA table_info(monthly_snapshots);');
   const existingColumns = new Set(columns.map((column) => column.name));
   if (!existingColumns.has('portfolio_cents')) {
     await db.execute(
@@ -354,13 +354,13 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
   }
 
   const db = await initDb();
-  const rows = await db.select<{
+  const rows = await db.select<Array<{
     month: string;
     income_cents: number;
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
-  }>(MONTHLY_SUMMARY_SQL, [month]);
+  }>>(MONTHLY_SUMMARY_SQL, [month]);
 
   const row = rows[0];
   if (!row) {
@@ -393,7 +393,7 @@ export async function getInvestmentPortfolioEnabled(): Promise<boolean> {
   }
 
   const db = await initDb();
-  const rows = await db.select<{ value: string }>(GET_APP_SETTING_SQL, [INVESTMENT_PORTFOLIO_SETTING_KEY]);
+  const rows = await db.select<Array<{ value: string }>>(GET_APP_SETTING_SQL, [INVESTMENT_PORTFOLIO_SETTING_KEY]);
   const value = rows[0]?.value;
   if (value === 'false') {
     return false;
@@ -423,13 +423,13 @@ export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
   }
 
   const db = await initDb();
-  const rows = await db.select<{
+  const rows = await db.select<Array<{
     month: string;
     income_cents: number;
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
-  }>(MONTHLY_SERIES_SQL);
+  }>>(MONTHLY_SERIES_SQL);
 
   return rows.map((row) => {
     const incomeCents = row.income_cents ?? 0;
@@ -475,14 +475,14 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
   const db = await initDb();
   let portfolioCents = input.portfolioCents;
   if (portfolioCents === undefined) {
-    const existingRows = await db.select<{ balance_cents?: number; portfolio_cents?: number }>(MONTHLY_WEALTH_SQL, [
+    const existingRows = await db.select<Array<{ balance_cents?: number; portfolio_cents?: number }>>(MONTHLY_WEALTH_SQL, [
       input.month
     ]);
     const existingRow = existingRows[0];
     portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
   }
   if (portfolioCents === undefined) {
-    const previousRows = await db.select<{ portfolio_cents?: number }>(LATEST_PORTFOLIO_BEFORE_MONTH_SQL, [
+    const previousRows = await db.select<Array<{ portfolio_cents?: number }>>(LATEST_PORTFOLIO_BEFORE_MONTH_SQL, [
       input.month
     ]);
     portfolioCents = previousRows[0]?.portfolio_cents ?? 0;

@@ -1,28 +1,16 @@
-import type { SeriesKey, TabKey } from './types';
+import type { TabKey } from './types';
 
 export const FLOW_TYPES = [
-  { key: 'income', labelKey: 'series.income', colorClass: 'bg-income', fillClass: 'fill-income' },
-  { key: 'expense', labelKey: 'series.expense', colorClass: 'bg-expense', fillClass: 'fill-expense' },
-  { key: 'benefit', labelKey: 'series.benefit', colorClass: 'bg-benefit', fillClass: 'fill-benefit' }
+  { key: 'income', labelKey: 'series.income' },
+  { key: 'expense', labelKey: 'series.expense' },
+  { key: 'benefit', labelKey: 'series.benefit' }
 ] as const;
 
 export const WEALTH_TYPES = [
-  { key: 'balance', labelKey: 'series.balance', colorClass: 'bg-balance', fillClass: 'fill-balance' },
-  { key: 'portfolio', labelKey: 'series.portfolio', colorClass: 'bg-portfolio', fillClass: 'fill-portfolio' },
-  {
-    key: 'totalWealth',
-    labelKey: 'series.totalWealth',
-    colorClass: 'bg-totalWealth',
-    fillClass: 'fill-totalWealth'
-  }
+  { key: 'balance', labelKey: 'series.balance' },
+  { key: 'portfolio', labelKey: 'series.portfolio' },
+  { key: 'totalWealth', labelKey: 'series.totalWealth' }
 ] as const;
-
-export const BAR_TYPES: Array<{
-  key: SeriesKey;
-  labelKey: string;
-  colorClass: string;
-  fillClass: string;
-}> = [...FLOW_TYPES, ...WEALTH_TYPES];
 
 export const COLORS = {
   income: '#70e3b6',

@@ -25,6 +25,19 @@ export function ChartModal({
   const [isPortrait, setIsPortrait] = useState(false);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, open]);
+
+  useEffect(() => {
     if (!open || !fullScreen) {
       return;
     }
@@ -51,8 +64,11 @@ export function ChartModal({
     }
     const lockOrientation = async () => {
       try {
-        if (screen.orientation?.lock) {
-          await screen.orientation.lock('landscape');
+        const orientation = screen.orientation as ScreenOrientation & {
+          lock?: (orientation: 'landscape') => Promise<void>;
+        };
+        if (orientation.lock) {
+          await orientation.lock('landscape');
         }
       } catch {
         // Ignore orientation lock failures.

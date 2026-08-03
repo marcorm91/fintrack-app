@@ -35,6 +35,7 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Evita que meses posteriores sin datos o con saldo al cierre `0` corten el patrimonio acumulado.
 - Precarga saldo al cierre y cartera inversión en meses nuevos desde el último cierre real.
 - Mejora la importación de CSV antiguos: ignora filas vacías con todo a `0` y no usa una columna de cartera completamente a `0` para sobrescribir cartera existente.
+- Mejora la vista móvil mensual: dona sin tooltips superpuestos y formulario de guardado en panel inferior.
 - Mantiene las mejoras de 2.0.1: ancho estable del selector de mes y porcentaje de ingresos/gastos en la dona mensual.
 - Mantiene los cambios principales de 2.0.0: nuevo diseño, cartera opcional, comparativas anual/histórica, mocks desde 2019 e icono renovado.
 

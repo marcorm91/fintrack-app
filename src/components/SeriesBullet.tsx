@@ -11,7 +11,6 @@ const SERIES_BULLET_CLASS: Record<SeriesKey, string> = {
 
 type SeriesBulletProps = {
   seriesKey: SeriesKey;
-  valueCents?: number;
   className?: string;
 };
 

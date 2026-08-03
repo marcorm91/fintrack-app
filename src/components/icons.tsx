@@ -79,3 +79,11 @@ export function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
     </svg>
   );
 }
+
+export function PlusIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 4.5v11M4.5 10h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
