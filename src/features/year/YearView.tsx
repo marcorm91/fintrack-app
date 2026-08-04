@@ -484,7 +484,7 @@ export function YearView({
           </div>
           <div className="mt-4 sm:hidden">
             <div
-              className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2"
               aria-label={t('labels.monthDetail')}
             >
               {(
