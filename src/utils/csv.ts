@@ -52,8 +52,40 @@ const IMPORT_HEADER_ALIASES = {
   income: ['income', 'ingresos'],
   expense: ['expense', 'gastos'],
   balance: ['balance', 'saldo', 'efectivo', 'acumulacion', 'saldo al cierre', 'saldo cierre'],
-  portfolio: ['portfolio', 'cartera', 'inversiones', 'cartera al cierre']
+  portfolio: ['portfolio', 'cartera', 'inversiones', 'cartera al cierre'],
+  note: ['note', 'notes', 'nota', 'notas', 'comentario', 'observaciones']
 };
+
+function parseDelimitedRow(line: string, delimiter: string) {
+  const cells: string[] = [];
+  let value = '';
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (quoted && line[index + 1] === '"') {
+        value += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (character === delimiter && !quoted) {
+      cells.push(value.trim());
+      value = '';
+    } else {
+      value += character;
+    }
+  }
+  cells.push(value.trim());
+  return cells;
+}
+
+function parseNoteValue(row: string[], noteIndex: number) {
+  if (noteIndex < 0) {
+    return undefined;
+  }
+  return (row[noteIndex] ?? '').replace(/\s+/g, ' ').trim().slice(0, 500);
+}
 
 function normalizeHeader(value: string) {
   return value
@@ -158,11 +190,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
   }
 
   const delimiter = lines.some((line) => line.includes(';')) ? ';' : ',';
-  const rows = lines.map((line) =>
-    line
-      .split(delimiter)
-      .map((cell) => cell.trim().replace(/^"|"$/g, ''))
-  );
+  const rows = lines.map((line) => parseDelimitedRow(line, delimiter));
 
   const header = rows[0].map(normalizeHeader);
   const hasHeader = header.some((cell) =>
@@ -176,6 +204,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
   let balanceIndex = 3;
   let portfolioIndex = 4;
   let yearIndex = -1;
+  let noteIndex = 5;
 
   if (hasHeader) {
     startIndex = 1;
@@ -185,6 +214,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     expenseIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.expense);
     balanceIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.balance);
     portfolioIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolio);
+    noteIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.note);
     if (monthIndex < 0 || incomeIndex < 0 || expenseIndex < 0 || balanceIndex < 0) {
       throw new Error(i18n.t('errors.missingColumns'));
     }
@@ -221,7 +251,8 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
       balanceCents: Math.round(balance * 100),
-      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100)
+      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100),
+      note: parseNoteValue(row, noteIndex)
     });
   }
 
@@ -242,11 +273,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
   }
 
   const delimiter = lines.some((line) => line.includes(';')) ? ';' : ',';
-  const rows = lines.map((line) =>
-    line
-      .split(delimiter)
-      .map((cell) => cell.trim().replace(/^"|"$/g, ''))
-  );
+  const rows = lines.map((line) => parseDelimitedRow(line, delimiter));
 
   const header = rows[0].map(normalizeHeader);
   const hasHeader = header.some((cell) =>
@@ -260,6 +287,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
   let balanceIndex = 2;
   let portfolioIndex = 3;
   let yearIndex = -1;
+  let noteIndex = 4;
 
   if (hasHeader) {
     startIndex = 1;
@@ -269,6 +297,7 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
     expenseIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.expense);
     balanceIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.balance);
     portfolioIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolio);
+    noteIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.note);
     if (incomeIndex < 0 || expenseIndex < 0 || balanceIndex < 0) {
       throw new Error(i18n.t('errors.missingColumnsMonth'));
     }
@@ -311,7 +340,8 @@ export function parseMonthCsv(text: string, month: string): MonthlySnapshotInput
       incomeCents: Math.round(income * 100),
       expenseCents: Math.round(expense * 100),
       balanceCents: Math.round(balance * 100),
-      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100)
+      portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100),
+      note: parseNoteValue(row, noteIndex)
     });
   }
 

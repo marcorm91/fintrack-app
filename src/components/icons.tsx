@@ -87,3 +87,17 @@ export function PlusIcon() {
     </svg>
   );
 }
+
+export function NoteIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M3 2.75h10v8.5l-2.5 2H3v-10.5z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      />
+      <path d="M5.25 5.5h5.5M5.25 8h4.25" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+    </svg>
+  );
+}

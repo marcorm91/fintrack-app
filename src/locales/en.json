@@ -147,7 +147,8 @@
     "to": "To",
     "page": "Page",
     "asOf": "as of",
-    "compareYear": "Compare with"
+    "compareYear": "Compare with",
+    "monthNote": "Monthly note"
   },
   "insights": {
     "title": "Comparisons",
@@ -190,7 +191,8 @@
     "inProgress": "In progress"
   },
   "placeholders": {
-    "amount": "0.00"
+    "amount": "0.00",
+    "monthNote": "Trip, repair, bonus payment..."
   },
   "chartTypes": {
     "bar": "Bars",

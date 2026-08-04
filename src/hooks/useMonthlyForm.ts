@@ -20,7 +20,8 @@ const emptyForm: FormState = {
   income: '',
   expense: '',
   balance: '',
-  portfolio: ''
+  portfolio: '',
+  note: ''
 };
 
 export function useMonthlyForm({
@@ -48,7 +49,8 @@ export function useMonthlyForm({
         income: monthSummary.incomeCents ? formatInputCents(monthSummary.incomeCents) : '',
         expense: monthSummary.expenseCents ? formatInputCents(monthSummary.expenseCents) : '',
         balance: monthSummary.balanceCents ? formatInputCents(monthSummary.balanceCents) : '',
-        portfolio: monthSummary.portfolioCents ? formatInputCents(monthSummary.portfolioCents) : ''
+        portfolio: monthSummary.portfolioCents ? formatInputCents(monthSummary.portfolioCents) : '',
+        note: monthSummary.note
       });
       return;
     }
@@ -58,7 +60,8 @@ export function useMonthlyForm({
         income: '',
         expense: '',
         balance: fallbackWealthSummary.balanceCents ? formatInputCents(fallbackWealthSummary.balanceCents) : '',
-        portfolio: fallbackWealthSummary.portfolioCents ? formatInputCents(fallbackWealthSummary.portfolioCents) : ''
+        portfolio: fallbackWealthSummary.portfolioCents ? formatInputCents(fallbackWealthSummary.portfolioCents) : '',
+        note: ''
       });
       return;
     }
@@ -67,7 +70,7 @@ export function useMonthlyForm({
   }, [fallbackWealthSummary, summary, monthValue, resetForm]);
 
   const handleChange = useCallback(
-    (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
+    (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setForm((prev) => ({
         ...prev,
         [field]: event.target.value
@@ -117,7 +120,8 @@ export function useMonthlyForm({
           balanceCents: Math.round(balanceValue * 100),
           portfolioCents: hasInvestmentPortfolio
             ? Math.round((portfolioValue ?? 0) * 100)
-            : summary?.portfolioCents ?? fallbackWealthSummary?.portfolioCents ?? 0
+            : summary?.portfolioCents ?? fallbackWealthSummary?.portfolioCents ?? 0,
+          note: form.note.replace(/\s+/g, ' ').trim().slice(0, 500)
         });
         await refreshData();
       } catch (err) {

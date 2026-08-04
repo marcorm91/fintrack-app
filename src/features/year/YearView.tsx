@@ -6,11 +6,12 @@ import type { RefObject } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartModal } from '../../components/ChartModal';
+import { InfoDialog } from '../../components/Dialogs';
 import { EyeToggle } from '../../components/EyeToggle';
 import { InsightsPanel } from '../../components/InsightsPanel';
 import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
-import { ChevronIcon, TrendIcon } from '../../components/icons';
+import { ChevronIcon, NoteIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { useChartInteractionOptions } from '../../hooks/useChartInteractionOptions';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -88,6 +89,7 @@ export function YearView({
   const isMobile = useIsMobile();
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [activeChartPanel, setActiveChartPanel] = useState<'summary' | 'wealth'>('summary');
+  const [selectedNote, setSelectedNote] = useState<{ month: string; note: string } | null>(null);
   const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
     'bar',
     Array<number | null>,
@@ -599,7 +601,24 @@ export function YearView({
                   const hasPointData = Boolean(trends);
                   return (
                     <tr key={point.month} className="border-b border-ink/5">
-                      <td className="py-3 pr-4 text-muted">{getMonthLabel(point.month, locale, 'long')}</td>
+                      <td className="py-3 pr-4 text-muted">
+                        {point.note ? (
+                          <span className="flex items-center gap-2">
+                            <span>{getMonthLabel(point.month, locale, 'long')}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedNote({ month: point.month, note: point.note })}
+                              className="rounded-md p-1 text-accent2 transition hover:bg-accent/10 hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                              aria-label={`${t('labels.monthNote')}: ${getMonthLabel(point.month, locale, 'long')}`}
+                              title={t('labels.monthNote')}
+                            >
+                              <NoteIcon />
+                            </button>
+                          </span>
+                        ) : (
+                          getMonthLabel(point.month, locale, 'long')
+                        )}
+                      </td>
                       {yearSeriesVisibility.income ? (
                         <td className="py-3 pr-4 text-ink">
                           <div className="flex items-center gap-2">
@@ -695,6 +714,20 @@ export function YearView({
         </div>
       </details>
       </div>
+      <InfoDialog
+        open={Boolean(selectedNote)}
+        title={
+          selectedNote
+            ? `${t('labels.monthNote')}: ${getMonthLabel(selectedNote.month, locale, 'long')} ${selectedNote.month.slice(0, 4)}`
+            : t('labels.monthNote')
+        }
+        content={
+          <p className="whitespace-pre-wrap break-words leading-relaxed text-ink">
+            {selectedNote?.note}
+          </p>
+        }
+        onClose={() => setSelectedNote(null)}
+      />
       <ChartModal
         open={chartModalOpen}
         title={activeYearChartModalTitle}

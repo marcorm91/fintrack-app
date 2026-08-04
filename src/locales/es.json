@@ -147,7 +147,8 @@
     "to": "Hasta",
     "page": "Pagina",
     "asOf": "a",
-    "compareYear": "Comparar con"
+    "compareYear": "Comparar con",
+    "monthNote": "Nota del mes"
   },
   "insights": {
     "title": "Comparativas",
@@ -190,7 +191,8 @@
     "inProgress": "En progreso"
   },
   "placeholders": {
-    "amount": "0.00"
+    "amount": "0.00",
+    "monthNote": "Viaje, reparación, paga extra..."
   },
   "chartTypes": {
     "bar": "Barras",
