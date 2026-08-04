@@ -22,17 +22,30 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Configuración de ruta de base de datos desde la app.
 - Modo solo lectura desde ajustes.
 - Cartera de inversión opcional: si se desactiva, la app no la muestra ni la incluye en cálculos de patrimonio.
+- Notas opcionales para documentar ingresos, gastos o circunstancias excepcionales de cada mes.
+- Tarjetas responsive para consultar el detalle anual e histórico sin tablas horizontales en móvil.
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.3/Fintrack_2.0.3-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
+
+## Novedades 2.0.4
+- Añade notas opcionales a los cierres mensuales, con migración automática para bases de datos existentes.
+- Incluye las notas en la importación y exportación CSV y en los volcados SQL.
+- Muestra las notas en la vista mensual y en un diálogo accesible desde el detalle anual.
+- Rediseña los detalles anual e histórico como tarjetas en móvil, sin perder ordenación, tendencias, filtros ni paginación.
+- Mantiene los controles de ordenación en una fila horizontal desplazable y conserva las tablas originales en escritorio.
+- Compacta el panel móvil de cierre mensual y bloquea el scroll del contenido de fondo mientras está abierto.
+- Añade una animación de cierre descendente al panel mensual.
+- Corrige el menú de importación para cerrarlo al pulsar fuera o utilizar la tecla `Escape`.
+- Reduce el JavaScript inicial mediante carga diferida de vistas y reorganiza lógica reutilizable en hooks y utilidades.
 
 ## Novedades 2.0.3
 - Extiende el swipe mensual a todo el contenido de la pestaña de mes.
@@ -136,6 +149,7 @@ Cabeceras reconocidas:
 - gastos: `expense`, `gastos`
 - saldo/efectivo: `balance`, `saldo`, `efectivo`, `acumulacion`, `saldo al cierre`, `saldo cierre`
 - cartera inversión: `portfolio`, `cartera`, `inversiones`, `cartera al cierre`
+- nota mensual: `note`, `notes`, `nota`, `notas`, `comentario`, `observaciones`
 
 Formatos de mes aceptados:
 - `YYYY-MM` o `YYYY/MM`
@@ -153,7 +167,7 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*`, como `v2.0.3`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*`, como `v2.0.4`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Campos de entrada
 
@@ -163,6 +177,7 @@ Introduce los importes tal y como aparecen en tu banco al final de cada mes:
 - Gastos: todo lo que ha salido en el mes.
 - Saldo al cierre: efectivo disponible al finalizar el mes.
 - Cartera inversión: valor de la cartera al cierre del mes, si la opción está activada.
+- Nota mensual: contexto opcional para identificar movimientos o circunstancias excepcionales.
 
 El beneficio se calcula automáticamente como ingresos menos gastos. El patrimonio total se calcula como efectivo más cartera cuando la cartera está activada.
 
