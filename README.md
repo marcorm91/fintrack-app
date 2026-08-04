@@ -27,14 +27,19 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.4](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.4/Fintrack_2.0.4-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_x64-setup.exe)
+- Windows (MSI): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_aarch64.dmg)
+- Linux (AppImage): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_amd64.AppImage)
+- Linux (DEB): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_amd64.deb)
+- Linux (RPM): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
+
+## Novedades 2.0.5
+- Documenta la columna opcional de notas en los ejemplos de importación mensual, anual e histórica.
+- Mantiene visible la tarjeta «Nota del mes» incluso cuando está vacía para evitar saltos en el diseño.
+- Añade el estado «Sin notas para este mes» en español e inglés.
 
 ## Novedades 2.0.4
 - Añade notas opcionales a los cierres mensuales, con migración automática para bases de datos existentes.
@@ -167,7 +172,7 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*`, como `v2.0.4`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*`, como `v2.0.5`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Campos de entrada
 
