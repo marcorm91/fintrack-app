@@ -6,6 +6,7 @@ export type MockMonthlySnapshot = {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
+  note?: string;
 };
 
 const MOCK_START_YEAR = 2019;
@@ -39,7 +40,15 @@ export function buildMockMonthlySnapshots(): MockMonthlySnapshot[] {
       incomeCents,
       expenseCents,
       balanceCents: Math.round(balanceCents),
-      portfolioCents: Math.max(0, Math.round(portfolioCents))
+      portfolioCents: Math.max(0, Math.round(portfolioCents)),
+      note:
+        offset === 0
+          ? 'Reparación inesperada del coche.'
+          : offset === 3
+            ? 'Viaje y alojamiento fuera del gasto habitual.'
+            : offset === 7
+              ? 'Ingreso excepcional por paga extra.'
+              : undefined
     });
   }
 

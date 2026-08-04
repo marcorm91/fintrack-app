@@ -2,8 +2,8 @@ import type { MonthlySeriesPoint } from '../db';
 import schemaSql from '../db/schema.sql?raw';
 
 const CSV_HEADERS = {
-  es: ['mes', 'ingresos', 'gastos', 'saldo al cierre', 'cartera al cierre'],
-  en: ['month', 'income', 'expenses', 'closing balance', 'portfolio closing value']
+  es: ['mes', 'ingresos', 'gastos', 'saldo al cierre', 'cartera al cierre', 'nota'],
+  en: ['month', 'income', 'expenses', 'closing balance', 'portfolio closing value', 'note']
 };
 
 function resolveCsvHeaders(locale: string) {
@@ -15,6 +15,10 @@ function formatCsvNumber(cents: number, locale: string) {
   return locale.startsWith('es') ? value.replace('.', ',') : value;
 }
 
+function escapeCsvValue(value: string) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
 export function buildCsvSnapshots(series: MonthlySeriesPoint[], locale: string) {
   const lines = [resolveCsvHeaders(locale).join(';')];
   for (const point of series) {
@@ -24,7 +28,8 @@ export function buildCsvSnapshots(series: MonthlySeriesPoint[], locale: string) 
         formatCsvNumber(point.incomeCents, locale),
         formatCsvNumber(point.expenseCents, locale),
         formatCsvNumber(point.balanceCents, locale),
-        formatCsvNumber(point.portfolioCents, locale)
+        formatCsvNumber(point.portfolioCents, locale),
+        escapeCsvValue(point.note)
       ].join(';')
     );
   }
@@ -45,9 +50,9 @@ export function buildSqlDump(series: MonthlySeriesPoint[]) {
     lines.push('BEGIN TRANSACTION;');
     for (const point of series) {
       lines.push(
-        `INSERT INTO monthly_snapshots (month, income_cents, expense_cents, balance_cents, portfolio_cents) VALUES ('${escapeSqlValue(
+        `INSERT INTO monthly_snapshots (month, income_cents, expense_cents, balance_cents, portfolio_cents, note) VALUES ('${escapeSqlValue(
           point.month
-        )}', ${point.incomeCents}, ${point.expenseCents}, ${point.balanceCents}, ${point.portfolioCents});`
+        )}', ${point.incomeCents}, ${point.expenseCents}, ${point.balanceCents}, ${point.portfolioCents}, '${escapeSqlValue(point.note)}');`
       );
     }
     lines.push('COMMIT;');

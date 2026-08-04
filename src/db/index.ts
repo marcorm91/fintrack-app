@@ -126,6 +126,7 @@ export interface MonthlySummary {
   portfolioCents: number;
   totalWealthCents: number;
   benefitCents: number;
+  note: string;
 }
 
 export interface MonthlySeriesPoint {
@@ -136,6 +137,7 @@ export interface MonthlySeriesPoint {
   portfolioCents: number;
   totalWealthCents: number;
   benefitCents: number;
+  note: string;
 }
 
 export interface MonthlySnapshotInput {
@@ -144,6 +146,7 @@ export interface MonthlySnapshotInput {
   expenseCents: number;
   balanceCents: number;
   portfolioCents?: number;
+  note?: string;
 }
 
 function shouldSeedDevData() {
@@ -166,7 +169,8 @@ SELECT
   income_cents,
   expense_cents,
   balance_cents,
-  portfolio_cents
+  portfolio_cents,
+  note
 FROM monthly_snapshots
 WHERE month = ?;
 `;
@@ -177,13 +181,14 @@ SELECT
   income_cents,
   expense_cents,
   balance_cents,
-  portfolio_cents
+  portfolio_cents,
+  note
 FROM monthly_snapshots
 ORDER BY month;
 `;
 
 const MONTHLY_WEALTH_SQL = `
-SELECT balance_cents, portfolio_cents
+SELECT balance_cents, portfolio_cents, note
 FROM monthly_snapshots
 WHERE month = ?;
 `;
@@ -202,14 +207,16 @@ INSERT INTO monthly_snapshots (
   income_cents,
   expense_cents,
   balance_cents,
-  portfolio_cents
+  portfolio_cents,
+  note
 )
-VALUES (?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
   balance_cents = excluded.balance_cents,
-  portfolio_cents = excluded.portfolio_cents;
+  portfolio_cents = excluded.portfolio_cents,
+  note = excluded.note;
 `;
 
 const DELETE_MONTH_SQL = `
@@ -254,6 +261,7 @@ function summaryFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySummary {
   const portfolioCents = snapshotPortfolioCents(snapshot);
   return {
     ...snapshot,
+    note: snapshot.note ?? '',
     portfolioCents,
     totalWealthCents: snapshot.balanceCents + portfolioCents,
     benefitCents: snapshot.incomeCents - snapshot.expenseCents
@@ -296,7 +304,8 @@ async function ensureDevSeeded(db: Database): Promise<void> {
           snapshot.incomeCents,
           snapshot.expenseCents,
           snapshot.balanceCents,
-          snapshot.portfolioCents
+          snapshot.portfolioCents,
+          snapshot.note ?? ''
         ]);
       }
     })();
@@ -311,6 +320,9 @@ async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
     await db.execute(
       'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0);'
     );
+  }
+  if (!existingColumns.has('note')) {
+    await db.execute("ALTER TABLE monthly_snapshots ADD COLUMN note TEXT NOT NULL DEFAULT '';");
   }
 }
 
@@ -360,6 +372,7 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
+    note?: string;
   }>>(MONTHLY_SUMMARY_SQL, [month]);
 
   const row = rows[0];
@@ -380,7 +393,8 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
     balanceCents,
     portfolioCents,
     totalWealthCents: balanceCents + portfolioCents,
-    benefitCents
+    benefitCents,
+    note: row.note ?? ''
   };
 }
 
@@ -429,6 +443,7 @@ export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
+    note?: string;
   }>>(MONTHLY_SERIES_SQL);
 
   return rows.map((row) => {
@@ -443,7 +458,8 @@ export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
       balanceCents,
       portfolioCents,
       totalWealthCents: balanceCents + portfolioCents,
-      benefitCents: incomeCents - expenseCents
+      benefitCents: incomeCents - expenseCents,
+      note: row.note ?? ''
     };
   });
 }
@@ -461,7 +477,8 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
       input.portfolioCents ?? existingPortfolioCents ?? latestPreviousPortfolioCents ?? 0;
     const nextInput = {
       ...input,
-      portfolioCents: previousPortfolioCents
+      portfolioCents: previousPortfolioCents,
+      note: input.note ?? (index >= 0 ? snapshots[index].note : '') ?? ''
     };
     if (index >= 0) {
       snapshots[index] = nextInput;
@@ -474,12 +491,16 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
 
   const db = await initDb();
   let portfolioCents = input.portfolioCents;
-  if (portfolioCents === undefined) {
-    const existingRows = await db.select<Array<{ balance_cents?: number; portfolio_cents?: number }>>(MONTHLY_WEALTH_SQL, [
+  let note = input.note;
+  if (portfolioCents === undefined || note === undefined) {
+    const existingRows = await db.select<Array<{ balance_cents?: number; portfolio_cents?: number; note?: string }>>(MONTHLY_WEALTH_SQL, [
       input.month
     ]);
     const existingRow = existingRows[0];
-    portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+    if (portfolioCents === undefined) {
+      portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+    }
+    note = note ?? existingRow?.note ?? '';
   }
   if (portfolioCents === undefined) {
     const previousRows = await db.select<Array<{ portfolio_cents?: number }>>(LATEST_PORTFOLIO_BEFORE_MONTH_SQL, [
@@ -492,7 +513,8 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     input.incomeCents,
     input.expenseCents,
     input.balanceCents,
-    portfolioCents
+    portfolioCents,
+    note.replace(/\s+/g, ' ').trim().slice(0, 500)
   ]);
 }
 

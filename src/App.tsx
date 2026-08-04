@@ -251,7 +251,8 @@ export default function App() {
           balanceCents: 0,
           portfolioCents: 0,
           totalWealthCents: 0,
-          benefitCents: 0
+          benefitCents: 0,
+          note: ''
         }));
 
   const hasMonthData = Boolean(summary || series.find((point) => point.month === monthValue));
@@ -358,7 +359,8 @@ export default function App() {
           balanceCents: 0,
           portfolioCents: 0,
           totalWealthCents: 0,
-          benefitCents: 0
+          benefitCents: 0,
+          note: ''
         });
   }, [currentMonthValue, effectiveSeries]);
 

@@ -3,6 +3,7 @@ export type FormState = {
   expense: string;
   balance: string;
   portfolio: string;
+  note: string;
 };
 
 export type TabKey = 'month' | 'year' | 'all';

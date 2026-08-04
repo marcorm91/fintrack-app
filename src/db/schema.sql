@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS monthly_snapshots (
   income_cents INTEGER NOT NULL CHECK (income_cents >= 0),
   expense_cents INTEGER NOT NULL CHECK (expense_cents >= 0),
   balance_cents INTEGER NOT NULL,
-  portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0)
+  portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0),
+  note TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS app_settings (

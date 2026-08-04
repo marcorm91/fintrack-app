@@ -10,7 +10,7 @@ import { EyeToggle } from '../../components/EyeToggle';
 import { InsightsPanel } from '../../components/InsightsPanel';
 import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
-import { ChevronIcon, TrendIcon } from '../../components/icons';
+import { ChevronIcon, NoteIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
 import { useChartInteractionOptions } from '../../hooks/useChartInteractionOptions';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -599,7 +599,23 @@ export function YearView({
                   const hasPointData = Boolean(trends);
                   return (
                     <tr key={point.month} className="border-b border-ink/5">
-                      <td className="py-3 pr-4 text-muted">{getMonthLabel(point.month, locale, 'long')}</td>
+                      <td className="py-3 pr-4 text-muted">
+                        {point.note ? (
+                          <details className="group/note min-w-32">
+                            <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+                              <span>{getMonthLabel(point.month, locale, 'long')}</span>
+                              <span className="text-accent2" aria-label={t('labels.monthNote')}>
+                                <NoteIcon />
+                              </span>
+                            </summary>
+                            <p className="mt-2 max-w-64 whitespace-normal break-words rounded-lg bg-accent/5 p-2 text-xs leading-relaxed text-ink">
+                              {point.note}
+                            </p>
+                          </details>
+                        ) : (
+                          getMonthLabel(point.month, locale, 'long')
+                        )}
+                      </td>
                       {yearSeriesVisibility.income ? (
                         <td className="py-3 pr-4 text-ink">
                           <div className="flex items-center gap-2">

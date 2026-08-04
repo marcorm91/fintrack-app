@@ -77,7 +77,9 @@ type MonthViewProps = {
   isCurrentMonth: boolean;
   displaySummary: MonthlySummary;
   form: FormState;
-  onFormChange: (field: keyof FormState) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onFormChange: (field: keyof FormState) => (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
   onSubmit: (event: React.FormEvent) => void;
   saving: boolean;
   error: string | null;
@@ -203,21 +205,19 @@ export function MonthView({
           </span>
         ) : null}
       </div>
-      <p className="mt-2 text-sm text-muted sm:text-sm">
-        {t('descriptions.monthSave')}
-      </p>
+      {!isMobile ? <p className="mt-2 text-sm text-muted">{t('descriptions.monthSave')}</p> : null}
       {readOnly ? (
         <div className="mt-3 rounded-xl border border-ink/5 bg-ink/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-xs">
           {t('messages.readOnlyActive')}
         </div>
       ) : null}
-      <form onSubmit={onSubmit} className="mt-6 grid gap-4">
-        <fieldset className="rounded-2xl border border-income/15 bg-[#f7fff9] p-3 shadow-sm">
+      <form onSubmit={onSubmit} className={isMobile ? 'mt-3 grid gap-3' : 'mt-6 grid gap-4'}>
+        <fieldset className={`border border-income/15 bg-[#f7fff9] shadow-sm ${isMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3'}`}>
           <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
             {t('labels.monthCashFlow')}
           </legend>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+          <div className={`grid grid-cols-2 ${isMobile ? 'mt-2 gap-2' : 'mt-3 gap-3'}`}>
+            <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-income" />
                 {t('series.income')}
@@ -230,10 +230,10 @@ export function MonthView({
                 value={form.income}
                 onChange={onFormChange('income')}
                 disabled={readOnly}
-                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+                className={`mt-2 w-full rounded-xl border border-ink/5 bg-white text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'}`}
               />
             </label>
-            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+            <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-expense" />
                 {t('series.expense')}
@@ -246,17 +246,17 @@ export function MonthView({
                 value={form.expense}
                 onChange={onFormChange('expense')}
                 disabled={readOnly}
-                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+                className={`mt-2 w-full rounded-xl border border-ink/5 bg-white text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'}`}
               />
             </label>
           </div>
         </fieldset>
-        <fieldset className="rounded-2xl border border-balance/15 bg-[#f7fbff] p-3 shadow-sm">
+        <fieldset className={`border border-balance/15 bg-[#f7fbff] shadow-sm ${isMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3'}`}>
           <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
             {t('labels.wealth')}
           </legend>
-          <div className={`mt-3 grid gap-3 ${hasInvestmentPortfolio ? 'sm:grid-cols-2' : ''}`}>
-            <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+          <div className={`grid ${isMobile ? 'mt-2 gap-2' : 'mt-3 gap-3'} ${hasInvestmentPortfolio ? 'grid-cols-2' : ''}`}>
+            <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-balance" />
                 {t('labels.closingBalanceInput')}
@@ -269,11 +269,11 @@ export function MonthView({
                 value={form.balance}
                 onChange={onFormChange('balance')}
                 disabled={readOnly}
-                className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+                className={`mt-2 w-full rounded-xl border border-ink/5 bg-white text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'}`}
               />
             </label>
             {hasInvestmentPortfolio ? (
-              <label className="rounded-xl border border-ink/5 bg-white/90 p-3 text-sm text-muted">
+              <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-portfolio" />
                   {t('series.portfolio')}
@@ -286,12 +286,27 @@ export function MonthView({
                   value={form.portfolio}
                   onChange={onFormChange('portfolio')}
                   disabled={readOnly}
-                  className="mt-2 w-full rounded-xl border border-ink/5 bg-white px-4 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted sm:text-sm"
+                  className={`mt-2 w-full rounded-xl border border-ink/5 bg-white text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'}`}
                 />
               </label>
             ) : null}
           </div>
         </fieldset>
+        <label className={`rounded-xl border border-ink/10 bg-white/90 text-sm text-muted ${isMobile ? 'p-2' : 'p-3'}`}>
+          <span className="flex items-center justify-between gap-2">
+            <span>{t('labels.monthNote')}</span>
+            <span className="text-[10px] tabular-nums text-muted">{form.note.length}/500</span>
+          </span>
+          <textarea
+            rows={isMobile ? 2 : 3}
+            maxLength={500}
+            placeholder={t('placeholders.monthNote')}
+            value={form.note}
+            onChange={onFormChange('note')}
+            disabled={readOnly}
+            className={`mt-2 w-full resize-y rounded-xl border border-ink/5 bg-white px-3 text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'min-h-14 py-1.5 text-sm' : 'py-2 text-sm'}`}
+          />
+        </label>
         <button
           type="submit"
           disabled={saving || readOnly}
@@ -338,7 +353,7 @@ export function MonthView({
           onClick={closeMobileForm}
         >
           <div
-            className="max-h-[86vh] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-ink/10 bg-white p-4 pb-[calc(var(--app-safe-bottom)+1rem)] shadow-card"
+            className="max-h-[92vh] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-ink/10 bg-white p-3 pb-[calc(var(--app-safe-bottom)+0.75rem)] shadow-card"
             style={{
               transform: mobileFormClosing ? 'translateY(100%)' : 'translateY(0)',
               transition: 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -348,7 +363,7 @@ export function MonthView({
           >
             <button
               type="button"
-              className="mx-auto mb-4 block h-1.5 w-12 touch-none rounded-full bg-ink/15"
+              className="mx-auto mb-3 block h-1.5 w-12 touch-none rounded-full bg-ink/15"
               onClick={closeMobileForm}
               onTouchStart={(event) => setSheetTouchStartY(event.touches[0]?.clientY ?? null)}
               onTouchEnd={(event) => handleSheetTouchEnd(event.changedTouches[0]?.clientY ?? 0)}
@@ -532,6 +547,14 @@ export function MonthView({
               </div>
             </div>
           </div>
+          {displaySummary.note ? (
+            <div className="mt-4 rounded-xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-ink">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent2">
+                {t('labels.monthNote')}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed">{displaySummary.note}</p>
+            </div>
+          ) : null}
         </section>
 
         <section className="order-2 hidden min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:block sm:p-6 lg:order-2">
