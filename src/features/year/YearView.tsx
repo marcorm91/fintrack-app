@@ -472,16 +472,11 @@ export function YearView({
 
         <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
-            <span>{t('labels.monthDetail')}</span>
+            <span>{t('labels.monthDetail')} · {yearValue}</span>
             <span className="text-muted transition group-open:rotate-90">
               <ChevronIcon direction="right" />
             </span>
           </summary>
-          <div className="mt-4 flex items-center justify-end">
-            <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-              {yearValue}
-            </span>
-          </div>
           <div className="mt-4 sm:hidden">
             <div
               className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2"
