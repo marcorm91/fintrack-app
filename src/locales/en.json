@@ -177,6 +177,7 @@
     "noTableData": "No data to display.",
     "seriesHidden": "Series hidden.",
     "benefitHidden": "Profit hidden.",
+    "noMonthNote": "No notes for this month.",
     "readOnlyActive": "Read-only mode enabled.",
     "rotateDevice": "Rotate your device to view the chart in landscape.",
     "imported": "Imported {{count}} records.",
@@ -222,42 +223,42 @@
       "month": {
         "title": "Import current month",
         "description": "Paste a single row for the current month or a CSV with headers.",
-        "placeholder": "income;expenses;closing balance;portfolio closing value\n2288.65;2187.92;3463.50;1200.00"
+        "placeholder": "income;expenses;closing balance;portfolio closing value;note\n2288.65;2187.92;3463.50;1200.00;Bonus payment"
       },
       "year": {
         "title": "Import year {{year}}",
         "description": "Paste a CSV with months for the selected year.",
-        "placeholder": "month;income;expenses;closing balance;portfolio closing value\n2025-01;2288.65;2187.92;3463.50;1200.00"
+        "placeholder": "month;income;expenses;closing balance;portfolio closing value;note\n2025-01;2288.65;2187.92;3463.50;1200.00;Bonus payment"
       },
       "all": {
         "title": "Import history",
         "description": "Paste a CSV with months from multiple years.",
-        "placeholder": "month;income;expenses;closing balance;portfolio closing value\n2024-12;2100.00;2000.00;3500.00;1200.00"
+        "placeholder": "month;income;expenses;closing balance;portfolio closing value;note\n2024-12;2100.00;2000.00;3500.00;1200.00;Car repair"
       }
     }
   },
   "info": {
     "month": {
       "title": "CSV format (current month)",
-      "line1": "Single row with income, expenses, closing balance, and portfolio value.",
+      "line1": "Single row with income, expenses, closing balance, portfolio value, and an optional note.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "income;expenses;closing balance;portfolio closing value",
-      "exampleRow": "2288.65;2187.92;3463.50;1200.00"
+      "exampleHeader": "income;expenses;closing balance;portfolio closing value;note",
+      "exampleRow": "2288.65;2187.92;3463.50;1200.00;Bonus payment"
     },
     "year": {
       "title": "CSV format (current year)",
       "line1": "One row per month. Month column in format 2025-01 or Jan 2025.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value",
-      "exampleRow": "2025-01;2288.65;2187.92;3463.50;1200.00"
+      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value;note",
+      "exampleRow": "2025-01;2288.65;2187.92;3463.50;1200.00;Bonus payment"
     },
     "all": {
       "title": "CSV format (all years)",
       "line1": "Multiple years in a single file, one row per month.",
       "line2": "Delimiter ; or , and decimals with comma.",
-      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value",
-      "exampleRow1": "2024-12;2100.00;2000.00;3500.00;1200.00",
-      "exampleRow2": "2025-01;2288.65;2187.92;3463.50;1350.00"
+      "exampleHeader": "month;income;expenses;closing balance;portfolio closing value;note",
+      "exampleRow1": "2024-12;2100.00;2000.00;3500.00;1200.00;Car repair",
+      "exampleRow2": "2025-01;2288.65;2187.92;3463.50;1350.00;"
     }
   },
   "errors": {

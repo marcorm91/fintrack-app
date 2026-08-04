@@ -177,6 +177,7 @@
     "noTableData": "No hay datos para mostrar.",
     "seriesHidden": "Series ocultas.",
     "benefitHidden": "Beneficio oculto.",
+    "noMonthNote": "Sin notas para este mes.",
     "readOnlyActive": "Modo solo lectura activado.",
     "rotateDevice": "Gira el movil para ver la grafica en horizontal.",
     "imported": "Importados {{count}} registros.",
@@ -222,42 +223,42 @@
       "month": {
         "title": "Importar mes actual",
         "description": "Pega una sola fila del mes actual o un CSV con cabecera.",
-        "placeholder": "ingresos;gastos;saldo al cierre;cartera al cierre\n2288,65;2187,92;3463,50;1200,00"
+        "placeholder": "ingresos;gastos;saldo al cierre;cartera al cierre;nota\n2288,65;2187,92;3463,50;1200,00;Paga extra"
       },
       "year": {
         "title": "Importar año {{year}}",
         "description": "Pega un CSV con meses del año seleccionado.",
-        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre\n2025-01;2288,65;2187,92;3463,50;1200,00"
+        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre;nota\n2025-01;2288,65;2187,92;3463,50;1200,00;Paga extra"
       },
       "all": {
         "title": "Importar histórico",
         "description": "Pega un CSV con meses de varios años.",
-        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre\n2024-12;2100,00;2000,00;3500,00;1200,00"
+        "placeholder": "mes;ingresos;gastos;saldo al cierre;cartera al cierre;nota\n2024-12;2100,00;2000,00;3500,00;1200,00;Reparación del coche"
       }
     }
   },
   "info": {
     "month": {
       "title": "Formato CSV (mes actual)",
-      "line1": "Una sola fila con ingresos, gastos, saldo al cierre y cartera.",
+      "line1": "Una sola fila con ingresos, gastos, saldo al cierre, cartera y nota opcional.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "ingresos;gastos;saldo al cierre;cartera al cierre",
-      "exampleRow": "2288,65;2187,92;3463,50;1200,00"
+      "exampleHeader": "ingresos;gastos;saldo al cierre;cartera al cierre;nota",
+      "exampleRow": "2288,65;2187,92;3463,50;1200,00;Paga extra"
     },
     "year": {
       "title": "Formato CSV (año actual)",
       "line1": "Una fila por mes. Columna mes en formato 2025-01 o ene 2025.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre",
-      "exampleRow": "2025-01;2288,65;2187,92;3463,50;1200,00"
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre;nota",
+      "exampleRow": "2025-01;2288,65;2187,92;3463,50;1200,00;Paga extra"
     },
     "all": {
       "title": "Formato CSV (todos los años)",
       "line1": "Múltiples años en un solo archivo, una fila por mes.",
       "line2": "Delimitador ; o , y decimales con coma.",
-      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre",
-      "exampleRow1": "2024-12;2100,00;2000,00;3500,00;1200,00",
-      "exampleRow2": "2025-01;2288,65;2187,92;3463,50;1350,00"
+      "exampleHeader": "mes;ingresos;gastos;saldo al cierre;cartera al cierre;nota",
+      "exampleRow1": "2024-12;2100,00;2000,00;3500,00;1200,00;Reparación del coche",
+      "exampleRow2": "2025-01;2288,65;2187,92;3463,50;1350,00;"
     }
   },
   "errors": {

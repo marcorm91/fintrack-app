@@ -547,14 +547,16 @@ export function MonthView({
               </div>
             </div>
           </div>
-          {displaySummary.note ? (
-            <div className="mt-4 rounded-xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-ink">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent2">
-                {t('labels.monthNote')}
-              </p>
+          <div className="mt-4 min-h-[78px] rounded-xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-ink">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent2">
+              {t('labels.monthNote')}
+            </p>
+            {displaySummary.note ? (
               <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed">{displaySummary.note}</p>
-            </div>
-          ) : null}
+            ) : (
+              <p className="mt-1 italic leading-relaxed text-muted">{t('messages.noMonthNote')}</p>
+            )}
+          </div>
         </section>
 
         <section className="order-2 hidden min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:block sm:p-6 lg:order-2">
