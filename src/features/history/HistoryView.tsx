@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeriesKey, SeriesTrendMap, SortDirection, AllTableSortKey } from '../../types';
-import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -10,9 +10,12 @@ import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { useChartInteractionOptions } from '../../hooks/useChartInteractionOptions';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { FLOW_TYPES, WEALTH_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
+import '../../utils/chartSetup';
+import { findBenefitExtremes } from '../../utils/metrics';
 
 type AllYearsPoint = {
   year: string;
@@ -191,22 +194,10 @@ export function HistoryView({
       datasets
     };
   }, [allYearsWealthChartData, filteredWealthChartLabels, wealthChartLabels]);
-  const { bestBenefitYear, worstBenefitYear } = useMemo(() => {
-    if (filteredAllYears.length === 0) {
-      return { bestBenefitYear: null, worstBenefitYear: null };
-    }
-    let best = filteredAllYears[0];
-    let worst = filteredAllYears[0];
-    for (const point of filteredAllYears) {
-      if (point.benefitCents > best.benefitCents) {
-        best = point;
-      }
-      if (point.benefitCents < worst.benefitCents) {
-        worst = point;
-      }
-    }
-    return { bestBenefitYear: best, worstBenefitYear: worst };
-  }, [filteredAllYears]);
+  const { best: bestBenefitYear, worst: worstBenefitYear } = useMemo(
+    () => findBenefitExtremes(filteredAllYears),
+    [filteredAllYears]
+  );
   const historyTotals = useMemo<HistoryTotals>(() => {
     const totals = filteredAllYears.reduce<HistoryTotals>(
       (acc, point) => ({
@@ -271,84 +262,27 @@ export function HistoryView({
     Number(allYearsSeriesVisibility.balance) +
     Number(allYearsSeriesVisibility.portfolio) +
     Number(allYearsSeriesVisibility.totalWealth);
-  const handleHistoryChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
-    const element = elements[0];
-    if (!element) {
-      setChartModalOpen(true);
-      return;
-    }
-    const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
-    if (!seriesKey) {
-      return;
-    }
-    showOnlyAllYearsSeries(seriesKey);
-  };
-  const historyChartOptionsWithClick: SeriesChartOptions = {
-    ...allYearsChartOptions,
-    onClick: handleHistoryChartClick
-  };
-  const handleHistoryWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
-    const element = elements[0];
-    if (!element) {
-      setChartModalOpen(true);
-      return;
-    }
-    const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
-    if (!seriesKey) {
-      return;
-    }
-    showOnlyAllYearsSeries(seriesKey);
-  };
-  const historyWealthChartOptionsWithClick: SeriesChartOptions = {
-    ...allYearsChartOptions,
-    onClick: handleHistoryWealthChartClick
-  };
-  const compactHistoryChartOptions: SeriesChartOptions = isMobile
-    ? {
-        ...historyChartOptionsWithClick,
-        scales: {
-          ...historyChartOptionsWithClick.scales,
-          x: {
-            ...(historyChartOptionsWithClick.scales?.x ?? {}),
-            ticks: {
-              ...((historyChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
-              autoSkip: true,
-              maxTicksLimit: 6
-            }
-          },
-          y: {
-            ...(historyChartOptionsWithClick.scales?.y ?? {}),
-            ticks: {
-              ...((historyChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    : historyChartOptionsWithClick;
-  const compactHistoryWealthChartOptions: SeriesChartOptions = isMobile
-    ? {
-        ...historyWealthChartOptionsWithClick,
-        scales: {
-          ...historyWealthChartOptionsWithClick.scales,
-          x: {
-            ...(historyWealthChartOptionsWithClick.scales?.x ?? {}),
-            ticks: {
-              ...((historyWealthChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
-              autoSkip: true,
-              maxTicksLimit: 6
-            }
-          },
-          y: {
-            ...(historyWealthChartOptionsWithClick.scales?.y ?? {}),
-            ticks: {
-              ...((historyWealthChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    : historyWealthChartOptionsWithClick;
+  const openChartModal = useCallback(() => setChartModalOpen(true), []);
+  const {
+    interactiveOptions: historyChartOptionsWithClick,
+    compactOptions: compactHistoryChartOptions
+  } = useChartInteractionOptions({
+    options: allYearsChartOptions,
+    series: FLOW_TYPES,
+    isMobile,
+    onShowOnly: showOnlyAllYearsSeries,
+    onOpenModal: openChartModal
+  });
+  const {
+    interactiveOptions: historyWealthChartOptionsWithClick,
+    compactOptions: compactHistoryWealthChartOptions
+  } = useChartInteractionOptions({
+    options: allYearsChartOptions,
+    series: WEALTH_TYPES,
+    isMobile,
+    onShowOnly: showOnlyAllYearsSeries,
+    onOpenModal: openChartModal
+  });
   const historyChartModalMinWidth = Math.max(360, filteredChartLabels.length * 56);
   const historyRangeLabel = useMemo(() => {
     if (filteredAllYears.length === 0) {
