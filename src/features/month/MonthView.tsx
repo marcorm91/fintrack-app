@@ -1,6 +1,6 @@
 import type { FormState, SeriesKey } from '../../types';
 import type { MonthlySummary } from '../../db';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { MonthPicker } from '../../components/MonthPicker';
@@ -107,7 +107,9 @@ export function MonthView({
   const locale = i18n.language;
   const isMobile = useIsMobile();
   const [mobileFormOpen, setMobileFormOpen] = useState(false);
+  const [mobileFormClosing, setMobileFormClosing] = useState(false);
   const [sheetTouchStartY, setSheetTouchStartY] = useState<number | null>(null);
+  const closeSheetTimerRef = useRef<number | null>(null);
   const monthlyFlowMix = useMemo<MonthlyInputMixItem[]>(
     () => [
       {
@@ -137,9 +139,57 @@ export function MonthView({
     onMobileFormOpenChange?.(mobileFormOpen);
     return () => onMobileFormOpenChange?.(false);
   }, [mobileFormOpen, onMobileFormOpenChange]);
+
+  useEffect(() => {
+    if (!mobileFormOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [mobileFormOpen]);
+
+  useEffect(
+    () => () => {
+      if (closeSheetTimerRef.current !== null) {
+        window.clearTimeout(closeSheetTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const openMobileForm = () => {
+    if (closeSheetTimerRef.current !== null) {
+      window.clearTimeout(closeSheetTimerRef.current);
+      closeSheetTimerRef.current = null;
+    }
+    setMobileFormClosing(false);
+    setMobileFormOpen(true);
+  };
+
+  const closeMobileForm = () => {
+    if (!mobileFormOpen || mobileFormClosing) {
+      return;
+    }
+
+    setMobileFormClosing(true);
+    closeSheetTimerRef.current = window.setTimeout(() => {
+      setMobileFormOpen(false);
+      setMobileFormClosing(false);
+      closeSheetTimerRef.current = null;
+    }, 280);
+  };
+
   const handleSheetTouchEnd = (clientY: number) => {
     if (sheetTouchStartY !== null && clientY - sheetTouchStartY > 70) {
-      setMobileFormOpen(false);
+      closeMobileForm();
     }
     setSheetTouchStartY(null);
   };
@@ -270,7 +320,7 @@ export function MonthView({
     <>
       <button
         type="button"
-        onClick={() => setMobileFormOpen(true)}
+        onClick={openMobileForm}
         className="btn btn-primary mobile-fab fixed right-4 z-30 grid h-12 w-12 place-items-center rounded-full p-0 shadow-card"
         style={{ bottom: 'calc(var(--app-safe-bottom) + 5.25rem)' }}
         aria-label={t('labels.saveMonth')}
@@ -279,17 +329,29 @@ export function MonthView({
         <PlusIcon />
       </button>
       {mobileFormOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end bg-ink/35" onClick={() => setMobileFormOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-ink/35"
+          style={{
+            opacity: mobileFormClosing ? 0 : 1,
+            transition: 'opacity 280ms ease'
+          }}
+          onClick={closeMobileForm}
+        >
           <div
-            className="max-h-[86vh] w-full overflow-y-auto rounded-t-2xl border border-ink/10 bg-white p-4 pb-[calc(var(--app-safe-bottom)+1rem)] shadow-card"
+            className="max-h-[86vh] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-ink/10 bg-white p-4 pb-[calc(var(--app-safe-bottom)+1rem)] shadow-card"
+            style={{
+              transform: mobileFormClosing ? 'translateY(100%)' : 'translateY(0)',
+              transition: 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: 'transform'
+            }}
             onClick={(event) => event.stopPropagation()}
-            onTouchStart={(event) => setSheetTouchStartY(event.touches[0]?.clientY ?? null)}
-            onTouchEnd={(event) => handleSheetTouchEnd(event.changedTouches[0]?.clientY ?? 0)}
           >
             <button
               type="button"
-              className="mx-auto mb-4 block h-1.5 w-12 rounded-full bg-ink/15"
-              onClick={() => setMobileFormOpen(false)}
+              className="mx-auto mb-4 block h-1.5 w-12 touch-none rounded-full bg-ink/15"
+              onClick={closeMobileForm}
+              onTouchStart={(event) => setSheetTouchStartY(event.touches[0]?.clientY ?? null)}
+              onTouchEnd={(event) => handleSheetTouchEnd(event.changedTouches[0]?.clientY ?? 0)}
               aria-label={t('actions.close')}
               title={t('actions.close')}
             />
