@@ -483,7 +483,10 @@ export function YearView({
             </span>
           </div>
           <div className="mt-4 sm:hidden">
-            <div className="flex flex-wrap gap-2" aria-label={t('labels.monthDetail')}>
+            <div
+              className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              aria-label={t('labels.monthDetail')}
+            >
               {(
                 [
                   ['month', t('labels.month'), true],
@@ -500,7 +503,7 @@ export function YearView({
                     key={key}
                     type="button"
                     onClick={() => handleYearSort(key)}
-                    className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition ${
+                    className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition ${
                       yearTableSort.key === key
                         ? 'border-accent/40 bg-accent/10 text-accent'
                         : 'border-ink/10 bg-white text-muted'
