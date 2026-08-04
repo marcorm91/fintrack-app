@@ -1,13 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
 import { useCharts } from './hooks/useCharts';
 import { useDatabaseSettings } from './hooks/useDatabaseSettings';
 import { useExportData } from './hooks/useExportData';
@@ -26,12 +18,9 @@ import { useReadOnlySetting } from './hooks/useReadOnlySetting';
 import { useToastAutoDismiss } from './hooks/useToastAutoDismiss';
 import { useUpdateStatus } from './hooks/useUpdateStatus';
 import { useIsMobile } from './hooks/useIsMobile';
-import type {
-  AllTableSortKey,
-  SortDirection,
-  TabKey,
-  YearTableSortKey
-} from './types';
+import { useSwipeNavigation } from './hooks/useSwipeNavigation';
+import { useTableSort } from './hooks/useTableSort';
+import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
 import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
@@ -41,18 +30,20 @@ import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
-import { HistoryView } from './features/history/HistoryView';
-import { MonthView } from './features/month/MonthView';
-import { YearView } from './features/year/YearView';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+const HistoryView = lazy(() =>
+  import('./features/history/HistoryView').then((module) => ({ default: module.HistoryView }))
+);
+const MonthView = lazy(() =>
+  import('./features/month/MonthView').then((module) => ({ default: module.MonthView }))
+);
+const YearView = lazy(() =>
+  import('./features/year/YearView').then((module) => ({ default: module.YearView }))
+);
 
 export default function App() {
   useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
-  const [monthContentSlideDirection, setMonthContentSlideDirection] = useState<'next' | 'previous' | null>(null);
-  const [monthSwipeStart, setMonthSwipeStart] = useState<{ x: number; y: number } | null>(null);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
   const isMobile = useIsMobile();
   const {
@@ -77,11 +68,11 @@ export default function App() {
     toggleSeries: toggleAllYearsSeries,
     showOnlySeries: showOnlyAllYearsSeries
   } = useSeriesVisibility();
-  const [yearTableSort, setYearTableSort] = useState<{ key: YearTableSortKey; direction: SortDirection }>({
+  const { sort: yearTableSort, toggleSort: handleYearSort } = useTableSort<YearTableSortKey>({
     key: 'month',
     direction: 'asc'
   });
-  const [allYearsTableSort, setAllYearsTableSort] = useState<{ key: AllTableSortKey; direction: SortDirection }>({
+  const { sort: allYearsTableSort, toggleSort: handleAllYearsSort } = useTableSort<AllTableSortKey>({
     key: 'year',
     direction: 'desc'
   });
@@ -142,25 +133,18 @@ export default function App() {
   );
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
-  const handleMonthSwipeAnimation = useCallback((direction: 'next' | 'previous') => {
-    setMonthContentSlideDirection(direction);
-    window.setTimeout(() => setMonthContentSlideDirection(null), 180);
-  }, []);
-  const handleMonthSwipeEnd = useCallback((clientX: number, clientY: number) => {
-    if (!isMobile || monthSwipeBlocked || !monthSwipeStart) {
-      setMonthSwipeStart(null);
-      return;
-    }
-
-    const deltaX = clientX - monthSwipeStart.x;
-    const deltaY = clientY - monthSwipeStart.y;
-    if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY) * 1.6) {
-      const direction = deltaX < 0 ? 'next' : 'previous';
-      handleMonthSwipeAnimation(direction);
+  const handleMonthSwipe = useCallback(
+    (direction: 'next' | 'previous') => {
       setMonthValue((prev) => shiftMonthValue(prev, direction === 'next' ? 1 : -1));
-    }
-    setMonthSwipeStart(null);
-  }, [handleMonthSwipeAnimation, isMobile, monthSwipeBlocked, monthSwipeStart, setMonthValue]);
+    },
+    [setMonthValue]
+  );
+  const { motionClassName: monthMotionClassName, swipeHandlers: monthSwipeHandlers } =
+    useSwipeNavigation({
+      enabled: isMobile,
+      blocked: monthSwipeBlocked,
+      onSwipe: handleMonthSwipe
+    });
   const {
     settingsOpen,
     openSettings,
@@ -363,22 +347,6 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [appReady]);
 
-  const handleYearSort = (key: YearTableSortKey) => {
-    setYearTableSort((prev) =>
-      prev.key === key
-        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { key, direction: 'asc' }
-    );
-  };
-
-  const handleAllYearsSort = (key: AllTableSortKey) => {
-    setAllYearsTableSort((prev) =>
-      prev.key === key
-        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { key, direction: 'asc' }
-    );
-  };
-
   const globalWealthSummary = useMemo(() => {
     const latestPoint = getLatestClosingBalancePointAtOrBefore(effectiveSeries, currentMonthValue);
     return latestPoint
@@ -499,35 +467,11 @@ export default function App() {
       }
       toast={toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
     >
+      <Suspense fallback={<div className="min-h-[40vh]" aria-busy="true" />}>
       {activeTab === 'month' ? (
         <div
-          className={`grid gap-4 transition duration-150 ease-out sm:gap-6 ${
-            monthContentSlideDirection === 'next'
-              ? '-translate-x-4 opacity-75'
-              : monthContentSlideDirection === 'previous'
-                ? 'translate-x-4 opacity-75'
-                : 'opacity-100'
-          }`}
-          onTouchStart={(event) => {
-            if (!isMobile || monthSwipeBlocked) {
-              return;
-            }
-            const target = event.target as HTMLElement;
-            if (target.closest('button, input, select, textarea, [role="button"]')) {
-              return;
-            }
-            const touch = event.touches[0];
-            if (touch) {
-              setMonthSwipeStart({ x: touch.clientX, y: touch.clientY });
-            }
-          }}
-          onTouchEnd={(event) => {
-            const touch = event.changedTouches[0];
-            if (touch) {
-              handleMonthSwipeEnd(touch.clientX, touch.clientY);
-            }
-          }}
-          onTouchCancel={() => setMonthSwipeStart(null)}
+          className={`grid gap-4 transition duration-150 ease-out sm:gap-6 ${monthMotionClassName}`}
+          {...monthSwipeHandlers}
         >
           <MonthView
             monthValue={monthValue}
@@ -597,6 +541,7 @@ export default function App() {
           allYearsTrendByYear={allYearsTrendByYear}
         />
       ) : null}
+      </Suspense>
     </AppLayout>
   );
 }

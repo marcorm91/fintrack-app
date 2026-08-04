@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SeriesKey, SeriesTrendMap, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
-import type { ActiveElement, ChartData, ChartEvent, ChartOptions } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 import type { RefObject } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -12,11 +12,15 @@ import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, TrendIcon } from '../../components/icons';
 import { useChartResize, type ChartInstance } from '../../hooks/useChartResize';
+import { useChartInteractionOptions } from '../../hooks/useChartInteractionOptions';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
 import { FLOW_TYPES, WEALTH_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftYearValue } from '../../utils/date';
 import type { InsightsPayload } from '../../types/insights';
+import '../../utils/chartSetup';
+import { findBenefitExtremes } from '../../utils/metrics';
 
 type YearTotals = {
   incomeCents: number;
@@ -84,8 +88,6 @@ export function YearView({
   const isMobile = useIsMobile();
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [activeChartPanel, setActiveChartPanel] = useState<'summary' | 'wealth'>('summary');
-  const [yearSwipeStart, setYearSwipeStart] = useState<{ x: number; y: number } | null>(null);
-  const [yearSlideDirection, setYearSlideDirection] = useState<'next' | 'previous' | null>(null);
   const { chartRef: yearChartRef, containerRef: yearChartContainerRef } = useChartResize<
     'bar',
     Array<number | null>,
@@ -101,22 +103,10 @@ export function YearView({
     Array<number | null>,
     string
   >();
-  const { bestBenefitMonth, worstBenefitMonth } = useMemo(() => {
-    if (sortedYearSeries.length === 0) {
-      return { bestBenefitMonth: null, worstBenefitMonth: null };
-    }
-    let best: MonthlySeriesPoint = sortedYearSeries[0];
-    let worst: MonthlySeriesPoint = sortedYearSeries[0];
-    for (const point of sortedYearSeries) {
-      if (point.benefitCents > best.benefitCents) {
-        best = point;
-      }
-      if (point.benefitCents < worst.benefitCents) {
-        worst = point;
-      }
-    }
-    return { bestBenefitMonth: best, worstBenefitMonth: worst };
-  }, [sortedYearSeries]);
+  const { best: bestBenefitMonth, worst: worstBenefitMonth } = useMemo(
+    () => findBenefitExtremes(sortedYearSeries),
+    [sortedYearSeries]
+  );
   const activeChartTitle =
     activeChartPanel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart');
   const activeYearChartModalTitle = `${activeChartTitle} ${yearValue}`;
@@ -133,133 +123,46 @@ export function YearView({
       setYearComparisonValue('');
     }
   }, [comparisonYears, setYearComparisonValue, yearComparisonValue]);
-  const handleYearChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
-    const element = elements[0];
-    if (!element) {
-      setChartModalOpen(true);
-      return;
-    }
-    const seriesKey = FLOW_TYPES[element.datasetIndex]?.key;
-    if (!seriesKey) {
-      return;
-    }
-    showOnlyYearSeries(seriesKey);
-  };
-  const yearChartOptionsWithClick: SeriesChartOptions = {
-    ...yearChartOptions,
-    onClick: handleYearChartClick
-  };
-  const handleYearWealthChartClick = (_event: ChartEvent, elements: ActiveElement[]) => {
-    const element = elements[0];
-    if (!element) {
-      setChartModalOpen(true);
-      return;
-    }
-    const seriesKey = WEALTH_TYPES[element.datasetIndex]?.key;
-    if (!seriesKey) {
-      return;
-    }
-    showOnlyYearSeries(seriesKey);
-  };
-  const yearWealthChartOptionsWithClick: SeriesChartOptions = {
-    ...yearChartOptions,
-    onClick: handleYearWealthChartClick
-  };
-  const handleYearSwipeEnd = (clientX: number, clientY: number) => {
-    if (!isMobile || !yearSwipeStart) {
-      setYearSwipeStart(null);
-      return;
-    }
-
-    const deltaX = clientX - yearSwipeStart.x;
-    const deltaY = clientY - yearSwipeStart.y;
-    if (Math.abs(deltaX) > 70 && Math.abs(deltaX) > Math.abs(deltaY) * 1.6) {
-      const direction = deltaX < 0 ? 'next' : 'previous';
-      setYearSlideDirection(direction);
+  const openChartModal = useCallback(() => setChartModalOpen(true), []);
+  const {
+    interactiveOptions: yearChartOptionsWithClick,
+    compactOptions: compactYearChartOptions
+  } = useChartInteractionOptions({
+    options: yearChartOptions,
+    series: FLOW_TYPES,
+    isMobile,
+    onShowOnly: showOnlyYearSeries,
+    onOpenModal: openChartModal
+  });
+  const {
+    interactiveOptions: yearWealthChartOptionsWithClick,
+    compactOptions: compactYearWealthChartOptions
+  } = useChartInteractionOptions({
+    options: yearChartOptions,
+    series: WEALTH_TYPES,
+    isMobile,
+    onShowOnly: showOnlyYearSeries,
+    onOpenModal: openChartModal
+  });
+  const handleYearSwipe = useCallback(
+    (direction: 'next' | 'previous') => {
       setYearValue((prev) => shiftYearValue(prev, direction === 'next' ? 1 : -1));
-      window.setTimeout(() => setYearSlideDirection(null), 180);
-    }
-    setYearSwipeStart(null);
-  };
-  const compactYearChartOptions: SeriesChartOptions = isMobile
-    ? {
-        ...yearChartOptionsWithClick,
-        scales: {
-          ...yearChartOptionsWithClick.scales,
-          x: {
-            ...(yearChartOptionsWithClick.scales?.x ?? {}),
-            ticks: {
-              ...((yearChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
-              autoSkip: true,
-              maxTicksLimit: 6
-            }
-          },
-          y: {
-            ...(yearChartOptionsWithClick.scales?.y ?? {}),
-            ticks: {
-              ...((yearChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    : yearChartOptionsWithClick;
-  const compactYearWealthChartOptions: SeriesChartOptions = isMobile
-    ? {
-        ...yearWealthChartOptionsWithClick,
-        scales: {
-          ...yearWealthChartOptionsWithClick.scales,
-          x: {
-            ...(yearWealthChartOptionsWithClick.scales?.x ?? {}),
-            ticks: {
-              ...((yearWealthChartOptionsWithClick.scales?.x as { ticks?: unknown })?.ticks ?? {}),
-              autoSkip: true,
-              maxTicksLimit: 6
-            }
-          },
-          y: {
-            ...(yearWealthChartOptionsWithClick.scales?.y ?? {}),
-            ticks: {
-              ...((yearWealthChartOptionsWithClick.scales?.y as { ticks?: unknown })?.ticks ?? {}),
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    : yearWealthChartOptionsWithClick;
+    },
+    [setYearValue]
+  );
+  const { motionClassName, swipeHandlers } = useSwipeNavigation({
+    enabled: isMobile,
+    blocked: chartModalOpen,
+    onSwipe: handleYearSwipe
+  });
   const yearChartModalMinWidth = Math.max(360, sortedYearSeries.length * 56);
   return (
     <div
       className="min-w-0 overflow-x-hidden"
-      onTouchStart={(event) => {
-        if (!isMobile || chartModalOpen) {
-          return;
-        }
-        const target = event.target as HTMLElement;
-        if (target.closest('button, input, select, textarea, canvas, [role="button"]')) {
-          return;
-        }
-        const touch = event.touches[0];
-        if (touch) {
-          setYearSwipeStart({ x: touch.clientX, y: touch.clientY });
-        }
-      }}
-      onTouchEnd={(event) => {
-        const touch = event.changedTouches[0];
-        if (touch) {
-          handleYearSwipeEnd(touch.clientX, touch.clientY);
-        }
-      }}
-      onTouchCancel={() => setYearSwipeStart(null)}
+      {...swipeHandlers}
     >
       <div
-        className={`grid min-w-0 gap-4 overflow-x-hidden transition duration-150 ease-out sm:gap-6 ${
-          yearSlideDirection === 'next'
-            ? '-translate-x-4 opacity-75'
-            : yearSlideDirection === 'previous'
-              ? 'translate-x-4 opacity-75'
-              : 'opacity-100'
-        }`}
+        className={`grid min-w-0 gap-4 overflow-x-hidden transition duration-150 ease-out sm:gap-6 ${motionClassName}`}
       >
         <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">

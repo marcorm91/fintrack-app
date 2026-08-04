@@ -3,7 +3,7 @@ import Database from '@tauri-apps/plugin-sql';
 import schemaSql from './schema.sql?raw';
 
 export const DATABASE_FILENAME = 'finanzas.db';
-export const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
+const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
 const DB_PATH_STORAGE_KEY = 'fintrack.dbPath';
 const MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY = 'fintrack.mockInvestmentPortfolioEnabled';
 

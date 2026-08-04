@@ -7,6 +7,8 @@
     "dev": "vite",
     "dev:mocks": "set VITE_USE_MOCK_DB=true&& set VITE_SEED_MOCKS=force&& vite",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run build",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings=0",
     "preview": "vite preview",
     "tauri": "tauri",
