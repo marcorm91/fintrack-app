@@ -562,7 +562,121 @@ export function HistoryView({
             </select>
           </label>
         </div>
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 sm:hidden">
+          <div
+            className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2"
+            aria-label={t('labels.yearDetail')}
+          >
+            {(
+              [
+                ['year', t('labels.year'), true],
+                ['income', t('series.income'), allYearsSeriesVisibility.income],
+                ['expense', t('series.expense'), allYearsSeriesVisibility.expense],
+                ['benefit', t('series.benefit'), allYearsSeriesVisibility.benefit],
+                ['balance', t('series.balance'), allYearsSeriesVisibility.balance],
+                ['portfolio', t('series.portfolio'), allYearsSeriesVisibility.portfolio],
+                ['totalWealth', t('series.totalWealth'), allYearsSeriesVisibility.totalWealth]
+              ] as const
+            ).map(([key, label, visible]) =>
+              visible ? (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleAllYearsSort(key)}
+                  className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition ${
+                    allYearsTableSort.key === key
+                      ? 'border-accent/40 bg-accent/10 text-accent'
+                      : 'border-ink/10 bg-white text-muted'
+                  }`}
+                >
+                  {label}
+                  <SortIndicator
+                    active={allYearsTableSort.key === key}
+                    direction={allYearsTableSort.direction}
+                  />
+                </button>
+              ) : null
+            )}
+          </div>
+          {!hasFilteredData ? (
+            <p className="py-6 text-center text-sm text-muted">{t('messages.noTableData')}</p>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {pagedAllYears.map((point) => {
+                const trends = allYearsTrendByYear.get(point.year);
+                const metrics = [
+                  {
+                    key: 'income',
+                    label: t('series.income'),
+                    visible: allYearsSeriesVisibility.income,
+                    value: point.incomeCents,
+                    trend: trends?.income,
+                    className: 'text-ink'
+                  },
+                  {
+                    key: 'expense',
+                    label: t('series.expense'),
+                    visible: allYearsSeriesVisibility.expense,
+                    value: point.expenseCents,
+                    trend: trends?.expense,
+                    className: 'text-ink'
+                  },
+                  {
+                    key: 'benefit',
+                    label: t('series.benefit'),
+                    visible: allYearsSeriesVisibility.benefit,
+                    value: point.benefitCents,
+                    trend: trends?.benefit,
+                    className: getBenefitClass(point.benefitCents)
+                  },
+                  {
+                    key: 'balance',
+                    label: t('series.balance'),
+                    visible: allYearsSeriesVisibility.balance,
+                    value: point.balanceCents,
+                    trend: trends?.balance,
+                    className: 'text-ink'
+                  },
+                  {
+                    key: 'portfolio',
+                    label: t('series.portfolio'),
+                    visible: allYearsSeriesVisibility.portfolio,
+                    value: point.portfolioCents,
+                    trend: trends?.portfolio,
+                    className: 'text-ink'
+                  },
+                  {
+                    key: 'totalWealth',
+                    label: t('series.totalWealth'),
+                    visible: allYearsSeriesVisibility.totalWealth,
+                    value: point.totalWealthCents,
+                    trend: trends?.totalWealth,
+                    className: 'text-ink'
+                  }
+                ] as const;
+                return (
+                  <article key={point.year} className="rounded-xl border border-ink/10 bg-white/90 p-3 shadow-sm">
+                    <h3 className="border-b border-ink/5 pb-2 font-semibold text-ink">{point.year}</h3>
+                    <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-4">
+                      {metrics.map((metric) =>
+                        metric.visible ? (
+                          <div key={metric.key} className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{metric.label}</p>
+                            <p className={`mt-1 flex items-center gap-1 text-xs font-medium ${metric.className}`}>
+                              <span>{formatCents(metric.value)} EUR</span>
+                              {metric.trend ? <TrendIcon trend={metric.trend} /> : null}
+                            </p>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="mt-4 hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
             <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">

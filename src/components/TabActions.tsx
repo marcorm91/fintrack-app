@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ImportScope } from '../types';
 import { DotsVerticalIcon, InfoIcon } from './icons';
 
@@ -27,6 +27,7 @@ type ImportMenuProps = {
   scope: ImportScope;
   importMenuOpen: ImportScope | null;
   toggleImportMenu: (scope: ImportScope) => void;
+  closeImportMenu: () => void;
   openFileImport: (scope: ImportScope) => void;
   openTextImport: (scope: ImportScope) => void;
   disabled: boolean;
@@ -37,14 +38,41 @@ function ImportMenu({
   scope,
   importMenuOpen,
   toggleImportMenu,
+  closeImportMenu,
   openFileImport,
   openTextImport,
   disabled,
   t
 }: ImportMenuProps) {
   const isOpen = importMenuOpen === scope;
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        closeImportMenu();
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeImportMenu();
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeImportMenu, isOpen]);
+
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <button
         type="button"
         onClick={() => toggleImportMenu(scope)}
@@ -139,6 +167,7 @@ export function TabActions({
           scope={activeConfig.scope}
           importMenuOpen={importMenuOpen}
           toggleImportMenu={toggleImportMenu}
+          closeImportMenu={closeImportMenu}
           openFileImport={openFileImport}
           openTextImport={openTextImport}
           disabled={importDisabled}

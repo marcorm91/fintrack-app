@@ -472,17 +472,132 @@ export function YearView({
 
         <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
-            <span>{t('labels.monthDetail')}</span>
+            <span>{t('labels.monthDetail')} · {yearValue}</span>
             <span className="text-muted transition group-open:rotate-90">
               <ChevronIcon direction="right" />
             </span>
           </summary>
-          <div className="mt-4 flex items-center justify-end">
-            <span className="text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-              {yearValue}
-            </span>
+          <div className="mt-4 sm:hidden">
+            <div
+              className="-mx-1 flex touch-pan-x flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-1 pb-2"
+              aria-label={t('labels.monthDetail')}
+            >
+              {(
+                [
+                  ['month', t('labels.month'), true],
+                  ['income', t('series.income'), yearSeriesVisibility.income],
+                  ['expense', t('series.expense'), yearSeriesVisibility.expense],
+                  ['benefit', t('series.benefit'), yearSeriesVisibility.benefit],
+                  ['balance', t('series.balance'), yearSeriesVisibility.balance],
+                  ['portfolio', t('series.portfolio'), yearSeriesVisibility.portfolio],
+                  ['totalWealth', t('series.totalWealth'), yearSeriesVisibility.totalWealth]
+                ] as const
+              ).map(([key, label, visible]) =>
+                visible ? (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleYearSort(key)}
+                    className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition ${
+                      yearTableSort.key === key
+                        ? 'border-accent/40 bg-accent/10 text-accent'
+                        : 'border-ink/10 bg-white text-muted'
+                    }`}
+                  >
+                    {label}
+                    <SortIndicator active={yearTableSort.key === key} direction={yearTableSort.direction} />
+                  </button>
+                ) : null
+              )}
+            </div>
+            {!hasChartData ? (
+              <p className="py-6 text-center text-sm text-muted">{t('messages.noTableData')}</p>
+            ) : (
+              <div className="mt-4 grid gap-3">
+                {sortedYearSeries.map((point) => {
+                  const trends = yearTrendByMonth.get(point.month);
+                  const hasPointData = Boolean(trends);
+                  return (
+                    <article key={point.month} className="rounded-xl border border-ink/10 bg-white/90 p-3 shadow-sm">
+                      <header className="flex items-center justify-between gap-3 border-b border-ink/5 pb-2">
+                        <h3 className="font-semibold capitalize text-ink">
+                          {getMonthLabel(point.month, locale, 'long')}
+                        </h3>
+                        {point.note ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedNote({ month: point.month, note: point.note })}
+                            className="rounded-md p-1 text-accent2 transition hover:bg-accent/10 hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            aria-label={`${t('labels.monthNote')}: ${getMonthLabel(point.month, locale, 'long')}`}
+                            title={t('labels.monthNote')}
+                          >
+                            <NoteIcon />
+                          </button>
+                        ) : null}
+                      </header>
+                      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-4">
+                        {yearSeriesVisibility.income ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.income')}</p>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-ink">
+                              <span>{formatCents(point.incomeCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.income} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                        {yearSeriesVisibility.expense ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.expense')}</p>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-ink">
+                              <span>{formatCents(point.expenseCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.expense} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                        {yearSeriesVisibility.benefit ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.benefit')}</p>
+                            <p className={`mt-1 flex items-center gap-1 text-xs font-medium ${hasPointData ? getBenefitClass(point.benefitCents) : 'text-ink'}`}>
+                              <span>{formatCents(point.benefitCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.benefit} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                        {yearSeriesVisibility.balance ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.balance')}</p>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-ink">
+                              <span>{formatCents(point.balanceCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.balance} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                        {yearSeriesVisibility.portfolio ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.portfolio')}</p>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-ink">
+                              <span>{formatCents(point.portfolioCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.portfolio} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                        {yearSeriesVisibility.totalWealth ? (
+                          <div className="min-w-0">
+                            <p className="text-[9px] uppercase tracking-[0.12em] text-muted">{t('series.totalWealth')}</p>
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-ink">
+                              <span>{formatCents(point.totalWealthCents)} EUR</span>
+                              {trends ? <TrendIcon trend={trends.totalWealth} /> : null}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[860px] text-left text-xs sm:text-sm">
             <thead className="text-[10px] uppercase tracking-[0.12em] text-muted sm:text-xs sm:tracking-[0.14em]">
               <tr className="border-b border-ink/10">
