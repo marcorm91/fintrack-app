@@ -149,6 +149,45 @@ export interface MonthlySnapshotInput {
   note?: string;
 }
 
+export type SyncStatus = 'synced' | 'pending' | 'conflict';
+
+export interface SyncableMonthlySnapshot {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  balanceCents: number;
+  portfolioCents: number;
+  note: string;
+  version: number;
+  localRevision: number;
+  updatedAt: string;
+  deletedAt: string | null;
+  syncStatus: SyncStatus;
+}
+
+export interface RemoteMonthlySnapshot {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  balanceCents: number;
+  portfolioCents: number;
+  note: string;
+  version: number;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export type RemoteApplyResult = 'applied' | 'ignored' | 'local-pending' | 'conflict';
+
+export interface MarkMonthlySnapshotSyncedInput {
+  month: string;
+  expectedVersion: number;
+  expectedLocalRevision: number;
+  nextVersion: number;
+  remoteUpdatedAt: string;
+  remoteDeletedAt: string | null;
+}
+
 function shouldSeedDevData() {
   if (typeof window === 'undefined') {
     return false;
@@ -172,7 +211,7 @@ SELECT
   portfolio_cents,
   note
 FROM monthly_snapshots
-WHERE month = ?;
+WHERE month = ? AND deleted_at IS NULL;
 `;
 
 const MONTHLY_SERIES_SQL = `
@@ -184,6 +223,7 @@ SELECT
   portfolio_cents,
   note
 FROM monthly_snapshots
+WHERE deleted_at IS NULL
 ORDER BY month;
 `;
 
@@ -196,7 +236,7 @@ WHERE month = ?;
 const LATEST_PORTFOLIO_BEFORE_MONTH_SQL = `
 SELECT portfolio_cents
 FROM monthly_snapshots
-WHERE month < ? AND balance_cents <> 0
+WHERE month < ? AND balance_cents <> 0 AND deleted_at IS NULL
 ORDER BY month DESC
 LIMIT 1;
 `;
@@ -208,29 +248,154 @@ INSERT INTO monthly_snapshots (
   expense_cents,
   balance_cents,
   portfolio_cents,
-  note
+  note,
+  version,
+  local_revision,
+  updated_at,
+  deleted_at,
+  sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, 0, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), NULL, 'pending')
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
   balance_cents = excluded.balance_cents,
   portfolio_cents = excluded.portfolio_cents,
-  note = excluded.note;
+  note = excluded.note,
+  local_revision = monthly_snapshots.local_revision + 1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  deleted_at = NULL,
+  sync_status = 'pending';
 `;
 
 const DELETE_MONTH_SQL = `
-DELETE FROM monthly_snapshots
-WHERE month = ?;
+UPDATE monthly_snapshots
+SET
+  local_revision = local_revision + 1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  deleted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  sync_status = 'pending'
+WHERE month = ? AND deleted_at IS NULL;
 `;
 
 const DELETE_YEAR_SQL = `
-DELETE FROM monthly_snapshots
-WHERE month LIKE ?;
+UPDATE monthly_snapshots
+SET
+  local_revision = local_revision + 1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  deleted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  sync_status = 'pending'
+WHERE month LIKE ? AND deleted_at IS NULL;
 `;
 
 const DELETE_ALL_SQL = `
+UPDATE monthly_snapshots
+SET
+  local_revision = local_revision + 1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  deleted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  sync_status = 'pending'
+WHERE deleted_at IS NULL;
+`;
+
+const PURGE_ALL_SQL = `
 DELETE FROM monthly_snapshots;
+`;
+
+const PENDING_MONTHLY_SNAPSHOTS_SQL = `
+SELECT
+  month,
+  income_cents,
+  expense_cents,
+  balance_cents,
+  portfolio_cents,
+  note,
+  version,
+  local_revision,
+  updated_at,
+  deleted_at,
+  sync_status
+FROM monthly_snapshots
+WHERE sync_status = 'pending'
+ORDER BY month;
+`;
+
+const CONFLICTED_MONTHLY_SNAPSHOTS_SQL = `
+SELECT
+  month,
+  income_cents,
+  expense_cents,
+  balance_cents,
+  portfolio_cents,
+  note,
+  version,
+  local_revision,
+  updated_at,
+  deleted_at,
+  sync_status
+FROM monthly_snapshots
+WHERE sync_status = 'conflict'
+ORDER BY month;
+`;
+
+const MONTHLY_SYNC_METADATA_SQL = `
+SELECT version, local_revision, sync_status
+FROM monthly_snapshots
+WHERE month = ?;
+`;
+
+const MARK_MONTH_SYNCED_SQL = `
+UPDATE monthly_snapshots
+SET
+  version = ?,
+  updated_at = ?,
+  deleted_at = ?,
+  sync_status = 'synced'
+WHERE
+  month = ?
+  AND version = ?
+  AND local_revision = ?
+  AND sync_status = 'pending';
+`;
+
+const MARK_MONTH_CONFLICT_SQL = `
+UPDATE monthly_snapshots
+SET sync_status = 'conflict'
+WHERE
+  month = ?
+  AND version = ?
+  AND local_revision = ?
+  AND sync_status = 'pending';
+`;
+
+const APPLY_REMOTE_MONTH_SQL = `
+INSERT INTO monthly_snapshots (
+  month,
+  income_cents,
+  expense_cents,
+  balance_cents,
+  portfolio_cents,
+  note,
+  version,
+  local_revision,
+  updated_at,
+  deleted_at,
+  sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
+ON CONFLICT(month) DO UPDATE SET
+  income_cents = excluded.income_cents,
+  expense_cents = excluded.expense_cents,
+  balance_cents = excluded.balance_cents,
+  portfolio_cents = excluded.portfolio_cents,
+  note = excluded.note,
+  version = excluded.version,
+  updated_at = excluded.updated_at,
+  deleted_at = excluded.deleted_at,
+  sync_status = 'synced'
+WHERE
+  monthly_snapshots.sync_status = 'synced'
+  AND monthly_snapshots.version < excluded.version;
 `;
 
 const GET_APP_SETTING_SQL = `
@@ -272,6 +437,46 @@ function seriesFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySeriesPoint 
   return summaryFromSnapshot(snapshot);
 }
 
+type SyncableMonthlySnapshotRow = {
+  month: string;
+  income_cents: number;
+  expense_cents: number;
+  balance_cents: number;
+  portfolio_cents: number;
+  note: string;
+  version: number;
+  local_revision: number;
+  updated_at: string;
+  deleted_at: string | null;
+  sync_status: SyncStatus;
+};
+
+type MonthlySyncMetadataRow = {
+  version: number;
+  local_revision: number;
+  sync_status: SyncStatus;
+};
+
+function syncableSnapshotFromRow(row: SyncableMonthlySnapshotRow): SyncableMonthlySnapshot {
+  return {
+    month: row.month,
+    incomeCents: row.income_cents,
+    expenseCents: row.expense_cents,
+    balanceCents: row.balance_cents,
+    portfolioCents: row.portfolio_cents,
+    note: row.note,
+    version: row.version,
+    localRevision: row.local_revision,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: row.sync_status
+  };
+}
+
+function normalizeSnapshotNote(note: string) {
+  return note.replace(/\s+/g, ' ').trim().slice(0, 500);
+}
+
 async function getMockSnapshots(): Promise<MonthlySnapshotInput[]> {
   if (!mockSnapshotsPromise) {
     mockSnapshotsPromise = (async () => {
@@ -289,9 +494,11 @@ async function ensureDevSeeded(db: Database): Promise<void> {
   if (!devSeedPromise) {
     devSeedPromise = (async () => {
       if (shouldResetDevMocks()) {
-        await db.execute(DELETE_ALL_SQL);
+        await db.execute(PURGE_ALL_SQL);
       }
-      const rows = await db.select<Array<{ count: number }>>('SELECT COUNT(*) as count FROM monthly_snapshots;');
+      const rows = await db.select<Array<{ count: number }>>(
+        'SELECT COUNT(*) as count FROM monthly_snapshots WHERE deleted_at IS NULL;'
+      );
       const count = Number(rows[0]?.count ?? 0);
       if (Number.isFinite(count) && count > 0) {
         return;
@@ -324,6 +531,33 @@ async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
   if (!existingColumns.has('note')) {
     await db.execute("ALTER TABLE monthly_snapshots ADD COLUMN note TEXT NOT NULL DEFAULT '';");
   }
+  if (!existingColumns.has('version')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN version INTEGER NOT NULL DEFAULT 0 CHECK (version >= 0);'
+    );
+  }
+  if (!existingColumns.has('local_revision')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN local_revision INTEGER NOT NULL DEFAULT 0 CHECK (local_revision >= 0);'
+    );
+  }
+  if (!existingColumns.has('updated_at')) {
+    await db.execute("ALTER TABLE monthly_snapshots ADD COLUMN updated_at TEXT NOT NULL DEFAULT '';");
+  }
+  if (!existingColumns.has('deleted_at')) {
+    await db.execute('ALTER TABLE monthly_snapshots ADD COLUMN deleted_at TEXT;');
+  }
+  if (!existingColumns.has('sync_status')) {
+    await db.execute(
+      "ALTER TABLE monthly_snapshots ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('synced', 'pending', 'conflict'));"
+    );
+  }
+  await db.execute(
+    "UPDATE monthly_snapshots SET updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE updated_at = '';"
+  );
+  await db.execute(
+    'CREATE INDEX IF NOT EXISTS idx_monthly_snapshots_sync_status ON monthly_snapshots(sync_status);'
+  );
 }
 
 async function ensureAppSettingsTable(db: Database): Promise<void> {
@@ -522,8 +756,127 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     input.expenseCents,
     input.balanceCents,
     portfolioCents,
-    note.replace(/\s+/g, ' ').trim().slice(0, 500)
+    normalizeSnapshotNote(note)
   ]);
+}
+
+async function getMonthlySnapshotsForSync(query: string): Promise<SyncableMonthlySnapshot[]> {
+  if (shouldUseMockDatabase()) {
+    return [];
+  }
+  const db = await initDb();
+  const rows = await db.select<SyncableMonthlySnapshotRow[]>(query);
+  return rows.map(syncableSnapshotFromRow);
+}
+
+export async function getPendingMonthlySnapshots(): Promise<SyncableMonthlySnapshot[]> {
+  return getMonthlySnapshotsForSync(PENDING_MONTHLY_SNAPSHOTS_SQL);
+}
+
+export async function getConflictedMonthlySnapshots(): Promise<SyncableMonthlySnapshot[]> {
+  return getMonthlySnapshotsForSync(CONFLICTED_MONTHLY_SNAPSHOTS_SQL);
+}
+
+export async function markMonthlySnapshotSynced(input: MarkMonthlySnapshotSyncedInput): Promise<boolean> {
+  if (input.nextVersion <= input.expectedVersion) {
+    throw new Error('La versión remota debe ser posterior a la versión local confirmada.');
+  }
+  if (shouldUseMockDatabase()) {
+    return false;
+  }
+  const db = await initDb();
+  const result = await db.execute(MARK_MONTH_SYNCED_SQL, [
+    input.nextVersion,
+    input.remoteUpdatedAt,
+    input.remoteDeletedAt,
+    input.month,
+    input.expectedVersion,
+    input.expectedLocalRevision
+  ]);
+  return result.rowsAffected > 0;
+}
+
+export async function markMonthlySnapshotConflict(
+  month: string,
+  expectedVersion: number,
+  expectedLocalRevision: number
+): Promise<boolean> {
+  if (shouldUseMockDatabase()) {
+    return false;
+  }
+  const db = await initDb();
+  const result = await db.execute(MARK_MONTH_CONFLICT_SQL, [month, expectedVersion, expectedLocalRevision]);
+  return result.rowsAffected > 0;
+}
+
+async function getMonthlySyncMetadata(db: Database, month: string): Promise<MonthlySyncMetadataRow | null> {
+  const rows = await db.select<MonthlySyncMetadataRow[]>(MONTHLY_SYNC_METADATA_SQL, [month]);
+  return rows[0] ?? null;
+}
+
+async function markRemoteConflictIfStillPending(
+  db: Database,
+  month: string,
+  metadata: MonthlySyncMetadataRow
+): Promise<RemoteApplyResult> {
+  const result = await db.execute(MARK_MONTH_CONFLICT_SQL, [
+    month,
+    metadata.version,
+    metadata.local_revision
+  ]);
+  if (result.rowsAffected > 0) {
+    return 'conflict';
+  }
+  const latest = await getMonthlySyncMetadata(db, month);
+  return latest?.sync_status === 'conflict' ? 'conflict' : 'local-pending';
+}
+
+export async function applyRemoteMonthlySnapshot(input: RemoteMonthlySnapshot): Promise<RemoteApplyResult> {
+  if (shouldUseMockDatabase()) {
+    return 'ignored';
+  }
+  const db = await initDb();
+  const current = await getMonthlySyncMetadata(db, input.month);
+
+  if (current?.sync_status === 'conflict') {
+    return 'conflict';
+  }
+  if (current?.sync_status === 'pending') {
+    if (input.version > current.version) {
+      return markRemoteConflictIfStillPending(db, input.month, current);
+    }
+    return 'local-pending';
+  }
+  if (current && input.version <= current.version) {
+    return 'ignored';
+  }
+
+  const result = await db.execute(APPLY_REMOTE_MONTH_SQL, [
+    input.month,
+    input.incomeCents,
+    input.expenseCents,
+    input.balanceCents,
+    input.portfolioCents,
+    normalizeSnapshotNote(input.note),
+    input.version,
+    input.updatedAt,
+    input.deletedAt
+  ]);
+  if (result.rowsAffected > 0) {
+    return 'applied';
+  }
+
+  const latest = await getMonthlySyncMetadata(db, input.month);
+  if (latest?.sync_status === 'conflict') {
+    return 'conflict';
+  }
+  if (latest?.sync_status === 'pending') {
+    if (input.version > latest.version) {
+      return markRemoteConflictIfStillPending(db, input.month, latest);
+    }
+    return 'local-pending';
+  }
+  return 'ignored';
 }
 
 export async function deleteMonthlySnapshot(month: string): Promise<void> {

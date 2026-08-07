@@ -206,6 +206,17 @@ Es el formato recomendado para migrar Fintrack a otro dispositivo. Antes de impo
 
 Antes de configurar una futura sincronización en la nube, guarda un backup JSON y un CSV. Ambos se generan únicamente desde la base SQLite local y funcionan sin conexión.
 
+**Base local preparada para sincronización** <br/>
+SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin conexión. Cada mes guarda además una versión remota, una revisión local, la fecha de modificación y su estado de sincronización.
+
+- Las bases existentes se migran automáticamente y conservan todos sus registros.
+- Los registros anteriores quedan pendientes para poder realizar una primera subida completa.
+- Los cambios y borrados se conservan como pendientes hasta que el servidor los confirme.
+- Una confirmación solo se acepta si el registro no volvió a cambiar durante la subida.
+- Si llega una versión remota nueva mientras existe un cambio local pendiente, el registro se marca como conflicto y no se sobrescribe silenciosamente.
+
+Esta rama todavía no conecta con ningún proveedor cloud ni sincroniza al abrir la app; contiene la capa local necesaria para implementar ese proceso de forma segura.
+
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  
 Este archivo es el origen de todos los datos de la aplicación: meses, histórico, efectivo, cartera y ajustes.
