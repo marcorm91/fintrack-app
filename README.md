@@ -202,7 +202,7 @@ El CSV incluye una marca UTF-8 para que Excel interprete correctamente acentos y
 
 **Backup JSON** <br/>
 Desde **Ajustes > Base de datos > Copia de seguridad** puedes exportar un JSON con todos los meses, notas y ajustes.
-Es el formato recomendado para migrar Fintrack a otro dispositivo. Al importarlo, los meses coincidentes se actualizan y los demás datos locales se conservan.
+Es el formato recomendado para migrar Fintrack a otro dispositivo. Antes de importarlo, Fintrack indica cuántos meses son nuevos, idénticos o contienen cambios; los meses que no están en el backup se conservan.
 
 Antes de configurar una futura sincronización en la nube, guarda un backup JSON y un CSV. Ambos se generan únicamente desde la base SQLite local y funcionan sin conexión.
 

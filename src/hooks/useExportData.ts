@@ -5,7 +5,12 @@ import { dirname, join } from '@tauri-apps/api/path';
 import { confirm, save } from '@tauri-apps/plugin-dialog';
 import { checkpointDatabase, getMonthlySeries } from '../db';
 import type { MonthlySnapshotInput } from '../db';
-import { BackupParseError, buildJsonBackup, parseJsonBackup } from '../utils/backup';
+import {
+  BackupParseError,
+  buildJsonBackup,
+  parseJsonBackup,
+  summarizeBackupImport
+} from '../utils/backup';
 import { buildCsvSnapshots, buildSqlDump } from '../utils/export';
 
 type ExportTone = 'success' | 'error';
@@ -180,10 +185,15 @@ export function useExportData({
       setBackupStatus(null);
       try {
         const backup = parseJsonBackup(await file.text());
+        const currentSeries = await getMonthlySeries();
+        const importSummary = summarizeBackupImport(currentSeries, backup.snapshots);
         const confirmed = await confirm(
           t('settings.backupImportConfirmMessage', {
             count: backup.snapshots.length,
-            version: backup.appVersion
+            version: backup.appVersion,
+            newCount: importSummary.newCount,
+            changedCount: importSummary.changedCount,
+            unchangedCount: importSummary.unchangedCount
           }),
           { title: t('settings.backupImportConfirmTitle') }
         );

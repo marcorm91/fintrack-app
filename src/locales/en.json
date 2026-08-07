@@ -106,7 +106,7 @@
     "exportJsonTitle": "Save JSON backup",
     "exportJsonSuccess": "JSON backup saved to {{path}}.",
     "backupImportConfirmTitle": "Import backup?",
-    "backupImportConfirmMessage": "{{count}} months from Fintrack {{version}} will be imported. Matching months will be overwritten and all other months will remain.",
+    "backupImportConfirmMessage": "Fintrack {{version}} backup with {{count}} months: {{newCount}} new, {{changedCount}} changed and to be overwritten, and {{unchangedCount}} already identical. All other local months will remain.",
     "backupImportSuccess": "Backup imported: {{count}} months processed.",
     "backupImportError": "Could not import the backup.",
     "backupImportReadOnly": "Disable read-only mode to import a backup.",

@@ -46,6 +46,12 @@ export type ParsedFintrackBackup = {
   snapshots: MonthlySnapshotInput[];
 };
 
+export type BackupImportSummary = {
+  newCount: number;
+  changedCount: number;
+  unchangedCount: number;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -82,6 +88,37 @@ export function buildJsonBackup(
   };
 
   return `${JSON.stringify(backup, null, 2)}\n`;
+}
+
+function snapshotsMatch(left: MonthlySnapshotInput, right: MonthlySnapshotInput) {
+  return (
+    left.incomeCents === right.incomeCents &&
+    left.expenseCents === right.expenseCents &&
+    left.balanceCents === right.balanceCents &&
+    (left.portfolioCents ?? 0) === (right.portfolioCents ?? 0) &&
+    (left.note ?? '') === (right.note ?? '')
+  );
+}
+
+export function summarizeBackupImport(
+  currentSeries: MonthlySeriesPoint[],
+  backupSnapshots: MonthlySnapshotInput[]
+): BackupImportSummary {
+  const currentByMonth = new Map(currentSeries.map((snapshot) => [snapshot.month, snapshot]));
+  return backupSnapshots.reduce<BackupImportSummary>(
+    (summary, snapshot) => {
+      const current = currentByMonth.get(snapshot.month);
+      if (!current) {
+        summary.newCount += 1;
+      } else if (snapshotsMatch(current, snapshot)) {
+        summary.unchangedCount += 1;
+      } else {
+        summary.changedCount += 1;
+      }
+      return summary;
+    },
+    { newCount: 0, changedCount: 0, unchangedCount: 0 }
+  );
 }
 
 export function parseJsonBackup(text: string): ParsedFintrackBackup {
