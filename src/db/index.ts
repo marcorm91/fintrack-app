@@ -358,6 +358,14 @@ async function initDb(): Promise<Database> {
   return db;
 }
 
+export async function checkpointDatabase(): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    return;
+  }
+  const db = await initDb();
+  await db.execute('PRAGMA wal_checkpoint(FULL);');
+}
+
 export async function getMonthlySummary(month: string): Promise<MonthlySummary | null> {
   if (shouldUseMockDatabase()) {
     const snapshots = await getMockSnapshots();

@@ -305,15 +305,27 @@ export default function App() {
   const {
     exportCsv,
     exportSql,
+    exportJson,
+    openJsonImport,
+    onJsonBackupFileChange,
+    backupInputRef,
     backupDatabase,
     exportingCsv,
     exportingSql,
+    exportingJson,
+    importingJson,
     backingUp,
     exportStatus,
     backupStatus
   } = useExportData({
     currentPath,
     language,
+    currentVersion,
+    hasInvestmentPortfolio,
+    readOnly,
+    saveSnapshot,
+    setInvestmentPortfolioEnabled: setHasInvestmentPortfolio,
+    refreshData,
     t
   });
   const infoDialogContent = useInfoDialogContent(infoDialog);
@@ -407,6 +419,15 @@ export default function App() {
       }
       dialogs={
         <>
+          <input
+            ref={backupInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={onJsonBackupFileChange}
+            className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
           <ConfirmDialog
             open={Boolean(confirmDialog)}
             title={confirmDialog?.title ?? ''}
@@ -452,6 +473,8 @@ export default function App() {
             latestReleaseUrl={latestReleaseUrl}
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
+            exportingJson={exportingJson}
+            importingJson={importingJson}
             backingUp={backingUp}
             exportStatus={exportStatus}
             backupStatus={backupStatus}
@@ -462,6 +485,8 @@ export default function App() {
             onCheckUpdates={checkForUpdates}
             onExportCsv={exportCsv}
             onExportSql={exportSql}
+            onExportJson={exportJson}
+            onImportJson={openJsonImport}
             onBackupDatabase={backupDatabase}
             onClose={closeSettings}
           />

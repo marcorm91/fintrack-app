@@ -33,7 +33,7 @@ export function buildCsvSnapshots(series: MonthlySeriesPoint[], locale: string) 
       ].join(';')
     );
   }
-  return lines.join('\n');
+  return `\uFEFF${lines.join('\n')}`;
 }
 
 function escapeSqlValue(value: string) {

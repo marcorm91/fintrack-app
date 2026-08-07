@@ -198,6 +198,13 @@ El formato depende de la vista desde la que se realiza la importación: mensual,
 
 **Exportar CSV/SQL** <br/>
 Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o migraciones.
+El CSV incluye una marca UTF-8 para que Excel interprete correctamente acentos y caracteres especiales.
+
+**Backup JSON** <br/>
+Desde **Ajustes > Base de datos > Copia de seguridad** puedes exportar un JSON con todos los meses, notas y ajustes.
+Es el formato recomendado para migrar Fintrack a otro dispositivo. Al importarlo, los meses coincidentes se actualizan y los demás datos locales se conservan.
+
+Antes de configurar una futura sincronización en la nube, guarda un backup JSON y un CSV. Ambos se generan únicamente desde la base SQLite local y funcionan sin conexión.
 
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  

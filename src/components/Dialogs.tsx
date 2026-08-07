@@ -166,6 +166,8 @@ export function DatabaseSettingsDialog({
   latestReleaseUrl,
   exportingCsv,
   exportingSql,
+  exportingJson,
+  importingJson,
   backingUp,
   exportStatus,
   backupStatus,
@@ -176,6 +178,8 @@ export function DatabaseSettingsDialog({
   onCheckUpdates,
   onExportCsv,
   onExportSql,
+  onExportJson,
+  onImportJson,
   onBackupDatabase,
   onClose
 }: {
@@ -197,6 +201,8 @@ export function DatabaseSettingsDialog({
   latestReleaseUrl: string | null;
   exportingCsv: boolean;
   exportingSql: boolean;
+  exportingJson: boolean;
+  importingJson: boolean;
   backingUp: boolean;
   exportStatus: ExportStatus;
   backupStatus: ExportStatus;
@@ -207,6 +213,8 @@ export function DatabaseSettingsDialog({
   onCheckUpdates: () => void;
   onExportCsv: () => void;
   onExportSql: () => void;
+  onExportJson: () => void;
+  onImportJson: () => void;
   onBackupDatabase: () => void;
   onClose: () => void;
 }) {
@@ -235,7 +243,7 @@ export function DatabaseSettingsDialog({
   const exportStatusClass =
     exportStatus?.tone === 'error' ? 'text-red-700' : 'text-benefit';
   const exportDisabled = loading || exportingCsv || exportingSql;
-  const backupDisabled = loading || backingUp;
+  const backupDisabled = loading || backingUp || exportingJson || importingJson;
   const [pathStatus, setPathStatus] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
   const hasUnsavedChanges = inputPath.trim() !== currentPath;
   const handleExternalLink = async (event: MouseEvent<HTMLAnchorElement>, url: string) => {
@@ -451,14 +459,32 @@ export function DatabaseSettingsDialog({
                   <p className="text-sm font-semibold text-ink">{t('settings.backupTitle')}</p>
                   <p className="text-xs text-muted">{t('settings.backupDescription')}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={onBackupDatabase}
-                  disabled={backupDisabled}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
-                >
-                  {backingUp ? t('settings.backupRunning') : t('settings.backupAction')}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={onExportJson}
+                    disabled={backupDisabled}
+                    className="btn btn-primary text-[10px] sm:text-[11px]"
+                  >
+                    {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onImportJson}
+                    disabled={backupDisabled || readOnly}
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  >
+                    {importingJson ? t('settings.importingJson') : t('settings.importJson')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onBackupDatabase}
+                    disabled={backupDisabled}
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  >
+                    {backingUp ? t('settings.backupRunning') : t('settings.backupDatabaseAction')}
+                  </button>
+                </div>
               </div>
               {backupStatus ? (
                 <p
