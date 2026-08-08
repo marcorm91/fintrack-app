@@ -20,6 +20,7 @@ import { useUpdateStatus } from './hooks/useUpdateStatus';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 import { useTableSort } from './hooks/useTableSort';
+import { useAuthSession } from './hooks/useAuthSession';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -30,6 +31,8 @@ import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
+import { AuthScreen } from './components/AuthScreen';
+import { dismissSplash } from './utils/splash';
 const HistoryView = lazy(() =>
   import('./features/history/HistoryView').then((module) => ({ default: module.HistoryView }))
 );
@@ -42,6 +45,45 @@ const YearView = lazy(() =>
 
 export default function App() {
   useSafeAreaInsets();
+  const {
+    user,
+    loading,
+    initializationError,
+    signIn,
+    requestPasswordReset,
+    signOut
+  } = useAuthSession();
+
+  useEffect(() => {
+    if (loading || user) {
+      return;
+    }
+    return dismissSplash();
+  }, [loading, user]);
+
+  if (loading) {
+    return null;
+  }
+  if (!user) {
+    return (
+      <AuthScreen
+        initializationError={initializationError}
+        onSignIn={signIn}
+        onRequestPasswordReset={requestPasswordReset}
+      />
+    );
+  }
+
+  return <FintrackApp userEmail={user.email} onSignOut={signOut} />;
+}
+
+function FintrackApp({
+  userEmail,
+  onSignOut
+}: {
+  userEmail: string | null;
+  onSignOut: () => Promise<void>;
+}) {
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
@@ -351,13 +393,7 @@ export default function App() {
     if (!appReady) {
       return;
     }
-    const splash = document.getElementById('splash');
-    if (!splash) {
-      return;
-    }
-    splash.classList.add('fade-out');
-    const timeout = window.setTimeout(() => splash.remove(), 200);
-    return () => window.clearTimeout(timeout);
+    return dismissSplash();
   }, [appReady]);
 
   const globalWealthSummary = useMemo(() => {
@@ -383,6 +419,10 @@ export default function App() {
         void i18n.changeLanguage(languageValue);
       }}
       onOpenSettings={openSettings}
+      userEmail={userEmail}
+      onSignOut={() => {
+        void onSignOut();
+      }}
       t={t}
       importInputRef={importInputRef}
       onFileChange={onFileChange}

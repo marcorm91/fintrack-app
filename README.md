@@ -80,7 +80,7 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Tauri 2 + SQLite plugin
 
 ## Requisitos
-- Node.js 18+ (o 20+)
+- Node.js 20+
 - Rust toolchain y dependencias de Tauri
 
 Guía de requisitos de Tauri: https://tauri.app
@@ -215,7 +215,7 @@ SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin con
 - Una confirmación solo se acepta si el registro no volvió a cambiar durante la subida.
 - Si llega una versión remota nueva mientras existe un cambio local pendiente, el registro se marca como conflicto y no se sobrescribe silenciosamente.
 
-Esta rama todavía no conecta con ningún proveedor cloud ni sincroniza al abrir la app; contiene la capa local necesaria para implementar ese proceso de forma segura.
+Esta rama ya incorpora acceso mediante Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. Todavía no lee ni escribe datos en Firestore: la información financiera continúa únicamente en SQLite hasta que se implemente y valide la sincronización.
 
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  

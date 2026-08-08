@@ -4,6 +4,8 @@ type AppHeaderProps = {
   activeLanguage: 'en' | 'es';
   onLanguageChange: (language: 'en' | 'es') => void;
   onOpenSettings: () => void;
+  userEmail: string | null;
+  onSignOut: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
@@ -11,6 +13,8 @@ export function AppHeader({
   activeLanguage,
   onLanguageChange,
   onOpenSettings,
+  userEmail,
+  onSignOut,
   t
 }: AppHeaderProps) {
   return (
@@ -51,6 +55,14 @@ export function AppHeader({
           </div>
           <button
             type="button"
+            onClick={onSignOut}
+            title={`${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()}
+            className="btn btn-neutral px-3 text-[9px] text-muted hover:text-ink sm:text-[10px]"
+          >
+            {t('auth.signOut')}
+          </button>
+          <button
+            type="button"
             onClick={onOpenSettings}
             aria-label={t('actions.settings')}
             title={t('actions.settings')}
@@ -63,4 +75,3 @@ export function AppHeader({
     </header>
   );
 }
-

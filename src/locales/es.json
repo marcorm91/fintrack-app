@@ -3,6 +3,28 @@
     "tagline": "Tu resumen mensual",
     "title": "Fintrack"
   },
+  "auth": {
+    "subtitle": "Accede a tus datos de forma segura",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "tu@correo.com",
+    "password": "Contraseña",
+    "signIn": "Entrar",
+    "signingIn": "Entrando...",
+    "signOut": "Salir",
+    "signedInAs": "Sesión iniciada como",
+    "forgotPassword": "He olvidado mi contraseña",
+    "sendingReset": "Enviando...",
+    "resetSent": "Si la cuenta existe, recibirás un correo para cambiar la contraseña.",
+    "privateAccess": "Esta pantalla no permite crear cuentas. Utiliza una cuenta autorizada de Fintrack.",
+    "errors": {
+      "emailRequired": "Introduce tu correo para recuperar la contraseña.",
+      "invalidEmail": "El correo electrónico no es válido.",
+      "invalidCredentials": "El correo o la contraseña no son correctos.",
+      "network": "No se pudo conectar. Comprueba tu conexión a Internet.",
+      "tooManyAttempts": "Demasiados intentos. Espera unos minutos antes de volver a probar.",
+      "generic": "No se pudo iniciar sesión. Inténtalo de nuevo."
+    }
+  },
   "language": {
     "label": "Idioma",
     "es": "ES",

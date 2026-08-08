@@ -6,6 +6,8 @@ type AppLayoutProps = {
   activeLanguage: 'en' | 'es';
   onLanguageChange: (languageValue: 'en' | 'es') => void;
   onOpenSettings: () => void;
+  userEmail: string | null;
+  onSignOut: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   importInputRef: RefObject<HTMLInputElement>;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -20,6 +22,8 @@ export function AppLayout({
   activeLanguage,
   onLanguageChange,
   onOpenSettings,
+  userEmail,
+  onSignOut,
   t,
   importInputRef,
   onFileChange,
@@ -36,6 +40,8 @@ export function AppLayout({
           activeLanguage={activeLanguage}
           onLanguageChange={onLanguageChange}
           onOpenSettings={onOpenSettings}
+          userEmail={userEmail}
+          onSignOut={onSignOut}
           t={t}
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />

@@ -3,6 +3,28 @@
     "tagline": "Your monthly summary",
     "title": "Fintrack"
   },
+  "auth": {
+    "subtitle": "Access your data securely",
+    "email": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as",
+    "forgotPassword": "I forgot my password",
+    "sendingReset": "Sending...",
+    "resetSent": "If the account exists, you will receive an email to change your password.",
+    "privateAccess": "Accounts cannot be created from this screen. Use an authorized Fintrack account.",
+    "errors": {
+      "emailRequired": "Enter your email address to reset your password.",
+      "invalidEmail": "The email address is not valid.",
+      "invalidCredentials": "The email address or password is incorrect.",
+      "network": "Could not connect. Check your Internet connection.",
+      "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
+      "generic": "Could not sign in. Please try again."
+    }
+  },
   "language": {
     "label": "Language",
     "es": "ES",
