@@ -502,8 +502,8 @@ export function DatabaseSettingsDialog({
             </p>
             {appMode === 'cloud' ? (
               <div className="mt-4 border-t border-ink/10 pt-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 sm:flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-semibold text-ink">
                         {t('settings.offlinePinTitle')}
@@ -521,14 +521,18 @@ export function DatabaseSettingsDialog({
                     </p>
                   </div>
                   {!offlineAccess ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div
+                      className={`grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap ${
+                        offlinePinConfigured ? 'grid-cols-2' : 'grid-cols-1'
+                      }`}
+                    >
                       <button
                         type="button"
                         onClick={() => {
                           setOfflinePinStatus(null);
                           setOfflinePinDialogOpen(true);
                         }}
-                        className="btn btn-neutral text-[10px] sm:text-[11px]"
+                        className="btn btn-neutral w-full whitespace-nowrap text-[10px] sm:w-auto sm:text-[11px]"
                       >
                         {t(
                           offlinePinConfigured
@@ -540,7 +544,7 @@ export function DatabaseSettingsDialog({
                         <button
                           type="button"
                           onClick={() => void handleDisableOfflinePin()}
-                          className="btn btn-neutral text-[10px] text-red-700 sm:text-[11px]"
+                          className="btn btn-neutral w-full whitespace-nowrap text-[10px] text-red-700 sm:w-auto sm:text-[11px]"
                         >
                           {t('settings.offlinePinDisable')}
                         </button>
