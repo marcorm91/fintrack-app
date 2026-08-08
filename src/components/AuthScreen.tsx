@@ -2,12 +2,14 @@ import { FirebaseError } from 'firebase/app';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EyeToggle } from './EyeToggle';
+import type { DatabaseAccessError } from '../hooks/useDatabaseAccess';
 
 type AuthScreenProps = {
   initializationError: unknown;
+  accessError: DatabaseAccessError;
   onSignIn: (email: string, password: string) => Promise<void>;
   onRequestPasswordReset: (email: string) => Promise<void>;
-  onUseLocal: () => void;
+  onUseLocal?: () => void;
 };
 
 function authErrorKey(error: unknown) {
@@ -31,6 +33,7 @@ function authErrorKey(error: unknown) {
 
 export function AuthScreen({
   initializationError,
+  accessError,
   onSignIn,
   onRequestPasswordReset,
   onUseLocal
@@ -41,11 +44,17 @@ export function AuthScreen({
   const [passwordHidden, setPasswordHidden] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [error, setError] = useState<string | null>(
-    initializationError ? t(authErrorKey(initializationError)) : null
-  );
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const activeLanguage = i18n.language.startsWith('en') ? 'en' : 'es';
+  const externalError =
+    accessError === 'owner-mismatch'
+      ? t('auth.errors.wrongAccount')
+      : accessError === 'unavailable'
+        ? t('auth.errors.databaseUnavailable')
+        : initializationError
+          ? t(authErrorKey(initializationError))
+          : null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -151,7 +160,7 @@ export function AuthScreen({
             </label>
 
             <div className="min-h-5 text-sm" aria-live="polite">
-              {error ? <p className="text-red-700">{error}</p> : null}
+              {error || externalError ? <p className="text-red-700">{error ?? externalError}</p> : null}
               {status ? <p className="text-benefit">{status}</p> : null}
             </div>
 
@@ -174,16 +183,27 @@ export function AuthScreen({
           <p className="mt-7 border-t border-ink/10 pt-5 text-center text-xs leading-5 text-muted">
             {t('auth.privateAccess')}
           </p>
-          <button
-            type="button"
-            onClick={onUseLocal}
-            className="btn btn-neutral mt-4 w-full py-3 text-xs"
-          >
-            {t('auth.continueLocal')}
-          </button>
-          <p className="mt-2 text-center text-[11px] leading-5 text-muted">
-            {t('auth.continueLocalDescription')}
-          </p>
+          {onUseLocal ? (
+            <>
+              <button
+                type="button"
+                onClick={onUseLocal}
+                className="btn btn-neutral mt-4 w-full py-3 text-xs"
+              >
+                {t('auth.continueLocal')}
+              </button>
+              <p className="mt-2 text-center text-[11px] leading-5 text-muted">
+                {t('auth.continueLocalDescription')}
+              </p>
+            </>
+          ) : (
+            <div className="mt-4 rounded-xl border border-ink/10 bg-ink/5 px-4 py-3 text-left">
+              <p className="text-xs font-semibold text-ink">{t('auth.localDataProtectedTitle')}</p>
+              <p className="mt-1 text-[11px] leading-5 text-muted">
+                {t('auth.localDataProtectedDescription')}
+              </p>
+            </div>
+          )}
         </section>
       </main>
     </div>

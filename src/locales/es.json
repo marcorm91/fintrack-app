@@ -26,6 +26,10 @@
     "privateAccess": "Esta pantalla no permite crear cuentas. Utiliza una cuenta autorizada de Fintrack.",
     "continueLocal": "Continuar solo en local",
     "continueLocalDescription": "Puedes entrar sin Firebase y activar la nube más adelante.",
+    "localDataProtectedTitle": "Copia local protegida",
+    "localDataProtectedDescription": "Esta base ya está vinculada a una cuenta cloud. Inicia sesión con esa misma cuenta para acceder; cerrar sesión no deja los datos disponibles en modo local.",
+    "databaseUnavailableTitle": "No se puede comprobar la base local",
+    "databaseUnavailableDescription": "Fintrack ha bloqueado el acceso por seguridad. Reintenta para verificar a qué cuenta está vinculada esta base de datos.",
     "localBadge": "Solo local",
     "enableCloud": "Activar el acceso cloud",
     "errors": {
@@ -34,6 +38,8 @@
       "invalidCredentials": "El correo o la contraseña no son correctos.",
       "network": "No se pudo conectar. Comprueba tu conexión a Internet.",
       "tooManyAttempts": "Demasiados intentos. Espera unos minutos antes de volver a probar.",
+      "wrongAccount": "Esta base local está vinculada a otra cuenta. Inicia sesión con la cuenta original.",
+      "databaseUnavailable": "No se pudo verificar la protección de la base local. Reinténtalo.",
       "generic": "No se pudo iniciar sesión. Inténtalo de nuevo."
     }
   },
@@ -48,6 +54,7 @@
     "all": "Histórico"
   },
   "actions": {
+    "retry": "Reintentar",
     "importOptions": "Opciones de importación",
     "importCsv": "Importar CSV",
     "pasteData": "Pegar datos",

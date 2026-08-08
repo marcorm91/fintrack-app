@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCharts } from './hooks/useCharts';
 import { useDatabaseSettings } from './hooks/useDatabaseSettings';
@@ -23,6 +23,7 @@ import { useTableSort } from './hooks/useTableSort';
 import { useAuthSession } from './hooks/useAuthSession';
 import { useAppMode, type AppMode } from './hooks/useAppMode';
 import { useCloudSync } from './hooks/useCloudSync';
+import { useDatabaseAccess } from './hooks/useDatabaseAccess';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -48,7 +49,17 @@ const YearView = lazy(() =>
 
 export default function App() {
   useSafeAreaInsets();
+  const modeChangeInProgressRef = useRef(false);
   const { mode, setMode } = useAppMode();
+  const {
+    policy: databaseAccessPolicy,
+    loading: databaseAccessLoading,
+    error: databaseAccessError,
+    claimForCloudUser,
+    releaseToLocal,
+    clearError: clearDatabaseAccessError,
+    reload: reloadDatabaseAccess
+  } = useDatabaseAccess();
   const {
     user,
     loading,
@@ -58,18 +69,75 @@ export default function App() {
     signOut
   } = useAuthSession(mode === 'cloud');
 
+  useEffect(() => {
+    if (
+      !databaseAccessLoading &&
+      databaseAccessPolicy?.mode === 'cloud' &&
+      mode !== 'cloud'
+    ) {
+      setMode('cloud');
+    }
+  }, [databaseAccessLoading, databaseAccessPolicy, mode, setMode]);
+
+  useEffect(() => {
+    if (
+      mode !== 'cloud' ||
+      !user ||
+      databaseAccessLoading ||
+      databaseAccessError ||
+      modeChangeInProgressRef.current ||
+      !databaseAccessPolicy ||
+      (databaseAccessPolicy.mode === 'cloud' && databaseAccessPolicy.ownerUid === user.uid)
+    ) {
+      return;
+    }
+    void claimForCloudUser(user.uid);
+  }, [
+    claimForCloudUser,
+    databaseAccessError,
+    databaseAccessLoading,
+    databaseAccessPolicy,
+    mode,
+    user
+  ]);
+
+  useEffect(() => {
+    if (databaseAccessError === 'owner-mismatch' && user) {
+      void signOut();
+    }
+  }, [databaseAccessError, signOut, user]);
+
+  const handleSignIn = useCallback(
+    async (email: string, password: string) => {
+      clearDatabaseAccessError();
+      await signIn(email, password);
+    },
+    [clearDatabaseAccessError, signIn]
+  );
+
   const handleAppModeChange = useCallback(
     async (nextMode: AppMode) => {
-      setMode(nextMode);
       if (nextMode === 'local' && user) {
+        modeChangeInProgressRef.current = true;
         try {
-          await signOut();
-        } catch {
-          // Local mode must remain available even if Firebase cannot respond.
+          const released = await releaseToLocal(user.uid);
+          if (!released) {
+            return;
+          }
+          setMode(nextMode);
+          try {
+            await signOut();
+          } catch {
+            // Local mode must remain available even if Firebase cannot respond.
+          }
+        } finally {
+          modeChangeInProgressRef.current = false;
         }
+        return;
       }
+      setMode(nextMode);
     },
-    [setMode, signOut, user]
+    [releaseToLocal, setMode, signOut, user]
   );
 
   useEffect(() => {
@@ -80,6 +148,15 @@ export default function App() {
     return dismissSplash();
   }, [loading, mode, user]);
 
+  if (databaseAccessLoading) {
+    return null;
+  }
+  if (!databaseAccessPolicy || databaseAccessError === 'unavailable') {
+    return <DatabaseAccessErrorScreen onRetry={() => void reloadDatabaseAccess()} />;
+  }
+  if (databaseAccessPolicy.mode === 'cloud' && mode !== 'cloud') {
+    return null;
+  }
   if (mode === null) {
     return (
       <AccessModeScreen
@@ -95,13 +172,29 @@ export default function App() {
     return (
       <AuthScreen
         initializationError={initializationError}
-        onSignIn={signIn}
+        accessError={databaseAccessError}
+        onSignIn={handleSignIn}
         onRequestPasswordReset={requestPasswordReset}
-        onUseLocal={() => {
-          void handleAppModeChange('local');
-        }}
+        onUseLocal={
+          databaseAccessPolicy.mode === 'local'
+            ? () => {
+                void handleAppModeChange('local');
+              }
+            : undefined
+        }
       />
     );
+  }
+
+  if (
+    mode === 'cloud' &&
+    user &&
+    !(
+      databaseAccessPolicy.mode === 'cloud' &&
+      databaseAccessPolicy.ownerUid === user.uid
+    )
+  ) {
+    return null;
   }
 
   return (
@@ -112,6 +205,22 @@ export default function App() {
       onSignOut={signOut}
       onChangeAppMode={handleAppModeChange}
     />
+  );
+}
+
+function DatabaseAccessErrorScreen({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-ink/5 px-4">
+      <section className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 text-center shadow-card sm:p-8">
+        <img src="/app-icon.svg" alt="" className="mx-auto h-16 w-16 rounded-2xl shadow-sm" />
+        <h1 className="mt-5 text-xl font-semibold text-ink">{t('auth.databaseUnavailableTitle')}</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">{t('auth.databaseUnavailableDescription')}</p>
+        <button type="button" onClick={onRetry} className="btn btn-primary mt-6 w-full justify-center py-3">
+          {t('actions.retry')}
+        </button>
+      </section>
+    </div>
   );
 }
 

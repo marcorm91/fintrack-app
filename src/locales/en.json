@@ -26,6 +26,10 @@
     "privateAccess": "Accounts cannot be created from this screen. Use an authorized Fintrack account.",
     "continueLocal": "Continue in local-only mode",
     "continueLocalDescription": "You can use the app without Firebase and enable cloud access later.",
+    "localDataProtectedTitle": "Local copy protected",
+    "localDataProtectedDescription": "This database is already linked to a cloud account. Sign in with that same account to access it; signing out does not make the data available in local mode.",
+    "databaseUnavailableTitle": "The local database could not be verified",
+    "databaseUnavailableDescription": "Fintrack has blocked access for safety. Retry to verify which account this database is linked to.",
     "localBadge": "Local only",
     "enableCloud": "Enable cloud access",
     "errors": {
@@ -34,6 +38,8 @@
       "invalidCredentials": "The email address or password is incorrect.",
       "network": "Could not connect. Check your Internet connection.",
       "tooManyAttempts": "Too many attempts. Wait a few minutes before trying again.",
+      "wrongAccount": "This local database is linked to another account. Sign in with the original account.",
+      "databaseUnavailable": "The local database protection could not be verified. Please retry.",
       "generic": "Could not sign in. Please try again."
     }
   },
@@ -48,6 +54,7 @@
     "all": "History"
   },
   "actions": {
+    "retry": "Retry",
     "importOptions": "Import options",
     "importCsv": "Import CSV",
     "pasteData": "Paste data",

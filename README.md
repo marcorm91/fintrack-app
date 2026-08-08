@@ -223,7 +223,7 @@ SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin con
 - Si llega una versión remota nueva mientras existe un cambio local pendiente, el registro se marca como conflicto y no se sobrescribe silenciosamente.
 - Los conflictos se resuelven expresamente desde Ajustes conservando la copia local o la cloud.
 
-Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. El modo se puede cambiar desde Ajustes sin borrar la base local.
+Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. La base local queda vinculada al UID autenticado: cerrar sesión bloquea también el acceso desde el modo local y otra cuenta no puede sincronizar esa SQLite. El propietario puede desvincularla expresamente cambiando a modo local desde Ajustes, sin borrar datos.
 
 Las reglas que validan propietario, formato y avance de versión están en `firestore.rules` y deben publicarse en Firebase antes de probar la sincronización.
 
@@ -235,7 +235,7 @@ Es importante que la aplicación esté **apuntando al archivo `.db` correcto** p
 Cambiar de archivo implica cambiar de conjunto de datos.
 
 
-Ventaja clave: los datos **no se alojan en ningun servidor**, no hace falta registro ni cuenta, y todo queda en tu equipo.
+En modo local, los datos **no se alojan en ningún servidor**, no hace falta registro ni cuenta y todo queda en el equipo. En modo cloud se mantiene esa copia SQLite y se sincroniza con Firestore.
 Fintrack busca llevar tus cuentas de forma puntual y **lo mas simple posible**.
 
 Para enlazar o cambiar el archivo de datos:

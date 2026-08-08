@@ -4,6 +4,7 @@ import schemaSql from './schema.sql?raw';
 import { notifyLocalDataChanged } from '../utils/localDataEvents';
 
 export const DATABASE_FILENAME = 'finanzas.db';
+export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
 const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
 const DB_PATH_STORAGE_KEY = 'fintrack.dbPath';
 const MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY = 'fintrack.mockInvestmentPortfolioEnabled';
@@ -121,6 +122,9 @@ export function setDatabasePath(path: string | null, options: { persist?: boolea
   }
   dbPromise = null;
   initPromise = null;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(DATABASE_PATH_CHANGED_EVENT));
+  }
 }
 
 export interface MonthlySummary {
@@ -468,6 +472,21 @@ ON CONFLICT(key) DO UPDATE SET
 `;
 
 const INVESTMENT_PORTFOLIO_SETTING_KEY = 'investmentPortfolioEnabled';
+const DATABASE_ACCESS_SETTING_KEY = 'databaseAccess';
+const DATABASE_ACCESS_LOCAL = 'local';
+const DATABASE_ACCESS_CLOUD = 'cloud';
+const DATABASE_ACCESS_CLOUD_PREFIX = 'cloud:';
+
+export type DatabaseAccessPolicy =
+  | { mode: 'local'; ownerUid: null }
+  | { mode: 'cloud'; ownerUid: string | null };
+
+export class DatabaseOwnerMismatchError extends Error {
+  constructor() {
+    super('La base de datos local está vinculada a otra cuenta cloud.');
+    this.name = 'DatabaseOwnerMismatchError';
+  }
+}
 
 let dbPromise: Promise<Database> | null = null;
 let initPromise: Promise<void> | null = null;
@@ -646,6 +665,91 @@ async function initDb(): Promise<Database> {
   }
   await initPromise;
   return db;
+}
+
+function parseDatabaseAccessPolicy(value: string | undefined): DatabaseAccessPolicy | null {
+  if (value === DATABASE_ACCESS_LOCAL) {
+    return { mode: 'local', ownerUid: null };
+  }
+  if (value === DATABASE_ACCESS_CLOUD) {
+    return { mode: 'cloud', ownerUid: null };
+  }
+  if (value?.startsWith(DATABASE_ACCESS_CLOUD_PREFIX)) {
+    const ownerUid = value.slice(DATABASE_ACCESS_CLOUD_PREFIX.length).trim();
+    if (ownerUid) {
+      return { mode: 'cloud', ownerUid };
+    }
+  }
+  return null;
+}
+
+async function readDatabaseAccessPolicy(db: Database): Promise<DatabaseAccessPolicy | null> {
+  const rows = await db.select<Array<{ value: string }>>(GET_APP_SETTING_SQL, [
+    DATABASE_ACCESS_SETTING_KEY
+  ]);
+  return parseDatabaseAccessPolicy(rows[0]?.value);
+}
+
+async function writeDatabaseAccessPolicy(db: Database, value: string): Promise<void> {
+  await db.execute(UPSERT_APP_SETTING_SQL, [DATABASE_ACCESS_SETTING_KEY, value]);
+}
+
+export async function getDatabaseAccessPolicy(): Promise<DatabaseAccessPolicy> {
+  if (shouldUseMockDatabase()) {
+    return { mode: 'local', ownerUid: null };
+  }
+  const db = await initDb();
+  const stored = await readDatabaseAccessPolicy(db);
+  if (stored) {
+    return stored;
+  }
+
+  const rows = await db.select<Array<{ count: number }>>(
+    'SELECT COUNT(*) AS count FROM monthly_snapshots WHERE version > 0;'
+  );
+  const hasCloudHistory = Number(rows[0]?.count ?? 0) > 0;
+  const inferred: DatabaseAccessPolicy = hasCloudHistory
+    ? { mode: 'cloud', ownerUid: null }
+    : { mode: 'local', ownerUid: null };
+  await writeDatabaseAccessPolicy(
+    db,
+    hasCloudHistory ? DATABASE_ACCESS_CLOUD : DATABASE_ACCESS_LOCAL
+  );
+  return inferred;
+}
+
+export async function claimDatabaseForCloudUser(userId: string): Promise<DatabaseAccessPolicy> {
+  const normalizedUserId = userId.trim();
+  if (!normalizedUserId) {
+    throw new Error('El identificador de la cuenta cloud no es válido.');
+  }
+  if (shouldUseMockDatabase()) {
+    return { mode: 'cloud', ownerUid: normalizedUserId };
+  }
+  const db = await initDb();
+  const current = (await readDatabaseAccessPolicy(db)) ?? (await getDatabaseAccessPolicy());
+  if (current.ownerUid && current.ownerUid !== normalizedUserId) {
+    throw new DatabaseOwnerMismatchError();
+  }
+  const claimed: DatabaseAccessPolicy = { mode: 'cloud', ownerUid: normalizedUserId };
+  await writeDatabaseAccessPolicy(
+    db,
+    `${DATABASE_ACCESS_CLOUD_PREFIX}${normalizedUserId}`
+  );
+  return claimed;
+}
+
+export async function releaseDatabaseToLocal(userId: string): Promise<DatabaseAccessPolicy> {
+  if (shouldUseMockDatabase()) {
+    return { mode: 'local', ownerUid: null };
+  }
+  const db = await initDb();
+  const current = (await readDatabaseAccessPolicy(db)) ?? (await getDatabaseAccessPolicy());
+  if (current.ownerUid && current.ownerUid !== userId.trim()) {
+    throw new DatabaseOwnerMismatchError();
+  }
+  await writeDatabaseAccessPolicy(db, DATABASE_ACCESS_LOCAL);
+  return { mode: 'local', ownerUid: null };
 }
 
 export async function checkpointDatabase(): Promise<void> {
