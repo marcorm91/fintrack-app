@@ -5,6 +5,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 import { open as openExternal } from '@tauri-apps/plugin-shell';
 import type { UpdateStatus } from '../hooks/useUpdateStatus';
 import type { ExportStatus } from '../hooks/useExportData';
+import type { AppMode } from '../hooks/useAppMode';
 
 export function ConfirmDialog({
   open,
@@ -149,6 +150,9 @@ export function TextImportDialog({
 
 export function DatabaseSettingsDialog({
   open,
+  appMode,
+  userEmail,
+  onChangeAppMode,
   currentPath,
   defaultPath,
   inputPath,
@@ -184,6 +188,9 @@ export function DatabaseSettingsDialog({
   onClose
 }: {
   open: boolean;
+  appMode: AppMode;
+  userEmail: string | null;
+  onChangeAppMode: (mode: AppMode) => void;
   currentPath: string;
   defaultPath: string;
   inputPath: string;
@@ -327,6 +334,40 @@ export function DatabaseSettingsDialog({
         </div>
         {activeTab === 'data' ? (
           <>
+            <div className="mt-4 rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4 text-sm">
+              <p className="text-sm font-semibold text-ink">{t('settings.storageModeTitle')}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                {t(
+                  appMode === 'local'
+                    ? 'settings.storageModeLocalDescription'
+                    : 'settings.storageModeCloudDescription'
+                )}
+              </p>
+              {appMode === 'cloud' && userEmail ? (
+                <p className="mt-2 text-xs text-ink">
+                  {t('settings.storageModeAccount', { email: userEmail })}
+                </p>
+              ) : null}
+              <div className="segmented mt-3 text-[10px] sm:text-[11px]" role="group">
+                <button
+                  type="button"
+                  onClick={() => onChangeAppMode('local')}
+                  aria-pressed={appMode === 'local'}
+                  className={`segmented-option ${appMode === 'local' ? 'segmented-option-active' : ''}`}
+                >
+                  {t('settings.storageModeLocal')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChangeAppMode('cloud')}
+                  aria-pressed={appMode === 'cloud'}
+                  className={`segmented-option ${appMode === 'cloud' ? 'segmented-option-active' : ''}`}
+                >
+                  {t('settings.storageModeCloud')}
+                </button>
+              </div>
+              <p className="mt-3 text-[11px] leading-5 text-muted">{t('settings.storageModeSafety')}</p>
+            </div>
             <div className="mt-4 space-y-3 text-[10px] text-muted sm:text-xs">
               <div>
                 <span className="uppercase tracking-[0.18em]">{t('settings.currentPath')}</span>

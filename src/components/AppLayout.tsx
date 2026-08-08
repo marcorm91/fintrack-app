@@ -1,13 +1,16 @@
 import type { ChangeEvent, ReactNode, RefObject } from 'react';
 import { AppFooter } from './AppFooter';
 import { AppHeader } from './AppHeader';
+import type { AppMode } from '../hooks/useAppMode';
 
 type AppLayoutProps = {
   activeLanguage: 'en' | 'es';
   onLanguageChange: (languageValue: 'en' | 'es') => void;
   onOpenSettings: () => void;
+  appMode: AppMode;
   userEmail: string | null;
   onSignOut: () => void;
+  onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   importInputRef: RefObject<HTMLInputElement>;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -22,8 +25,10 @@ export function AppLayout({
   activeLanguage,
   onLanguageChange,
   onOpenSettings,
+  appMode,
   userEmail,
   onSignOut,
+  onChangeAppMode,
   t,
   importInputRef,
   onFileChange,
@@ -40,8 +45,10 @@ export function AppLayout({
           activeLanguage={activeLanguage}
           onLanguageChange={onLanguageChange}
           onOpenSettings={onOpenSettings}
+          appMode={appMode}
           userEmail={userEmail}
           onSignOut={onSignOut}
+          onChangeAppMode={onChangeAppMode}
           t={t}
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />

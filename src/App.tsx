@@ -21,6 +21,7 @@ import { useIsMobile } from './hooks/useIsMobile';
 import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 import { useTableSort } from './hooks/useTableSort';
 import { useAuthSession } from './hooks/useAuthSession';
+import { useAppMode, type AppMode } from './hooks/useAppMode';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -32,6 +33,7 @@ import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
 import { AuthScreen } from './components/AuthScreen';
+import { AccessModeScreen } from './components/AccessModeScreen';
 import { dismissSplash } from './utils/splash';
 const HistoryView = lazy(() =>
   import('./features/history/HistoryView').then((module) => ({ default: module.HistoryView }))
@@ -45,6 +47,7 @@ const YearView = lazy(() =>
 
 export default function App() {
   useSafeAreaInsets();
+  const { mode, setMode } = useAppMode();
   const {
     user,
     loading,
@@ -52,37 +55,74 @@ export default function App() {
     signIn,
     requestPasswordReset,
     signOut
-  } = useAuthSession();
+  } = useAuthSession(mode === 'cloud');
+
+  const handleAppModeChange = useCallback(
+    async (nextMode: AppMode) => {
+      setMode(nextMode);
+      if (nextMode === 'local' && user) {
+        try {
+          await signOut();
+        } catch {
+          // Local mode must remain available even if Firebase cannot respond.
+        }
+      }
+    },
+    [setMode, signOut, user]
+  );
 
   useEffect(() => {
-    if (loading || user) {
+    const accessScreenVisible = mode === null || (mode === 'cloud' && !loading && !user);
+    if (!accessScreenVisible) {
       return;
     }
     return dismissSplash();
-  }, [loading, user]);
+  }, [loading, mode, user]);
 
-  if (loading) {
+  if (mode === null) {
+    return (
+      <AccessModeScreen
+        onChooseCloud={() => setMode('cloud')}
+        onChooseLocal={() => setMode('local')}
+      />
+    );
+  }
+  if (mode === 'cloud' && loading) {
     return null;
   }
-  if (!user) {
+  if (mode === 'cloud' && !user) {
     return (
       <AuthScreen
         initializationError={initializationError}
         onSignIn={signIn}
         onRequestPasswordReset={requestPasswordReset}
+        onUseLocal={() => {
+          void handleAppModeChange('local');
+        }}
       />
     );
   }
 
-  return <FintrackApp userEmail={user.email} onSignOut={signOut} />;
+  return (
+    <FintrackApp
+      appMode={mode}
+      userEmail={mode === 'cloud' ? (user?.email ?? null) : null}
+      onSignOut={signOut}
+      onChangeAppMode={handleAppModeChange}
+    />
+  );
 }
 
 function FintrackApp({
+  appMode,
   userEmail,
-  onSignOut
+  onSignOut,
+  onChangeAppMode
 }: {
+  appMode: AppMode;
   userEmail: string | null;
   onSignOut: () => Promise<void>;
+  onChangeAppMode: (mode: AppMode) => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
@@ -419,9 +459,13 @@ function FintrackApp({
         void i18n.changeLanguage(languageValue);
       }}
       onOpenSettings={openSettings}
+      appMode={appMode}
       userEmail={userEmail}
       onSignOut={() => {
         void onSignOut();
+      }}
+      onChangeAppMode={(nextMode) => {
+        void onChangeAppMode(nextMode);
       }}
       t={t}
       importInputRef={importInputRef}
@@ -494,6 +538,11 @@ function FintrackApp({
           />
           <DatabaseSettingsDialog
             open={settingsOpen}
+            appMode={appMode}
+            userEmail={userEmail}
+            onChangeAppMode={(nextMode) => {
+              void onChangeAppMode(nextMode);
+            }}
             currentPath={currentPath}
             defaultPath={defaultPath}
             inputPath={inputPath}

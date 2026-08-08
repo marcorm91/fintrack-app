@@ -7,6 +7,7 @@ type AuthScreenProps = {
   initializationError: unknown;
   onSignIn: (email: string, password: string) => Promise<void>;
   onRequestPasswordReset: (email: string) => Promise<void>;
+  onUseLocal: () => void;
 };
 
 function authErrorKey(error: unknown) {
@@ -31,7 +32,8 @@ function authErrorKey(error: unknown) {
 export function AuthScreen({
   initializationError,
   onSignIn,
-  onRequestPasswordReset
+  onRequestPasswordReset,
+  onUseLocal
 }: AuthScreenProps) {
   const { t, i18n } = useTranslation();
   const [email, setEmail] = useState('');
@@ -168,6 +170,16 @@ export function AuthScreen({
 
           <p className="mt-7 border-t border-ink/10 pt-5 text-center text-xs leading-5 text-muted">
             {t('auth.privateAccess')}
+          </p>
+          <button
+            type="button"
+            onClick={onUseLocal}
+            className="btn btn-neutral mt-4 w-full py-3 text-xs"
+          >
+            {t('auth.continueLocal')}
+          </button>
+          <p className="mt-2 text-center text-[11px] leading-5 text-muted">
+            {t('auth.continueLocalDescription')}
           </p>
         </section>
       </main>

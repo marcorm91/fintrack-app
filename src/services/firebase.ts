@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 
 // Firebase client configuration is public by design. Access to user data is
 // enforced by Firebase Authentication and Firestore Security Rules.
@@ -12,5 +12,12 @@ const firebaseConfig = {
   appId: '1:921544592783:web:ee24403953943854808ffa'
 };
 
-export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-export const firebaseAuth = getAuth(firebaseApp);
+let firebaseAuth: Auth | null = null;
+
+export function getFirebaseAuth() {
+  if (!firebaseAuth) {
+    const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    firebaseAuth = getAuth(firebaseApp);
+  }
+  return firebaseAuth;
+}
