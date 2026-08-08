@@ -19,11 +19,11 @@
     "android:dev": "npm run android:patch && tauri android dev"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0",
-    "@tauri-apps/plugin-fs": "^2.0.0",
-    "@tauri-apps/plugin-shell": "^2.0.0",
-    "@tauri-apps/plugin-sql": "^2.0.0",
+    "@tauri-apps/api": "2.9.1",
+    "@tauri-apps/plugin-dialog": "2.4.2",
+    "@tauri-apps/plugin-fs": "2.4.4",
+    "@tauri-apps/plugin-shell": "2.3.4",
+    "@tauri-apps/plugin-sql": "2.3.1",
     "chart.js": "^4.4.3",
     "firebase": "^12.17.1",
     "i18next": "^23.12.2",
@@ -33,7 +33,7 @@
     "react-i18next": "^14.1.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0",
+    "@tauri-apps/cli": "2.9.6",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
