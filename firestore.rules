@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidMonthlySnapshot(month) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'schemaVersion',
+          'month',
+          'incomeCents',
+          'expenseCents',
+          'balanceCents',
+          'portfolioCents',
+          'note',
+          'version',
+          'updatedAt',
+          'deletedAt'
+        ])
+        && data.schemaVersion == 1
+        && data.month == month
+        && month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')
+        && data.incomeCents is int
+        && data.incomeCents >= 0
+        && data.expenseCents is int
+        && data.expenseCents >= 0
+        && data.balanceCents is int
+        && data.portfolioCents is int
+        && data.portfolioCents >= 0
+        && data.note is string
+        && data.note.size() <= 500
+        && data.version is int
+        && data.version >= 1
+        && data.updatedAt == request.time
+        && (data.deletedAt == null || data.deletedAt == request.time);
+    }
+
+    match /users/{userId}/monthlySnapshots/{month} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isValidMonthlySnapshot(month)
+        && request.resource.data.version == 1;
+      allow update: if isOwner(userId)
+        && isValidMonthlySnapshot(month)
+        && request.resource.data.version == resource.data.version + 1;
+      allow delete: if false;
+    }
+  }
+}

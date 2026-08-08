@@ -22,6 +22,7 @@ import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 import { useTableSort } from './hooks/useTableSort';
 import { useAuthSession } from './hooks/useAuthSession';
 import { useAppMode, type AppMode } from './hooks/useAppMode';
+import { useCloudSync } from './hooks/useCloudSync';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -106,6 +107,7 @@ export default function App() {
   return (
     <FintrackApp
       appMode={mode}
+      userId={mode === 'cloud' ? (user?.uid ?? null) : null}
       userEmail={mode === 'cloud' ? (user?.email ?? null) : null}
       onSignOut={signOut}
       onChangeAppMode={handleAppModeChange}
@@ -115,11 +117,13 @@ export default function App() {
 
 function FintrackApp({
   appMode,
+  userId,
   userEmail,
   onSignOut,
   onChangeAppMode
 }: {
   appMode: AppMode;
+  userId: string | null;
   userEmail: string | null;
   onSignOut: () => Promise<void>;
   onChangeAppMode: (mode: AppMode) => Promise<void>;
@@ -215,6 +219,15 @@ function FintrackApp({
   );
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
+  const {
+    status: cloudSyncStatus,
+    syncNow: syncCloudNow,
+    resolveConflicts: resolveCloudSyncConflicts
+  } = useCloudSync({
+    enabled: appMode === 'cloud',
+    userId,
+    onRemoteChange: refreshData
+  });
   const handleMonthSwipe = useCallback(
     (direction: 'next' | 'previous') => {
       setMonthValue((prev) => shiftMonthValue(prev, direction === 'next' ? 1 : -1));
@@ -542,6 +555,11 @@ function FintrackApp({
             onChangeAppMode={(nextMode) => {
               void onChangeAppMode(nextMode);
             }}
+            cloudSyncStatus={cloudSyncStatus}
+            onSyncNow={() => {
+              void syncCloudNow();
+            }}
+            onResolveSyncConflicts={resolveCloudSyncConflicts}
             currentPath={currentPath}
             inputPath={inputPath}
             isDefaultPath={isDefaultPath}

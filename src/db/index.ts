@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import schemaSql from './schema.sql?raw';
+import { notifyLocalDataChanged } from '../utils/localDataEvents';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
@@ -9,6 +10,10 @@ const MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY = 'fintrack.mockInvestmentPortfolioE
 
 function shouldUseMockDatabase() {
   return import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DB === 'true';
+}
+
+export function isUsingMockDatabase() {
+  return shouldUseMockDatabase();
 }
 
 function loadStoredDatabasePath() {
@@ -188,18 +193,21 @@ export interface MarkMonthlySnapshotSyncedInput {
   remoteDeletedAt: string | null;
 }
 
+export type MonthlySnapshotAcknowledgement = 'synced' | 'superseded' | 'stale';
+
 function shouldSeedDevData() {
   if (typeof window === 'undefined') {
     return false;
   }
-  if (!import.meta.env.DEV) {
-    return false;
-  }
-  return import.meta.env.VITE_SEED_MOCKS !== 'false';
+  return (
+    import.meta.env.DEV &&
+    shouldUseMockDatabase() &&
+    import.meta.env.VITE_SEED_MOCKS !== 'false'
+  );
 }
 
 function shouldResetDevMocks() {
-  return shouldUseMockDatabase() || import.meta.env.VITE_SEED_MOCKS === 'force';
+  return shouldUseMockDatabase() && import.meta.env.VITE_SEED_MOCKS === 'force';
 }
 
 const MONTHLY_SUMMARY_SQL = `
@@ -368,6 +376,16 @@ WHERE
   AND sync_status = 'pending';
 `;
 
+const ADVANCE_MONTH_VERSION_SQL = `
+UPDATE monthly_snapshots
+SET version = ?
+WHERE
+  month = ?
+  AND version = ?
+  AND local_revision > ?
+  AND sync_status = 'pending';
+`;
+
 const APPLY_REMOTE_MONTH_SQL = `
 INSERT INTO monthly_snapshots (
   month,
@@ -396,6 +414,44 @@ ON CONFLICT(month) DO UPDATE SET
 WHERE
   monthly_snapshots.sync_status = 'synced'
   AND monthly_snapshots.version < excluded.version;
+`;
+
+const FORCE_APPLY_REMOTE_MONTH_SQL = `
+INSERT INTO monthly_snapshots (
+  month,
+  income_cents,
+  expense_cents,
+  balance_cents,
+  portfolio_cents,
+  note,
+  version,
+  local_revision,
+  updated_at,
+  deleted_at,
+  sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
+ON CONFLICT(month) DO UPDATE SET
+  income_cents = excluded.income_cents,
+  expense_cents = excluded.expense_cents,
+  balance_cents = excluded.balance_cents,
+  portfolio_cents = excluded.portfolio_cents,
+  note = excluded.note,
+  version = excluded.version,
+  local_revision = 0,
+  updated_at = excluded.updated_at,
+  deleted_at = excluded.deleted_at,
+  sync_status = 'synced';
+`;
+
+const REBASE_CONFLICTED_MONTH_SQL = `
+UPDATE monthly_snapshots
+SET
+  version = ?,
+  local_revision = local_revision + 1,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  sync_status = 'pending'
+WHERE month = ? AND sync_status = 'conflict';
 `;
 
 const GET_APP_SETTING_SQL = `
@@ -758,6 +814,7 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     portfolioCents,
     normalizeSnapshotNote(note)
   ]);
+  notifyLocalDataChanged();
 }
 
 async function getMonthlySnapshotsForSync(query: string): Promise<SyncableMonthlySnapshot[]> {
@@ -794,6 +851,26 @@ export async function markMonthlySnapshotSynced(input: MarkMonthlySnapshotSynced
     input.expectedLocalRevision
   ]);
   return result.rowsAffected > 0;
+}
+
+export async function acknowledgeMonthlySnapshotSync(
+  input: MarkMonthlySnapshotSyncedInput
+): Promise<MonthlySnapshotAcknowledgement> {
+  const synced = await markMonthlySnapshotSynced(input);
+  if (synced) {
+    return 'synced';
+  }
+  if (shouldUseMockDatabase()) {
+    return 'stale';
+  }
+  const db = await initDb();
+  const advanced = await db.execute(ADVANCE_MONTH_VERSION_SQL, [
+    input.nextVersion,
+    input.month,
+    input.expectedVersion,
+    input.expectedLocalRevision
+  ]);
+  return advanced.rowsAffected > 0 ? 'superseded' : 'stale';
 }
 
 export async function markMonthlySnapshotConflict(
@@ -879,6 +956,36 @@ export async function applyRemoteMonthlySnapshot(input: RemoteMonthlySnapshot): 
   return 'ignored';
 }
 
+export async function forceApplyRemoteMonthlySnapshot(input: RemoteMonthlySnapshot): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    return;
+  }
+  const db = await initDb();
+  await db.execute(FORCE_APPLY_REMOTE_MONTH_SQL, [
+    input.month,
+    input.incomeCents,
+    input.expenseCents,
+    input.balanceCents,
+    input.portfolioCents,
+    normalizeSnapshotNote(input.note),
+    input.version,
+    input.updatedAt,
+    input.deletedAt
+  ]);
+}
+
+export async function rebaseConflictedMonthlySnapshot(month: string, remoteVersion: number): Promise<boolean> {
+  if (!Number.isSafeInteger(remoteVersion) || remoteVersion < 0) {
+    throw new Error('La versión remota no es válida.');
+  }
+  if (shouldUseMockDatabase()) {
+    return false;
+  }
+  const db = await initDb();
+  const result = await db.execute(REBASE_CONFLICTED_MONTH_SQL, [remoteVersion, month]);
+  return result.rowsAffected > 0;
+}
+
 export async function deleteMonthlySnapshot(month: string): Promise<void> {
   if (shouldUseMockDatabase()) {
     const snapshots = await getMockSnapshots();
@@ -891,6 +998,7 @@ export async function deleteMonthlySnapshot(month: string): Promise<void> {
 
   const db = await initDb();
   await db.execute(DELETE_MONTH_SQL, [month]);
+  notifyLocalDataChanged();
 }
 
 export async function deleteMonthlySnapshotsForYear(year: string): Promise<void> {
@@ -903,6 +1011,7 @@ export async function deleteMonthlySnapshotsForYear(year: string): Promise<void>
 
   const db = await initDb();
   await db.execute(DELETE_YEAR_SQL, [`${year}-%`]);
+  notifyLocalDataChanged();
 }
 
 export async function deleteAllMonthlySnapshots(): Promise<void> {
@@ -914,4 +1023,5 @@ export async function deleteAllMonthlySnapshots(): Promise<void> {
 
   const db = await initDb();
   await db.execute(DELETE_ALL_SQL);
+  notifyLocalDataChanged();
 }

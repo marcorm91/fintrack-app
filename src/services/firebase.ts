@@ -1,4 +1,4 @@
-import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 
 // Firebase client configuration is public by design. Access to user data is
@@ -13,11 +13,18 @@ const firebaseConfig = {
 };
 
 let firebaseAuth: Auth | null = null;
+let firebaseApp: FirebaseApp | null = null;
+
+export function getFirebaseApp() {
+  if (!firebaseApp) {
+    firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  }
+  return firebaseApp;
+}
 
 export function getFirebaseAuth() {
   if (!firebaseAuth) {
-    const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    firebaseAuth = getAuth(firebaseApp);
+    firebaseAuth = getAuth(getFirebaseApp());
   }
   return firebaseAuth;
 }

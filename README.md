@@ -207,23 +207,25 @@ Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o m
 El CSV incluye una marca UTF-8 para que Excel interprete correctamente acentos y caracteres especiales.
 
 **Backup JSON** <br/>
-Desde **Ajustes > Base de datos > Copia de seguridad** puedes exportar un JSON con todos los meses, notas y ajustes.
+Desde **Ajustes > Tus datos > Exportar copia** puedes exportar un JSON con todos los meses, notas y ajustes.
 Es el formato recomendado para migrar Fintrack a otro dispositivo. Antes de importarlo, Fintrack indica cuántos meses son nuevos, idénticos o contienen cambios; los meses que no están en el backup se conservan.
 
-Antes de configurar una futura sincronización en la nube, guarda un backup JSON y un CSV. Ambos se generan únicamente desde la base SQLite local y funcionan sin conexión.
+Antes de activar la sincronización en un dispositivo nuevo, guarda un backup JSON. Se genera únicamente desde SQLite y funciona sin conexión.
 
-**Base local preparada para sincronización** <br/>
-SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin conexión. Cada mes guarda además una versión remota, una revisión local, la fecha de modificación y su estado de sincronización.
+**Sincronización offline-first** <br/>
+SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin conexión. En modo cloud, cada mes se sincroniza en Firestore bajo `users/{uid}/monthlySnapshots/{month}`.
 
 - Las bases existentes se migran automáticamente y conservan todos sus registros.
-- Los registros anteriores quedan pendientes para poder realizar una primera subida completa.
+- Los registros locales anteriores se suben en la primera sincronización cloud.
 - Los cambios y borrados se conservan como pendientes hasta que el servidor los confirme.
-- Una confirmación solo se acepta si el registro no volvió a cambiar durante la subida.
+- La sincronización se ejecuta al abrir la app, guardar, recuperar conexión o recibir un cambio remoto.
+- Las versiones se incrementan mediante transacciones de Firestore; una confirmación solo se acepta si el registro no volvió a cambiar durante la subida.
 - Si llega una versión remota nueva mientras existe un cambio local pendiente, el registro se marca como conflicto y no se sobrescribe silenciosamente.
+- Los conflictos se resuelven expresamente desde Ajustes conservando la copia local o la cloud.
 
-Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase; SQLite continúa funcionando como hasta ahora. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. El modo se puede cambiar posteriormente desde Ajustes sin borrar la base local.
+Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. El modo se puede cambiar desde Ajustes sin borrar la base local.
 
-Todavía no se leen ni escriben datos financieros en Firestore: la información continúa únicamente en SQLite hasta que se implemente y valide la sincronización.
+Las reglas que validan propietario, formato y avance de versión están en `firestore.rules` y deben publicarse en Firebase antes de probar la sincronización.
 
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  

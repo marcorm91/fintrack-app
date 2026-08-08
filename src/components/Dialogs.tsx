@@ -6,6 +6,8 @@ import { open as openExternal } from '@tauri-apps/plugin-shell';
 import type { UpdateStatus } from '../hooks/useUpdateStatus';
 import type { ExportStatus } from '../hooks/useExportData';
 import type { AppMode } from '../hooks/useAppMode';
+import type { CloudSyncStatus } from '../hooks/useCloudSync';
+import type { CloudConflictResolution } from '../services/cloudSync';
 
 export function ConfirmDialog({
   open,
@@ -153,6 +155,9 @@ export function DatabaseSettingsDialog({
   appMode,
   userEmail,
   onChangeAppMode,
+  cloudSyncStatus,
+  onSyncNow,
+  onResolveSyncConflicts,
   currentPath,
   inputPath,
   isDefaultPath,
@@ -190,6 +195,9 @@ export function DatabaseSettingsDialog({
   appMode: AppMode;
   userEmail: string | null;
   onChangeAppMode: (mode: AppMode) => void;
+  cloudSyncStatus: CloudSyncStatus;
+  onSyncNow: () => void;
+  onResolveSyncConflicts: (resolution: CloudConflictResolution) => Promise<void>;
   currentPath: string;
   inputPath: string;
   isDefaultPath: boolean;
@@ -243,6 +251,7 @@ export function DatabaseSettingsDialog({
   }
   const updateActionLabel =
     updateStatus === 'checking' ? t('settings.updateChecking') : t('settings.checkUpdates');
+  const syncStatusMessage = t(`settings.syncStatus.${cloudSyncStatus.phase}`);
   const exportStatusClass =
     exportStatus?.tone === 'error' ? 'text-red-700' : 'text-benefit';
   const exportDisabled = loading || exportingCsv || exportingSql;
@@ -281,6 +290,20 @@ export function DatabaseSettingsDialog({
       setPathStatus({ tone: 'success', message: t('settings.saveSuccess') });
     } else {
       setPathStatus({ tone: 'error', message: t('settings.saveError') });
+    }
+  };
+  const handleConflictResolution = async (resolution: CloudConflictResolution) => {
+    const confirmed = await confirm(
+      t(
+        resolution === 'local'
+          ? 'settings.syncConflictKeepLocalConfirm'
+          : 'settings.syncConflictUseCloudConfirm',
+        { count: cloudSyncStatus.conflictCount }
+      ),
+      { title: t('settings.syncConflictConfirmTitle') }
+    );
+    if (confirmed) {
+      await onResolveSyncConflicts(resolution);
     }
   };
   const pathStatusClass =
@@ -340,17 +363,81 @@ export function DatabaseSettingsDialog({
                     {t('settings.storageModeAccount', { email: userEmail })}
                   </p>
                 ) : null}
+                {appMode === 'cloud' ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        cloudSyncStatus.phase === 'idle'
+                          ? 'bg-benefit'
+                          : cloudSyncStatus.phase === 'syncing'
+                            ? 'animate-pulse bg-accent'
+                            : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
+                              ? 'bg-red-600'
+                              : 'bg-muted'
+                      }`}
+                    />
+                    <span className="text-ink">{syncStatusMessage}</span>
+                    {cloudSyncStatus.pendingCount > 0 ? (
+                      <span className="text-muted">
+                        {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
-                className={`btn shrink-0 text-[10px] sm:text-[11px] ${
-                  appMode === 'local' ? 'btn-primary' : 'btn-neutral'
-                }`}
-              >
-                {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
-              </button>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {appMode === 'cloud' ? (
+                  <button
+                    type="button"
+                    onClick={onSyncNow}
+                    disabled={cloudSyncStatus.phase === 'syncing'}
+                    className="btn btn-primary text-[10px] sm:text-[11px]"
+                  >
+                    {cloudSyncStatus.phase === 'syncing'
+                      ? t('settings.syncingNow')
+                      : t('settings.syncNow')}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
+                  disabled={appMode === 'cloud' && cloudSyncStatus.phase === 'syncing'}
+                  className={`btn text-[10px] sm:text-[11px] ${
+                    appMode === 'local' ? 'btn-primary' : 'btn-neutral'
+                  }`}
+                >
+                  {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
+                </button>
+              </div>
             </div>
+            {appMode === 'cloud' && cloudSyncStatus.conflictCount > 0 ? (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3">
+                <p className="text-xs font-semibold text-red-800">
+                  {t('settings.syncConflictCount', { count: cloudSyncStatus.conflictCount })}
+                </p>
+                <p className="mt-1 text-[11px] leading-5 text-red-700">
+                  {t('settings.syncConflictDescription')}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleConflictResolution('local')}
+                    disabled={cloudSyncStatus.phase === 'syncing'}
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  >
+                    {t('settings.syncConflictKeepLocal')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleConflictResolution('cloud')}
+                    disabled={cloudSyncStatus.phase === 'syncing'}
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  >
+                    {t('settings.syncConflictUseCloud')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <p className="mt-3 text-[11px] leading-5 text-muted">{t('settings.storageModeSafety')}</p>
           </section>
 
