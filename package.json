@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:mocks": "set VITE_USE_MOCK_DB=true&& set VITE_SEED_MOCKS=force&& vite",
+    "dev:mocks": "node scripts/start-mocks.js",
+    "tauri:dev:mocks": "node scripts/start-mocks.js --tauri",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm run build",

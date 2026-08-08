@@ -105,7 +105,13 @@ npm run dev
 npm run dev:mocks
 ```
 
-Este modo usa `finanzas.mocks.db`, rellena datos simulados en cada arranque y no toca `finanzas.db` ni la ruta guardada en ajustes.
+Para abrir la aplicación de escritorio con Tauri y datos simulados:
+
+```bash
+npm run tauri:dev:mocks
+```
+
+Ambos comandos usan `finanzas.mocks.db`, rellenan datos simulados en cada arranque y no tocan `finanzas.db` ni la ruta guardada en ajustes.
 
 ## Desarrollo desktop (Tauri)
 ```bash

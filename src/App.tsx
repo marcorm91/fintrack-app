@@ -235,7 +235,6 @@ function FintrackApp({
     resetSettings,
     handleDatabasePathInputChange,
     currentPath,
-    defaultPath,
     inputPath,
     isDefaultPath,
     loading: isDatabasePathLoading,
@@ -544,7 +543,6 @@ function FintrackApp({
               void onChangeAppMode(nextMode);
             }}
             currentPath={currentPath}
-            defaultPath={defaultPath}
             inputPath={inputPath}
             isDefaultPath={isDefaultPath}
             loading={isDatabasePathLoading}

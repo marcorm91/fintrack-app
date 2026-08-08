@@ -8,7 +8,13 @@ Para arrancar la app usando siempre mocks:
 npm run dev:mocks
 ```
 
-Ese comando usa `finanzas.mocks.db` y la vuelve a rellenar en cada arranque. No usa `finanzas.db` ni una ruta de base de datos guardada en ajustes.
+Para ejecutar la aplicación Tauri con la misma base aislada:
+
+```bash
+npm run tauri:dev:mocks
+```
+
+Estos comandos usan `finanzas.mocks.db` y la vuelven a rellenar en cada arranque. No usan `finanzas.db` ni una ruta de base de datos guardada en ajustes.
 
 La app los carga únicamente si se cumplen estas dos condiciones:
 

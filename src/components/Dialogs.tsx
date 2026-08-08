@@ -154,7 +154,6 @@ export function DatabaseSettingsDialog({
   userEmail,
   onChangeAppMode,
   currentPath,
-  defaultPath,
   inputPath,
   isDefaultPath,
   loading,
@@ -192,7 +191,6 @@ export function DatabaseSettingsDialog({
   userEmail: string | null;
   onChangeAppMode: (mode: AppMode) => void;
   currentPath: string;
-  defaultPath: string;
   inputPath: string;
   isDefaultPath: boolean;
   loading: boolean;
@@ -227,7 +225,6 @@ export function DatabaseSettingsDialog({
 }) {
   const { t } = useTranslation();
   const resolvedCurrent = currentPath || t('settings.unknownPath');
-  const resolvedDefault = defaultPath || t('settings.unknownPath');
   const errorMessage = error ? t(error) : null;
   const resolvedCurrentVersion = currentVersion ?? t('settings.updateUnknown');
   const resolvedLatestVersion = latestVersion ?? t('settings.updateUnknown');
@@ -403,33 +400,61 @@ export function DatabaseSettingsDialog({
           </section>
 
           <section className="rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4">
-            <h4 className="text-sm font-semibold text-ink">{t('settings.backupTitle')}</h4>
-            <p className="mt-1 text-xs leading-5 text-muted">{t('settings.backupDescription')}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onExportJson}
-                disabled={backupDisabled}
-                className="btn btn-primary text-[10px] sm:text-[11px]"
-              >
-                {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
-              </button>
-              <button
-                type="button"
-                onClick={onImportJson}
-                disabled={backupDisabled || readOnly}
-                className="btn btn-neutral text-[10px] sm:text-[11px]"
-              >
-                {importingJson ? t('settings.importingJson') : t('settings.importJson')}
-              </button>
-              <button
-                type="button"
-                onClick={onExportCsv}
-                disabled={exportDisabled}
-                className="btn btn-neutral text-[10px] sm:text-[11px]"
-              >
-                {exportingCsv ? t('settings.exportingCsv') : t('settings.exportCsv')}
-              </button>
+            <h4 className="text-sm font-semibold text-ink">{t('settings.dataManagementTitle')}</h4>
+            <p className="mt-1 text-xs leading-5 text-muted">{t('settings.dataManagementDescription')}</p>
+            <div className="mt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {t('settings.fullBackupTitle')}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onExportJson}
+                  disabled={backupDisabled}
+                  className="btn btn-primary text-[10px] sm:text-[11px]"
+                >
+                  {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onImportJson}
+                  disabled={backupDisabled || readOnly}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {importingJson ? t('settings.importingJson') : t('settings.importJson')}
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 border-t border-ink/10 pt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {t('settings.otherFormatsTitle')}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onExportCsv}
+                  disabled={exportDisabled}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {exportingCsv ? t('settings.exportingCsv') : t('settings.exportCsv')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onExportSql}
+                  disabled={exportDisabled}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {exportingSql ? t('settings.exportingSql') : t('settings.exportSql')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onBackupDatabase}
+                  disabled={backupDisabled}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {backingUp ? t('settings.backupRunning') : t('settings.backupDatabaseAction')}
+                </button>
+              </div>
             </div>
             {exportStatus ? (
               <p className={`mt-3 text-xs ${exportStatusClass}`}>{exportStatus.message}</p>
@@ -448,8 +473,10 @@ export function DatabaseSettingsDialog({
           <details className="group rounded-2xl border border-ink/10 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
               <span>
-                <span className="block text-sm font-semibold text-ink">{t('settings.advancedTitle')}</span>
-                <span className="mt-1 block text-xs text-muted">{t('settings.advancedDescription')}</span>
+                <span className="block text-sm font-semibold text-ink">{t('settings.databaseLocationTitle')}</span>
+                <span className="mt-1 block text-xs text-muted">
+                  {t('settings.databaseLocationDescription')}
+                </span>
               </span>
               <svg
                 className="h-4 w-4 shrink-0 text-muted transition group-open:rotate-180"
@@ -460,11 +487,7 @@ export function DatabaseSettingsDialog({
               </svg>
             </summary>
             <div className="border-t border-ink/10 px-4 pb-4 pt-4">
-              <h4 className="text-xs font-semibold text-ink">{t('settings.databaseLocationTitle')}</h4>
-              <p className="mt-1 text-[11px] leading-5 text-muted">
-                {t('settings.databaseLocationDescription')}
-              </p>
-              <div className="mt-3 space-y-3 text-[10px] text-muted sm:text-xs">
+              <div className="space-y-3 text-[10px] text-muted sm:text-xs">
                 <div>
                   <span className="uppercase tracking-[0.16em]">{t('settings.currentPath')}</span>
                   <div className="mt-1 flex min-w-0 items-center gap-2 rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink">
@@ -476,12 +499,6 @@ export function DatabaseSettingsDialog({
                         {t('settings.defaultBadge')}
                       </span>
                     ) : null}
-                  </div>
-                </div>
-                <div>
-                  <span className="uppercase tracking-[0.16em]">{t('settings.defaultPath')}</span>
-                  <div className="mt-1 truncate rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink" title={resolvedDefault}>
-                    {resolvedDefault}
                   </div>
                 </div>
               </div>
@@ -532,31 +549,6 @@ export function DatabaseSettingsDialog({
               {pathStatus ? (
                 <p className={`mt-3 text-xs ${pathStatusClass}`}>{pathStatus.message}</p>
               ) : null}
-
-              <div className="mt-5 border-t border-ink/10 pt-4">
-                <h4 className="text-xs font-semibold text-ink">{t('settings.technicalExportsTitle')}</h4>
-                <p className="mt-1 text-[11px] leading-5 text-muted">
-                  {t('settings.technicalExportsDescription')}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={onExportSql}
-                    disabled={exportDisabled}
-                    className="btn btn-neutral text-[10px] sm:text-[11px]"
-                  >
-                    {exportingSql ? t('settings.exportingSql') : t('settings.exportSql')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onBackupDatabase}
-                    disabled={backupDisabled}
-                    className="btn btn-neutral text-[10px] sm:text-[11px]"
-                  >
-                    {backingUp ? t('settings.backupRunning') : t('settings.backupDatabaseAction')}
-                  </button>
-                </div>
-              </div>
             </div>
           </details>
 
