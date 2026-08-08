@@ -226,7 +226,6 @@ export function DatabaseSettingsDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'data' | 'updates'>('data');
   const resolvedCurrent = currentPath || t('settings.unknownPath');
   const resolvedDefault = defaultPath || t('settings.unknownPath');
   const errorMessage = error ? t(error) : null;
@@ -315,171 +314,231 @@ export function DatabaseSettingsDialog({
             <path d="M4.5 4.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h3 className="text-lg font-semibold text-ink">{t('settings.title')}</h3>
-        <div className="segmented mt-4 mr-auto text-[10px] sm:text-[11px]">
-          <button
-            type="button"
-            onClick={() => setActiveTab('data')}
-            className={`segmented-option ${activeTab === 'data' ? 'segmented-option-active' : ''}`}
-          >
-            {t('settings.tabsData')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('updates')}
-            className={`segmented-option ${activeTab === 'updates' ? 'segmented-option-active' : ''}`}
-          >
-            {t('settings.tabsUpdates')}
-          </button>
-        </div>
-        {activeTab === 'data' ? (
-          <>
-            <div className="mt-4 rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4 text-sm">
-              <p className="text-sm font-semibold text-ink">{t('settings.storageModeTitle')}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">
-                {t(
-                  appMode === 'local'
-                    ? 'settings.storageModeLocalDescription'
-                    : 'settings.storageModeCloudDescription'
-                )}
-              </p>
-              {appMode === 'cloud' && userEmail ? (
-                <p className="mt-2 text-xs text-ink">
-                  {t('settings.storageModeAccount', { email: userEmail })}
+        <h3 className="pr-12 text-lg font-semibold text-ink">{t('settings.title')}</h3>
+        <p className="mt-1 pr-12 text-xs leading-5 text-muted">{t('settings.description')}</p>
+
+        <div className="mt-5 space-y-4">
+          <section className="rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="text-sm font-semibold text-ink">{t('settings.storageModeTitle')}</h4>
+                  <span className="rounded-full bg-white px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+                    {t(
+                      appMode === 'local'
+                        ? 'settings.storageModeLocal'
+                        : 'settings.storageModeCloud'
+                    )}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-muted">
+                  {t(
+                    appMode === 'local'
+                      ? 'settings.storageModeLocalDescription'
+                      : 'settings.storageModeCloudDescription'
+                  )}
                 </p>
-              ) : null}
-              <div className="segmented mt-3 text-[10px] sm:text-[11px]" role="group">
-                <button
-                  type="button"
-                  onClick={() => onChangeAppMode('local')}
-                  aria-pressed={appMode === 'local'}
-                  className={`segmented-option ${appMode === 'local' ? 'segmented-option-active' : ''}`}
-                >
-                  {t('settings.storageModeLocal')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChangeAppMode('cloud')}
-                  aria-pressed={appMode === 'cloud'}
-                  className={`segmented-option ${appMode === 'cloud' ? 'segmented-option-active' : ''}`}
-                >
-                  {t('settings.storageModeCloud')}
-                </button>
+                {appMode === 'cloud' && userEmail ? (
+                  <p className="mt-2 truncate text-xs text-ink" title={userEmail}>
+                    {t('settings.storageModeAccount', { email: userEmail })}
+                  </p>
+                ) : null}
               </div>
-              <p className="mt-3 text-[11px] leading-5 text-muted">{t('settings.storageModeSafety')}</p>
-            </div>
-            <div className="mt-4 space-y-3 text-[10px] text-muted sm:text-xs">
-              <div>
-                <span className="uppercase tracking-[0.18em]">{t('settings.currentPath')}</span>
-                <div className="mt-1 flex min-w-0 items-center gap-2 rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink">
-                  <span className="min-w-0 flex-1 truncate" title={resolvedCurrent}>
-                    {resolvedCurrent}
-                  </span>
-                  {isDefaultPath ? (
-                    <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-muted">
-                      {t('settings.defaultBadge')}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              <div>
-                <span className="uppercase tracking-[0.18em]">{t('settings.defaultPath')}</span>
-                <div className="mt-1 rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink">
-                  <span className="block w-full truncate" title={resolvedDefault}>
-                    {resolvedDefault}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
               <button
                 type="button"
-                onClick={onReset}
-                disabled={loading}
-                className="btn btn-neutral text-[10px] sm:text-xs"
+                onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
+                className={`btn shrink-0 text-[10px] sm:text-[11px] ${
+                  appMode === 'local' ? 'btn-primary' : 'btn-neutral'
+                }`}
               >
-                {t('settings.useDefault')}
+                {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
               </button>
             </div>
-            <label className="mt-5 flex flex-col gap-2 text-[10px] text-muted uppercase tracking-[0.18em] sm:text-xs">
-              {t('settings.inputLabel')}
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  value={inputPath}
-                  onChange={(event) => onInputChange(event.target.value)}
-                  placeholder={t('settings.inputPlaceholder')}
-                  className="tracking-normal text-[11px] min-w-[220px] flex-1 rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-ink focus:border-accent focus:outline-none truncate"
-                />
-                <button
-                  type="button"
-                  onClick={onBrowse}
-                  disabled={loading}
-                  className="btn btn-neutral text-[9px] sm:text-[10px]"
-                >
-                  {t('settings.browse')}
-                </button>
-              </div>
-              <span className="text-[10px] text-muted normal-case tracking-normal sm:text-xs">
-                {t('settings.inputHelp')}
-              </span>
-            </label>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-white px-3 py-3">
-              <div>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-ink">
-                  {t('settings.readOnlyTitle')}
-                </p>
-                <p className="mt-1 text-[10px] text-muted sm:text-xs">{t('settings.readOnlyDescription')}</p>
-              </div>
-              <label className="relative inline-flex h-6 w-11 items-center">
-                <input
-                  type="checkbox"
-                  checked={readOnly}
-                  onChange={(event) => onToggleReadOnly(event.target.checked)}
-                  className="peer sr-only"
-                />
-                <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
-                <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+            <p className="mt-3 text-[11px] leading-5 text-muted">{t('settings.storageModeSafety')}</p>
+          </section>
+
+          <section className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
+            <h4 className="text-sm font-semibold text-ink">{t('settings.preferencesTitle')}</h4>
+            <p className="mt-1 text-xs text-muted">{t('settings.preferencesDescription')}</p>
+            <div className="mt-3 divide-y divide-ink/10">
+              <label className="flex cursor-pointer items-center justify-between gap-4 py-3">
+                <span>
+                  <span className="block text-xs font-semibold text-ink">
+                    {t('settings.investmentPortfolioTitle')}
+                  </span>
+                  <span className="mt-1 block text-[11px] leading-5 text-muted">
+                    {t('settings.investmentPortfolioDescription')}
+                  </span>
+                </span>
+                <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+                  <input
+                    type="checkbox"
+                    checked={hasInvestmentPortfolio}
+                    onChange={(event) => onToggleInvestmentPortfolio(event.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
+                  <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-center justify-between gap-4 py-3">
+                <span>
+                  <span className="block text-xs font-semibold text-ink">{t('settings.readOnlyTitle')}</span>
+                  <span className="mt-1 block text-[11px] leading-5 text-muted">
+                    {t('settings.readOnlyDescription')}
+                  </span>
+                </span>
+                <span className="relative inline-flex h-6 w-11 shrink-0 items-center">
+                  <input
+                    type="checkbox"
+                    checked={readOnly}
+                    onChange={(event) => onToggleReadOnly(event.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
+                  <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+                </span>
               </label>
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-white px-3 py-3">
-              <div>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-ink">
-                  {t('settings.investmentPortfolioTitle')}
-                </p>
-                <p className="mt-1 text-[10px] text-muted sm:text-xs">
-                  {t('settings.investmentPortfolioDescription')}
-                </p>
-              </div>
-              <label className="relative inline-flex h-6 w-11 items-center">
-                <input
-                  type="checkbox"
-                  checked={hasInvestmentPortfolio}
-                  onChange={(event) => onToggleInvestmentPortfolio(event.target.checked)}
-                  className="peer sr-only"
-                />
-                <span className="h-6 w-11 rounded-full bg-ink/10 transition peer-checked:bg-ink" />
-                <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
-              </label>
+          </section>
+
+          <section className="rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4">
+            <h4 className="text-sm font-semibold text-ink">{t('settings.backupTitle')}</h4>
+            <p className="mt-1 text-xs leading-5 text-muted">{t('settings.backupDescription')}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onExportJson}
+                disabled={backupDisabled}
+                className="btn btn-primary text-[10px] sm:text-[11px]"
+              >
+                {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
+              </button>
+              <button
+                type="button"
+                onClick={onImportJson}
+                disabled={backupDisabled || readOnly}
+                className="btn btn-neutral text-[10px] sm:text-[11px]"
+              >
+                {importingJson ? t('settings.importingJson') : t('settings.importJson')}
+              </button>
+              <button
+                type="button"
+                onClick={onExportCsv}
+                disabled={exportDisabled}
+                className="btn btn-neutral text-[10px] sm:text-[11px]"
+              >
+                {exportingCsv ? t('settings.exportingCsv') : t('settings.exportCsv')}
+              </button>
             </div>
-            {errorMessage ? (
-              <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+            {exportStatus ? (
+              <p className={`mt-3 text-xs ${exportStatusClass}`}>{exportStatus.message}</p>
             ) : null}
-            <div className="mt-6 rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4 text-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            {backupStatus ? (
+              <p
+                className={`mt-3 text-xs ${
+                  backupStatus.tone === 'error' ? 'text-red-700' : 'text-benefit'
+                }`}
+              >
+                {backupStatus.message}
+              </p>
+            ) : null}
+          </section>
+
+          <details className="group rounded-2xl border border-ink/10 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+              <span>
+                <span className="block text-sm font-semibold text-ink">{t('settings.advancedTitle')}</span>
+                <span className="mt-1 block text-xs text-muted">{t('settings.advancedDescription')}</span>
+              </span>
+              <svg
+                className="h-4 w-4 shrink-0 text-muted transition group-open:rotate-180"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M3.5 6l4.5 4 4.5-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </summary>
+            <div className="border-t border-ink/10 px-4 pb-4 pt-4">
+              <h4 className="text-xs font-semibold text-ink">{t('settings.databaseLocationTitle')}</h4>
+              <p className="mt-1 text-[11px] leading-5 text-muted">
+                {t('settings.databaseLocationDescription')}
+              </p>
+              <div className="mt-3 space-y-3 text-[10px] text-muted sm:text-xs">
                 <div>
-                  <p className="text-sm font-semibold text-ink">{t('settings.exportTitle')}</p>
-                  <p className="text-xs text-muted">{t('settings.exportDescription')}</p>
+                  <span className="uppercase tracking-[0.16em]">{t('settings.currentPath')}</span>
+                  <div className="mt-1 flex min-w-0 items-center gap-2 rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink">
+                    <span className="min-w-0 flex-1 truncate" title={resolvedCurrent}>
+                      {resolvedCurrent}
+                    </span>
+                    {isDefaultPath ? (
+                      <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-muted">
+                        {t('settings.defaultBadge')}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div>
+                  <span className="uppercase tracking-[0.16em]">{t('settings.defaultPath')}</span>
+                  <div className="mt-1 truncate rounded-lg bg-ink/5 px-3 py-2 text-[11px] text-ink" title={resolvedDefault}>
+                    {resolvedDefault}
+                  </div>
+                </div>
+              </div>
+              <label className="mt-4 flex flex-col gap-2 text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs">
+                {t('settings.inputLabel')}
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={inputPath}
+                    onChange={(event) => onInputChange(event.target.value)}
+                    placeholder={t('settings.inputPlaceholder')}
+                    className="min-w-[220px] flex-1 truncate rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-[11px] tracking-normal text-ink focus:border-accent focus:outline-none"
+                  />
                   <button
                     type="button"
-                    onClick={onExportCsv}
-                    disabled={exportDisabled}
-                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                    onClick={onBrowse}
+                    disabled={loading}
+                    className="btn btn-neutral text-[9px] sm:text-[10px]"
                   >
-                    {exportingCsv ? t('settings.exportingCsv') : t('settings.exportCsv')}
+                    {t('settings.browse')}
                   </button>
+                </div>
+                <span className="text-[10px] normal-case tracking-normal text-muted sm:text-xs">
+                  {t('settings.inputHelp')}
+                </span>
+              </label>
+              {errorMessage ? (
+                <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+              ) : null}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={loading}
+                  className="btn btn-primary text-[10px] sm:text-xs"
+                >
+                  {t('settings.savePath')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onReset}
+                  disabled={loading}
+                  className="btn btn-neutral text-[10px] sm:text-xs"
+                >
+                  {t('settings.useDefault')}
+                </button>
+              </div>
+              {pathStatus ? (
+                <p className={`mt-3 text-xs ${pathStatusClass}`}>{pathStatus.message}</p>
+              ) : null}
+
+              <div className="mt-5 border-t border-ink/10 pt-4">
+                <h4 className="text-xs font-semibold text-ink">{t('settings.technicalExportsTitle')}</h4>
+                <p className="mt-1 text-[11px] leading-5 text-muted">
+                  {t('settings.technicalExportsDescription')}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={onExportSql}
@@ -487,35 +546,6 @@ export function DatabaseSettingsDialog({
                     className="btn btn-neutral text-[10px] sm:text-[11px]"
                   >
                     {exportingSql ? t('settings.exportingSql') : t('settings.exportSql')}
-                  </button>
-                </div>
-              </div>
-              {exportStatus ? (
-                <p className={`mt-3 text-xs ${exportStatusClass}`}>{exportStatus.message}</p>
-              ) : null}
-            </div>
-            <div className="mt-4 rounded-2xl border border-ink/10 bg-white px-4 py-4 text-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-ink">{t('settings.backupTitle')}</p>
-                  <p className="text-xs text-muted">{t('settings.backupDescription')}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={onExportJson}
-                    disabled={backupDisabled}
-                    className="btn btn-primary text-[10px] sm:text-[11px]"
-                  >
-                    {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onImportJson}
-                    disabled={backupDisabled || readOnly}
-                    className="btn btn-neutral text-[10px] sm:text-[11px]"
-                  >
-                    {importingJson ? t('settings.importingJson') : t('settings.importJson')}
                   </button>
                   <button
                     type="button"
@@ -527,73 +557,49 @@ export function DatabaseSettingsDialog({
                   </button>
                 </div>
               </div>
-              {backupStatus ? (
-                <p
-                  className={`mt-3 text-xs ${
-                    backupStatus.tone === 'error' ? 'text-red-700' : 'text-benefit'
-                  }`}
-                >
-                  {backupStatus.message}
-                </p>
-              ) : null}
             </div>
-            <div className="mt-6 mb-3 flex flex-wrap justify-end gap-3">
+          </details>
+
+          <section className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-ink">{t('settings.aboutTitle')}</h4>
+                <p className="mt-1 text-xs text-muted">
+                  {t('settings.currentVersion')}: <span className="text-ink">{resolvedCurrentVersion}</span>
+                </p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {t(isOnline ? 'settings.updateStatusOnline' : 'settings.updateStatusOffline')}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => void handleSave()}
-                disabled={loading}
-                className="btn btn-primary text-[10px] sm:text-xs"
+                onClick={onCheckUpdates}
+                disabled={!isOnline || updateStatus === 'checking'}
+                className="btn btn-neutral text-[10px] sm:text-[11px]"
               >
-                {t('settings.savePath')}
+                {updateActionLabel}
               </button>
             </div>
-            {pathStatus ? (
-              <p className={`mt-3 mb-3 text-xs ${pathStatusClass}`}>{pathStatus.message}</p>
+            {updateStatus !== 'idle' ? (
+              <p className="mt-3 text-xs text-ink">{updateMessage}</p>
             ) : null}
-          </>
-        ) : (
-          <>
-            <div className="mt-6 rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4 text-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-ink">{t('settings.updatesTitle')}</p>
-                  <p className="text-xs text-muted">
-                    {t(isOnline ? 'settings.updateStatusOnline' : 'settings.updateStatusOffline')}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={onCheckUpdates}
-                  disabled={!isOnline || updateStatus === 'checking'}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
-                >
-                  {updateActionLabel}
-                </button>
-              </div>
-              <div className="mt-3 grid gap-1 text-xs text-muted">
-                <span>
-                  {t('settings.currentVersion')}: <span className="text-ink">{resolvedCurrentVersion}</span>
-                </span>
-                <span>
-                  {t('settings.latestVersion')}: <span className="text-ink">{resolvedLatestVersion}</span>
-                </span>
-                <span className="text-ink">{updateMessage}</span>
-              </div>
-              {updateStatus === 'updateAvailable' && latestReleaseUrl ? (
-                <div className="mt-3">
-                  <a
-                    href={latestReleaseUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-neutral text-[10px] sm:text-[11px]"
-                  >
-                    {t('settings.openRelease')}
-                  </a>
-                </div>
-              ) : null}
-            </div>
-          </>
-        )}
+            {updateStatus === 'updateAvailable' ? (
+              <p className="mt-1 text-xs text-muted">
+                {t('settings.latestVersion')}: <span className="text-ink">{resolvedLatestVersion}</span>
+              </p>
+            ) : null}
+            {updateStatus === 'updateAvailable' && latestReleaseUrl ? (
+              <a
+                href={latestReleaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-neutral mt-3 text-[10px] sm:text-[11px]"
+              >
+                {t('settings.openRelease')}
+              </a>
+            ) : null}
+          </section>
+        </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 pt-4 text-xs text-muted">
           <span>{t('settings.authorLabel')}</span>
           <div className="flex flex-wrap gap-3">
