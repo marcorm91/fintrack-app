@@ -1,10 +1,18 @@
 name: Android APK (artifact)
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag de la release a la que adjuntar el APK/AAB (opcional)'
+        required: false
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   android:
@@ -16,6 +24,7 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,3 +109,16 @@ jobs:
           path: |
             artifacts/android/*.apk
             artifacts/android/*.aab
+
+      - name: Attach APK/AAB to release
+        if: env.RELEASE_TAG != ''
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          draft: ${{ github.event_name == 'push' }}
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/android/*.apk
+            artifacts/android/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
