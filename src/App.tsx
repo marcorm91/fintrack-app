@@ -411,6 +411,7 @@ function FintrackApp({
     currentPath,
     inputPath,
     isDefaultPath,
+    canChangePath: canChangeDatabasePath,
     loading: isDatabasePathLoading,
     error: databasePathError,
     browsePath
@@ -729,6 +730,7 @@ function FintrackApp({
             currentPath={currentPath}
             inputPath={inputPath}
             isDefaultPath={isDefaultPath}
+            canChangeDatabasePath={canChangeDatabasePath}
             loading={isDatabasePathLoading}
             error={databasePathError}
             readOnly={readOnly}

@@ -20,6 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Android signing secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "$ANDROID_KEYSTORE_B64" ] || missing+=("ANDROID_KEYSTORE_BASE64")
+          [ -n "$ANDROID_KEYSTORE_PASSWORD" ] || missing+=("ANDROID_KEYSTORE_PASSWORD")
+          [ -n "$ANDROID_KEY_ALIAS" ] || missing+=("ANDROID_KEY_ALIAS")
+          [ -n "$ANDROID_KEY_PASSWORD" ] || missing+=("ANDROID_KEY_PASSWORD")
+          if (( ${#missing[@]} )); then
+            printf 'Missing required Android signing secret: %s\n' "${missing[@]}"
+            exit 1
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -66,8 +80,7 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
-      - name: Decode Android keystore (if provided)
-        if: env.ANDROID_KEYSTORE_B64 != ''
+      - name: Decode Android keystore
         shell: bash
         run: |
           set -euo pipefail

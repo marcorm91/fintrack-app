@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { dirname, join } from '@tauri-apps/api/path';
 import { confirm, save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { checkpointDatabase, getMonthlySeries } from '../db';
 import type { MonthlySnapshotInput } from '../db';
 import {
@@ -66,6 +67,10 @@ function formatExportError(error: unknown, fallback: string) {
   return fallback;
 }
 
+async function writeExportFile(path: string, contents: string) {
+  await writeTextFile(path, contents);
+}
+
 export function useExportData({
   currentPath,
   language,
@@ -102,7 +107,7 @@ export function useExportData({
       if (!path) {
         return;
       }
-      await invoke('write_text_file', { path, contents: csv });
+      await writeExportFile(path, csv);
       setExportStatus({ tone: 'success', message: t('settings.exportCsvSuccess', { path }) });
     } catch (error) {
       setExportStatus({ tone: 'error', message: formatExportError(error, t('settings.exportError')) });
@@ -127,7 +132,7 @@ export function useExportData({
       if (!path) {
         return;
       }
-      await invoke('write_text_file', { path, contents: sql });
+      await writeExportFile(path, sql);
       setExportStatus({ tone: 'success', message: t('settings.exportSqlSuccess', { path }) });
     } catch (error) {
       setExportStatus({ tone: 'error', message: formatExportError(error, t('settings.exportError')) });
@@ -152,7 +157,7 @@ export function useExportData({
       if (!path) {
         return;
       }
-      await invoke('write_text_file', { path, contents: json });
+      await writeExportFile(path, json);
       setBackupStatus({ tone: 'success', message: t('settings.exportJsonSuccess', { path }) });
     } catch (error) {
       setBackupStatus({ tone: 'error', message: formatExportError(error, t('settings.backupError')) });
@@ -241,7 +246,7 @@ export function useExportData({
         return;
       }
       await checkpointDatabase();
-      await invoke('copy_file', { source: currentPath, destination: path });
+      await invoke('backup_database_file', { source: currentPath, destination: path });
       setBackupStatus({ tone: 'success', message: t('settings.backupSuccess', { path }) });
     } catch (error) {
       setBackupStatus({ tone: 'error', message: formatExportError(error, t('settings.backupError')) });

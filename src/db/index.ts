@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import schemaSql from './schema.sql?raw';
 import { notifyLocalDataChanged } from '../utils/localDataEvents';
+import { isMobilePlatform } from '../utils/platform';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
@@ -30,10 +31,11 @@ function loadStoredDatabasePath() {
   return trimmed.length ? trimmed : null;
 }
 
-let dbPath: string | null = shouldUseMockDatabase() ? MOCK_DATABASE_FILENAME : loadStoredDatabasePath();
+let dbPath: string | null = shouldUseMockDatabase() ? MOCK_DATABASE_FILENAME : null;
 let dbUrl: string | null = dbPath ? `sqlite:${dbPath}` : null;
-let dbUrlPromise: Promise<string> | null = null;
 let portableMode = false;
+let initialPathResolved = shouldUseMockDatabase();
+let initialPathPromise: Promise<void> | null = null;
 
 export function getDatabasePath() {
   if (shouldUseMockDatabase()) {
@@ -62,45 +64,54 @@ async function resolvePortableDatabasePath(): Promise<string | null> {
   }
 }
 
+async function ensureInitialDatabasePath(): Promise<void> {
+  if (initialPathResolved) {
+    return;
+  }
+  if (!initialPathPromise) {
+    initialPathPromise = (async () => {
+      if (!isMobilePlatform()) {
+        const portablePath = await resolvePortableDatabasePath();
+        if (portablePath) {
+          portableMode = true;
+          dbPath = portablePath;
+          dbUrl = `sqlite:${portablePath}`;
+          initialPathResolved = true;
+          return;
+        }
+
+        const storedPath = loadStoredDatabasePath();
+        if (storedPath) {
+          dbPath = storedPath;
+          dbUrl = `sqlite:${storedPath}`;
+        }
+      }
+      initialPathResolved = true;
+    })().catch((error) => {
+      initialPathPromise = null;
+      throw error;
+    });
+  }
+  await initialPathPromise;
+}
+
 export async function resolveDatabasePath(): Promise<string | null> {
   if (shouldUseMockDatabase()) {
     return MOCK_DATABASE_FILENAME;
   }
-  if (dbPath) {
-    return dbPath;
-  }
-  const portablePath = await resolvePortableDatabasePath();
-  if (portablePath) {
-    portableMode = true;
-    dbPath = portablePath;
-    dbUrl = `sqlite:${portablePath}`;
-    return portablePath;
-  }
-  return null;
+  await ensureInitialDatabasePath();
+  return dbPath;
 }
 
 async function resolveDatabaseUrl(): Promise<string> {
   if (shouldUseMockDatabase()) {
     return `sqlite:${MOCK_DATABASE_FILENAME}`;
   }
+  await ensureInitialDatabasePath();
   if (dbUrl) {
     return dbUrl;
   }
-  if (!dbUrlPromise) {
-    dbUrlPromise = (async () => {
-      if (dbPath) {
-        return `sqlite:${dbPath}`;
-      }
-      const portablePath = await resolvePortableDatabasePath();
-      if (portablePath) {
-        portableMode = true;
-        dbPath = portablePath;
-        return `sqlite:${portablePath}`;
-      }
-      return `sqlite:${DATABASE_FILENAME}`;
-    })();
-  }
-  dbUrl = await dbUrlPromise;
+  dbUrl = `sqlite:${DATABASE_FILENAME}`;
   return dbUrl;
 }
 
@@ -113,7 +124,8 @@ export function setDatabasePath(path: string | null, options: { persist?: boolea
   const trimmed = path ? path.trim() : '';
   dbPath = trimmed.length ? trimmed : null;
   dbUrl = dbPath ? `sqlite:${dbPath}` : null;
-  dbUrlPromise = null;
+  initialPathResolved = true;
+  initialPathPromise = null;
   if (typeof window !== 'undefined') {
     if (persist && dbPath) {
       window.localStorage.setItem(DB_PATH_STORAGE_KEY, dbPath);

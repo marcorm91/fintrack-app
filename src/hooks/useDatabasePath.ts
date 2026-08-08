@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
-import { appDataDir, join } from '@tauri-apps/api/path';
+import { appConfigDir, join } from '@tauri-apps/api/path';
 import { DATABASE_FILENAME, getDatabasePath, isPortableMode, resolveDatabasePath, setDatabasePath } from '../db';
+import { isMobilePlatform } from '../utils/platform';
 
 type UseDatabasePathOptions = {
   onPathChange?: (path: string | null) => void;
@@ -21,15 +22,8 @@ function resolveInputPath(value: string) {
   return `${base}${separator}${DATABASE_FILENAME}`;
 }
 
-function isMobileUserAgent() {
-  if (typeof navigator === 'undefined') {
-    return false;
-  }
-  const ua = navigator.userAgent || navigator.vendor || '';
-  return /android|iphone|ipad|ipod/i.test(ua);
-}
-
 export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
+  const canChangePath = !isMobilePlatform();
   const [defaultPath, setDefaultPath] = useState('');
   const [currentPath, setCurrentPath] = useState('');
   const [inputPath, setInputPath] = useState('');
@@ -42,7 +36,7 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     const resolvePaths = async () => {
       let resolvedDefault = DATABASE_FILENAME;
       try {
-        const baseDir = await appDataDir();
+        const baseDir = await appConfigDir();
         resolvedDefault = await join(baseDir, DATABASE_FILENAME);
       } catch {
         resolvedDefault = DATABASE_FILENAME;
@@ -67,6 +61,9 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
   }, []);
 
   const savePath = useCallback(() => {
+    if (!canChangePath) {
+      return false;
+    }
     const nextPath = resolveInputPath(inputPath);
     if (!nextPath) {
       setError('settings.invalidDbPath');
@@ -79,17 +76,15 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     setError(null);
     onPathChange?.(nextPath);
     return true;
-  }, [inputPath, onPathChange]);
+  }, [canChangePath, inputPath, onPathChange]);
 
   const browsePath = useCallback(async () => {
+    if (!canChangePath) {
+      return;
+    }
     setError(null);
     try {
-      const useFilePicker = isMobileUserAgent();
-      const selected = await open(
-        useFilePicker
-          ? { multiple: false, filters: [{ name: 'Database', extensions: ['db'] }] }
-          : { directory: true, multiple: false }
-      );
+      const selected = await open({ directory: true, multiple: false });
       if (!selected) {
         return;
       }
@@ -100,9 +95,12 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     } catch {
       setError('settings.dialogUnavailable');
     }
-  }, []);
+  }, [canChangePath]);
 
   const resetPath = useCallback(() => {
+    if (!canChangePath) {
+      return;
+    }
     const nextPath = defaultPath || DATABASE_FILENAME;
     if (isPortableMode()) {
       setDatabasePath(nextPath, { persist: false, portable: true });
@@ -119,7 +117,7 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     setIsDefaultPath(true);
     setError(null);
     onPathChange?.(null);
-  }, [defaultPath, onPathChange]);
+  }, [canChangePath, defaultPath, onPathChange]);
 
   return {
     defaultPath,
@@ -129,6 +127,7 @@ export function useDatabasePath({ onPathChange }: UseDatabasePathOptions = {}) {
     isDefaultPath,
     loading,
     error,
+    canChangePath,
     setError,
     savePath,
     browsePath,
