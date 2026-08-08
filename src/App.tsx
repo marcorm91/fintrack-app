@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCharts } from './hooks/useCharts';
 import { useDatabaseSettings } from './hooks/useDatabaseSettings';
@@ -20,6 +20,11 @@ import { useUpdateStatus } from './hooks/useUpdateStatus';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 import { useTableSort } from './hooks/useTableSort';
+import { useAuthSession } from './hooks/useAuthSession';
+import { useAppMode, type AppMode } from './hooks/useAppMode';
+import { useCloudSync } from './hooks/useCloudSync';
+import { useDatabaseAccess } from './hooks/useDatabaseAccess';
+import { useOfflinePin } from './hooks/useOfflinePin';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -30,6 +35,10 @@ import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
+import { AuthScreen } from './components/AuthScreen';
+import { AccessModeScreen } from './components/AccessModeScreen';
+import { dismissSplash } from './utils/splash';
+import { DATABASE_PATH_CHANGED_EVENT } from './db';
 const HistoryView = lazy(() =>
   import('./features/history/HistoryView').then((module) => ({ default: module.HistoryView }))
 );
@@ -42,6 +51,244 @@ const YearView = lazy(() =>
 
 export default function App() {
   useSafeAreaInsets();
+  const modeChangeInProgressRef = useRef(false);
+  const [offlineUnlocked, setOfflineUnlocked] = useState(false);
+  const { mode, setMode } = useAppMode();
+  const {
+    policy: databaseAccessPolicy,
+    loading: databaseAccessLoading,
+    error: databaseAccessError,
+    claimForCloudUser,
+    releaseToLocal,
+    clearError: clearDatabaseAccessError,
+    reload: reloadDatabaseAccess
+  } = useDatabaseAccess();
+  const {
+    configured: offlinePinConfigured,
+    loading: offlinePinLoading,
+    configure: configureOfflinePin,
+    disable: disableOfflinePin,
+    verify: verifyOfflinePin
+  } = useOfflinePin();
+  const {
+    user,
+    loading,
+    initializationError,
+    signIn,
+    requestPasswordReset,
+    signOut
+  } = useAuthSession(mode === 'cloud');
+
+  useEffect(() => {
+    if (
+      !databaseAccessLoading &&
+      databaseAccessPolicy?.mode === 'cloud' &&
+      mode !== 'cloud'
+    ) {
+      setMode('cloud');
+    }
+  }, [databaseAccessLoading, databaseAccessPolicy, mode, setMode]);
+
+  useEffect(() => {
+    if (
+      mode !== 'cloud' ||
+      !user ||
+      databaseAccessLoading ||
+      databaseAccessError ||
+      modeChangeInProgressRef.current ||
+      !databaseAccessPolicy ||
+      (databaseAccessPolicy.mode === 'cloud' && databaseAccessPolicy.ownerUid === user.uid)
+    ) {
+      return;
+    }
+    void claimForCloudUser(user.uid);
+  }, [
+    claimForCloudUser,
+    databaseAccessError,
+    databaseAccessLoading,
+    databaseAccessPolicy,
+    mode,
+    user
+  ]);
+
+  useEffect(() => {
+    if (databaseAccessError === 'owner-mismatch' && user) {
+      void signOut();
+    }
+  }, [databaseAccessError, signOut, user]);
+
+  useEffect(() => {
+    if (user || mode !== 'cloud') {
+      setOfflineUnlocked(false);
+    }
+  }, [mode, user]);
+
+  useEffect(() => {
+    const handleDatabasePathChange = () => setOfflineUnlocked(false);
+    window.addEventListener(DATABASE_PATH_CHANGED_EVENT, handleDatabasePathChange);
+    return () => {
+      window.removeEventListener(DATABASE_PATH_CHANGED_EVENT, handleDatabasePathChange);
+    };
+  }, []);
+
+  const handleSignIn = useCallback(
+    async (email: string, password: string) => {
+      clearDatabaseAccessError();
+      await signIn(email, password);
+    },
+    [clearDatabaseAccessError, signIn]
+  );
+
+  const handleAppModeChange = useCallback(
+    async (nextMode: AppMode) => {
+      if (nextMode === 'local' && user) {
+        modeChangeInProgressRef.current = true;
+        try {
+          const released = await releaseToLocal(user.uid);
+          if (!released) {
+            return;
+          }
+          setMode(nextMode);
+          try {
+            await signOut();
+          } catch {
+            // Local mode must remain available even if Firebase cannot respond.
+          }
+        } finally {
+          modeChangeInProgressRef.current = false;
+        }
+        return;
+      }
+      setMode(nextMode);
+    },
+    [releaseToLocal, setMode, signOut, user]
+  );
+
+  useEffect(() => {
+    const accessScreenVisible = mode === null || (mode === 'cloud' && !loading && !user);
+    if (!accessScreenVisible) {
+      return;
+    }
+    return dismissSplash();
+  }, [loading, mode, user]);
+
+  if (databaseAccessLoading || offlinePinLoading) {
+    return null;
+  }
+  if (!databaseAccessPolicy || databaseAccessError === 'unavailable') {
+    return <DatabaseAccessErrorScreen onRetry={() => void reloadDatabaseAccess()} />;
+  }
+  if (databaseAccessPolicy.mode === 'cloud' && mode !== 'cloud') {
+    return null;
+  }
+  if (mode === null) {
+    return (
+      <AccessModeScreen
+        onChooseCloud={() => setMode('cloud')}
+        onChooseLocal={() => setMode('local')}
+      />
+    );
+  }
+  if (mode === 'cloud' && loading) {
+    return null;
+  }
+  if (mode === 'cloud' && !user && !offlineUnlocked) {
+    return (
+      <AuthScreen
+        initializationError={initializationError}
+        accessError={databaseAccessError}
+        offlinePinConfigured={
+          databaseAccessPolicy.mode === 'cloud' && offlinePinConfigured
+        }
+        onSignIn={handleSignIn}
+        onRequestPasswordReset={requestPasswordReset}
+        onUnlockOffline={async (pin) => {
+          const result = await verifyOfflinePin(pin);
+          if (result.status === 'success') {
+            setOfflineUnlocked(true);
+          }
+          return result;
+        }}
+        onUseLocal={
+          databaseAccessPolicy.mode === 'local'
+            ? () => {
+                void handleAppModeChange('local');
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
+  if (
+    mode === 'cloud' &&
+    user &&
+    !(
+      databaseAccessPolicy.mode === 'cloud' &&
+      databaseAccessPolicy.ownerUid === user.uid
+    )
+  ) {
+    return null;
+  }
+
+  return (
+    <FintrackApp
+      appMode={mode}
+      userId={mode === 'cloud' ? (user?.uid ?? null) : null}
+      userEmail={mode === 'cloud' ? (user?.email ?? null) : null}
+      offlineAccess={mode === 'cloud' && offlineUnlocked && !user}
+      offlinePinConfigured={offlinePinConfigured}
+      onConfigureOfflinePin={configureOfflinePin}
+      onDisableOfflinePin={disableOfflinePin}
+      onSignOut={
+        offlineUnlocked
+          ? async () => {
+              setOfflineUnlocked(false);
+            }
+          : signOut
+      }
+      onChangeAppMode={handleAppModeChange}
+    />
+  );
+}
+
+function DatabaseAccessErrorScreen({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-ink/5 px-4">
+      <section className="w-full max-w-md rounded-3xl border border-ink/10 bg-white p-6 text-center shadow-card sm:p-8">
+        <img src="/app-icon.svg" alt="" className="mx-auto h-16 w-16 rounded-2xl shadow-sm" />
+        <h1 className="mt-5 text-xl font-semibold text-ink">{t('auth.databaseUnavailableTitle')}</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">{t('auth.databaseUnavailableDescription')}</p>
+        <button type="button" onClick={onRetry} className="btn btn-primary mt-6 w-full justify-center py-3">
+          {t('actions.retry')}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+function FintrackApp({
+  appMode,
+  userId,
+  userEmail,
+  offlineAccess,
+  offlinePinConfigured,
+  onConfigureOfflinePin,
+  onDisableOfflinePin,
+  onSignOut,
+  onChangeAppMode
+}: {
+  appMode: AppMode;
+  userId: string | null;
+  userEmail: string | null;
+  offlineAccess: boolean;
+  offlinePinConfigured: boolean;
+  onConfigureOfflinePin: (pin: string) => Promise<void>;
+  onDisableOfflinePin: () => Promise<void>;
+  onSignOut: () => Promise<void>;
+  onChangeAppMode: (mode: AppMode) => Promise<void>;
+}) {
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
@@ -133,6 +380,15 @@ export default function App() {
   );
 
   const refreshData = useCallback(() => refresh(monthValue), [refresh, monthValue]);
+  const {
+    status: cloudSyncStatus,
+    syncNow: syncCloudNow,
+    resolveConflicts: resolveCloudSyncConflicts
+  } = useCloudSync({
+    enabled: appMode === 'cloud' && !offlineAccess,
+    userId,
+    onRemoteChange: refreshData
+  });
   const handleMonthSwipe = useCallback(
     (direction: 'next' | 'previous') => {
       setMonthValue((prev) => shiftMonthValue(prev, direction === 'next' ? 1 : -1));
@@ -153,7 +409,6 @@ export default function App() {
     resetSettings,
     handleDatabasePathInputChange,
     currentPath,
-    defaultPath,
     inputPath,
     isDefaultPath,
     loading: isDatabasePathLoading,
@@ -305,15 +560,27 @@ export default function App() {
   const {
     exportCsv,
     exportSql,
+    exportJson,
+    openJsonImport,
+    onJsonBackupFileChange,
+    backupInputRef,
     backupDatabase,
     exportingCsv,
     exportingSql,
+    exportingJson,
+    importingJson,
     backingUp,
     exportStatus,
     backupStatus
   } = useExportData({
     currentPath,
     language,
+    currentVersion,
+    hasInvestmentPortfolio,
+    readOnly,
+    saveSnapshot,
+    setInvestmentPortfolioEnabled: setHasInvestmentPortfolio,
+    refreshData,
     t
   });
   const infoDialogContent = useInfoDialogContent(infoDialog);
@@ -339,13 +606,7 @@ export default function App() {
     if (!appReady) {
       return;
     }
-    const splash = document.getElementById('splash');
-    if (!splash) {
-      return;
-    }
-    splash.classList.add('fade-out');
-    const timeout = window.setTimeout(() => splash.remove(), 200);
-    return () => window.clearTimeout(timeout);
+    return dismissSplash();
   }, [appReady]);
 
   const globalWealthSummary = useMemo(() => {
@@ -371,6 +632,15 @@ export default function App() {
         void i18n.changeLanguage(languageValue);
       }}
       onOpenSettings={openSettings}
+      appMode={appMode}
+      userEmail={userEmail}
+      offlineAccess={offlineAccess}
+      onSignOut={() => {
+        void onSignOut();
+      }}
+      onChangeAppMode={(nextMode) => {
+        void onChangeAppMode(nextMode);
+      }}
       t={t}
       importInputRef={importInputRef}
       onFileChange={onFileChange}
@@ -407,6 +677,15 @@ export default function App() {
       }
       dialogs={
         <>
+          <input
+            ref={backupInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={onJsonBackupFileChange}
+            className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
           <ConfirmDialog
             open={Boolean(confirmDialog)}
             title={confirmDialog?.title ?? ''}
@@ -433,8 +712,21 @@ export default function App() {
           />
           <DatabaseSettingsDialog
             open={settingsOpen}
+            appMode={appMode}
+            userEmail={userEmail}
+            offlineAccess={offlineAccess}
+            offlinePinConfigured={offlinePinConfigured}
+            onConfigureOfflinePin={onConfigureOfflinePin}
+            onDisableOfflinePin={onDisableOfflinePin}
+            onChangeAppMode={(nextMode) => {
+              void onChangeAppMode(nextMode);
+            }}
+            cloudSyncStatus={cloudSyncStatus}
+            onSyncNow={() => {
+              void syncCloudNow();
+            }}
+            onResolveSyncConflicts={resolveCloudSyncConflicts}
             currentPath={currentPath}
-            defaultPath={defaultPath}
             inputPath={inputPath}
             isDefaultPath={isDefaultPath}
             loading={isDatabasePathLoading}
@@ -452,6 +744,8 @@ export default function App() {
             latestReleaseUrl={latestReleaseUrl}
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
+            exportingJson={exportingJson}
+            importingJson={importingJson}
             backingUp={backingUp}
             exportStatus={exportStatus}
             backupStatus={backupStatus}
@@ -462,6 +756,8 @@ export default function App() {
             onCheckUpdates={checkForUpdates}
             onExportCsv={exportCsv}
             onExportSql={exportSql}
+            onExportJson={exportJson}
+            onImportJson={openJsonImport}
             onBackupDatabase={backupDatabase}
             onClose={closeSettings}
           />

@@ -1,9 +1,15 @@
 import { SettingsIcon } from './icons';
+import type { AppMode } from '../hooks/useAppMode';
 
 type AppHeaderProps = {
   activeLanguage: 'en' | 'es';
   onLanguageChange: (language: 'en' | 'es') => void;
   onOpenSettings: () => void;
+  appMode: AppMode;
+  userEmail: string | null;
+  offlineAccess: boolean;
+  onSignOut: () => void;
+  onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
@@ -11,6 +17,11 @@ export function AppHeader({
   activeLanguage,
   onLanguageChange,
   onOpenSettings,
+  appMode,
+  userEmail,
+  offlineAccess,
+  onSignOut,
+  onChangeAppMode,
   t
 }: AppHeaderProps) {
   return (
@@ -49,6 +60,29 @@ export function AppHeader({
               {t('language.en')}
             </button>
           </div>
+          {appMode === 'cloud' ? (
+            <button
+              type="button"
+              onClick={onSignOut}
+              title={
+                offlineAccess
+                  ? t('auth.offlineAccessActive')
+                  : `${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()
+              }
+              className="btn btn-neutral px-3 text-[9px] text-muted hover:text-ink sm:text-[10px]"
+            >
+              {t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onChangeAppMode('cloud')}
+              title={t('auth.enableCloud')}
+              className="btn btn-neutral px-3 text-[9px] text-muted hover:text-ink sm:text-[10px]"
+            >
+              {t('auth.localBadge')}
+            </button>
+          )}
           <button
             type="button"
             onClick={onOpenSettings}
@@ -63,4 +97,3 @@ export function AppHeader({
     </header>
   );
 }
-

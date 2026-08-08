@@ -4,20 +4,26 @@
 
 # Fintrack
 
-Aplicación local para control mensual, anual e histórico de finanzas personales con entradas agregadas, gráficas, tablas e importación de datos.
+Aplicación *offline-first* para el control mensual, anual e histórico de finanzas personales. Mantiene los datos disponibles en SQLite y permite sincronizarlos de forma opcional y segura mediante Firebase.
 
 > **Motivación**  
 > Este proyecto nace de una necesidad personal: dejar de gestionar mis finanzas en hojas de Excel que con el tiempo se volvieron difíciles de mantener, propensas a errores y poco prácticas para analizar el histórico.  
-> Fintrack surge como una alternativa local, sencilla y mantenible para controlar ingresos, gastos, efectivo y patrimonio sin depender de herramientas externas.
+> Fintrack surge como una alternativa sencilla y mantenible para controlar ingresos, gastos, efectivo y patrimonio. Puede utilizarse íntegramente en local o combinarse con una copia cloud para compartir los datos entre dispositivos.
 
 ## Características
+
 - Vista mensual, anual e histórico.
 - Importación desde CSV o pegado de texto.
-- Exportación CSV y SQL desde ajustes.
+- Exportación CSV, SQL y backup JSON desde ajustes.
 - Gráficas de barras para flujo de efectivo y patrimonio.
 - Ordenación de columnas en tablas.
 - Idiomas ES/EN.
-- Datos locales con SQLite (Tauri plugin).
+- Arquitectura *offline-first*: SQLite funciona como almacenamiento principal incluso sin conexión.
+- Modo local sin cuenta y modo cloud con Firebase Authentication y Firestore.
+- Sincronización automática al iniciar, guardar, recuperar conexión o recibir cambios remotos.
+- Control de versiones y resolución explícita de conflictos para evitar sobrescrituras silenciosas.
+- Sesión persistente por dispositivo, cierre de sesión y vinculación de la base local a su propietario.
+- PIN local de emergencia opcional para acceder a SQLite cuando Firebase no está disponible.
 - Filtros por rango y paginación en histórico.
 - Configuración de ruta de base de datos desde la app.
 - Modo solo lectura desde ajustes.
@@ -27,68 +33,66 @@ Aplicación local para control mensual, anual e histórico de finanzas personale
 - Mocks de desarrollo con histórico desde 2019.
 
 ## Descargas
-- Windows (instalador .exe): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_x64-setup.exe)
-- Windows (MSI): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_aarch64.dmg)
-- Linux (AppImage): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_amd64.AppImage)
-- Linux (DEB): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5_amd64.deb)
-- Linux (RPM): [Fintrack 2.0.5](https://github.com/marcorm91/fintrack-app/releases/download/v2.0.5/Fintrack_2.0.5-1.x86_64.rpm)
+
+- Windows (instalador .exe): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64-setup.exe)
+- Windows (MSI): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_aarch64.dmg)
+- Linux (AppImage): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.AppImage)
+- Linux (DEB): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.deb)
+- Linux (RPM): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
 
-## Novedades 2.0.5
-- Documenta la columna opcional de notas en los ejemplos de importación mensual, anual e histórica.
-- Mantiene visible la tarjeta «Nota del mes» incluso cuando está vacía para evitar saltos en el diseño.
-- Añade el estado «Sin notas para este mes» en español e inglés.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.0`.
 
-## Novedades 2.0.4
-- Añade notas opcionales a los cierres mensuales, con migración automática para bases de datos existentes.
-- Incluye las notas en la importación y exportación CSV y en los volcados SQL.
-- Muestra las notas en la vista mensual y en un diálogo accesible desde el detalle anual.
-- Rediseña los detalles anual e histórico como tarjetas en móvil, sin perder ordenación, tendencias, filtros ni paginación.
-- Mantiene los controles de ordenación en una fila horizontal desplazable y conserva las tablas originales en escritorio.
-- Compacta el panel móvil de cierre mensual y bloquea el scroll del contenido de fondo mientras está abierto.
-- Añade una animación de cierre descendente al panel mensual.
-- Corrige el menú de importación para cerrarlo al pulsar fuera o utilizar la tecla `Escape`.
-- Reduce el JavaScript inicial mediante carga diferida de vistas y reorganiza lógica reutilizable en hooks y utilidades.
+## Modalidades de uso y acceso
 
-## Novedades 2.0.3
-- Extiende el swipe mensual a todo el contenido de la pestaña de mes.
-- Elimina los chevrons flotantes móviles y deja el swipe como gesto lateral principal.
-- Mueve el botón flotante `+` a un portal para evitar problemas con padres transformados.
-- Añade animación de entrada al botón `+` y mantiene su posición fixed durante el swipe.
-- Corrige el overflow horizontal de la vista anual móvil al cambiar a años con datos.
-- Abre los modales de gráficas anual e histórico a pantalla completa también en desktop.
-- Permite cerrar los modales de gráficas con la tecla `Escape`.
-- Añade el año seleccionado al título del modal de gráfica anual.
-- Elimina constantes de series y props obsoletas sin uso.
-- Refuerza tipados de resultados SQL, tooltips de gráficas, bloqueo de orientación e imports de insights.
+### Uso local
 
-## Novedades 2.0.2
-- Mantiene patrimonio, efectivo y cartera desde el último mes con saldo al cierre informado.
-- Evita que meses posteriores sin datos o con saldo al cierre `0` corten el patrimonio acumulado.
-- Precarga saldo al cierre y cartera inversión en meses nuevos desde el último cierre real.
-- Mejora la importación de CSV antiguos: ignora filas vacías con todo a `0` y no usa una columna de cartera completamente a `0` para sobrescribir cartera existente.
-- Mejora la vista móvil mensual: dona sin tooltips superpuestos y formulario de guardado en panel inferior.
-- Mantiene las mejoras de 2.0.1: ancho estable del selector de mes y porcentaje de ingresos/gastos en la dona mensual.
-- Mantiene los cambios principales de 2.0.0: nuevo diseño, cartera opcional, comparativas anual/histórica, mocks desde 2019 e icono renovado.
+Fintrack puede utilizarse sin cuenta, sin conexión a Internet y sin contactar con el autor. En este modo, toda la información permanece en la base SQLite del dispositivo y el usuario conserva el control de sus copias de seguridad.
+
+### Servicio cloud administrado
+
+La infraestructura Firebase utilizada por la distribución oficial es privada y no admite el registro público desde la aplicación. Para solicitar una cuenta autorizada y utilizar la aplicación con esta base cloud, sin clonar el proyecto ni desplegar una infraestructura propia, es necesario contactar con [marco.romeromartin@hotmail.com](mailto:marco.romeromartin@hotmail.com). El acceso está sujeto a autorización y se habilita de forma individual.
+
+### Despliegue cloud independiente
+
+Quien prefiera gestionar su propia infraestructura puede clonar o bifurcar este repositorio, crear un proyecto propio de Firebase con Authentication y Firestore, sustituir la configuración de Firebase y publicar las reglas incluidas en `firestore.rules`. La licencia MIT permite hacerlo sin solicitar permiso ni contactar con el autor.
+
+En este caso, la administración de usuarios, seguridad, disponibilidad, costes y copias de seguridad de la infraestructura propia corresponde a quien realice el despliegue.
+
+## Novedades 3.0.0
+
+- Incorpora el modo cloud opcional con Firebase Authentication y Firestore, manteniendo SQLite como almacenamiento principal.
+- Sincroniza automáticamente los cambios al iniciar, guardar, recuperar conexión o recibir actualizaciones remotas.
+- Conserva cambios y eliminaciones pendientes durante periodos sin conexión, incluso aunque duren semanas o meses.
+- Añade control de versiones, detección de conflictos y elección entre la copia local y la cloud.
+- Mantiene la sesión iniciada por dispositivo e incorpora cierre de sesión y protección de la base local por propietario.
+- Añade un PIN local de emergencia opcional para acceder a los datos sin conexión cuando no es posible validar la sesión cloud.
+- Reorganiza Ajustes y reúne importación, exportación y backups en un bloque más claro.
+- Añade backups JSON portables para migrar todos los datos y ajustes entre dispositivos o proveedores.
 
 ## Stack
+
 - React + Vite + TypeScript
 - Tailwind CSS
 - Chart.js (react-chartjs-2)
 - Tauri 2 + SQLite plugin
+- Firebase Authentication + Cloud Firestore
 
 ## Requisitos
-- Node.js 18+ (o 20+)
+- Node.js 20+
 - Rust toolchain y dependencias de Tauri
 
 Guía de requisitos de Tauri: https://tauri.app
 
-## Instalación
+## Instalación para desarrollo o despliegue propio
+
 ```bash
 npm install
 ```
+
+Para habilitar el modo cloud en un despliegue independiente, crea un proyecto Firebase, configura Authentication y Firestore, sustituye la configuración de Firebase de la aplicación y publica `firestore.rules`. El modo local no necesita estos pasos.
 
 ## Lint
 ```bash
@@ -105,7 +109,13 @@ npm run dev
 npm run dev:mocks
 ```
 
-Este modo usa `finanzas.mocks.db`, rellena datos simulados en cada arranque y no toca `finanzas.db` ni la ruta guardada en ajustes.
+Para abrir la aplicación de escritorio con Tauri y datos simulados:
+
+```bash
+npm run tauri:dev:mocks
+```
+
+Ambos comandos usan `finanzas.mocks.db`, rellenan datos simulados en cada arranque y no tocan `finanzas.db` ni la ruta guardada en ajustes.
 
 ## Desarrollo desktop (Tauri)
 ```bash
@@ -172,7 +182,8 @@ Notas:
 - `src-tauri/`: código desktop, configuración y build.
 
 ## CI / Releases
-Al subir un tag `v*`, como `v2.0.5`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+
+Al subir un tag `v*`, como `v3.0.0`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Campos de entrada
 
@@ -198,6 +209,30 @@ El formato depende de la vista desde la que se realiza la importación: mensual,
 
 **Exportar CSV/SQL** <br/>
 Desde Ajustes puedes exportar los datos a CSV o a un volcado SQL para backup o migraciones.
+El CSV incluye una marca UTF-8 para que Excel interprete correctamente acentos y caracteres especiales.
+
+**Backup JSON** <br/>
+Desde **Ajustes > Tus datos > Exportar copia** puedes exportar un JSON con todos los meses, notas y ajustes.
+Es el formato recomendado para migrar Fintrack a otro dispositivo. Antes de importarlo, Fintrack indica cuántos meses son nuevos, idénticos o contienen cambios; los meses que no están en el backup se conservan.
+
+Antes de activar la sincronización en un dispositivo nuevo, guarda un backup JSON. Se genera únicamente desde SQLite y funciona sin conexión.
+
+**Sincronización offline-first** <br/>
+SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin conexión. En modo cloud, cada mes se sincroniza en Firestore bajo `users/{uid}/monthlySnapshots/{month}`.
+
+- Las bases existentes se migran automáticamente y conservan todos sus registros.
+- Los registros locales anteriores se suben en la primera sincronización cloud.
+- Los cambios y borrados se conservan como pendientes hasta que el servidor los confirme.
+- La sincronización se ejecuta al abrir la app, guardar, recuperar conexión o recibir un cambio remoto.
+- Las versiones se incrementan mediante transacciones de Firestore; una confirmación solo se acepta si el registro no volvió a cambiar durante la subida.
+- Si llega una versión remota nueva mientras existe un cambio local pendiente, el registro se marca como conflicto y no se sobrescribe silenciosamente.
+- Los conflictos se resuelven expresamente desde Ajustes conservando la copia local o la cloud.
+
+Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. La base local queda vinculada al UID autenticado: cerrar sesión bloquea también el acceso desde el modo local y otra cuenta no puede sincronizar esa SQLite. El propietario puede desvincularla expresamente cambiando a modo local desde Ajustes, sin borrar datos.
+
+Desde Ajustes se puede configurar un PIN local de emergencia de 6 dígitos. El PIN no se guarda: se almacena un verificador PBKDF2-SHA-256 con sal aleatoria y 600.000 iteraciones. Tras cinco intentos fallidos, el acceso se bloquea temporalmente. Este modo permite trabajar únicamente en SQLite; la sincronización permanece pausada hasta volver a iniciar sesión en Firebase.
+
+Las reglas que validan propietario, formato y avance de versión están en `firestore.rules`. En la infraestructura oficial ya forman parte de la configuración administrada; cualquier despliegue independiente debe publicarlas en su propio proyecto Firebase antes de probar la sincronización.
 
 **Base de datos (.db)** <br/>
 Fintrack guarda toda la información en un único archivo de base de datos **SQLite (`.db`)**.  
@@ -207,8 +242,8 @@ Es importante que la aplicación esté **apuntando al archivo `.db` correcto** p
 Cambiar de archivo implica cambiar de conjunto de datos.
 
 
-Ventaja clave: los datos **no se alojan en ningun servidor**, no hace falta registro ni cuenta, y todo queda en tu equipo.
-Fintrack busca llevar tus cuentas de forma puntual y **lo mas simple posible**.
+En modo local, los datos **no se alojan en ningún servidor**, no hace falta registro ni cuenta y todo queda en el equipo. En modo cloud se mantiene esa copia SQLite y se sincroniza con Firestore.
+Fintrack busca facilitar el control de tus cuentas de la forma más sencilla posible.
 
 Para enlazar o cambiar el archivo de datos:
 
