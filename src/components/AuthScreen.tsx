@@ -158,6 +158,9 @@ export function AuthScreen({
             <button type="submit" disabled={submitting || resetting} className="btn btn-primary w-full py-3">
               {submitting ? t('auth.signingIn') : t('auth.signIn')}
             </button>
+            <p className="text-center text-[11px] leading-5 text-muted">
+              {t('auth.sessionRemembered')}
+            </p>
             <button
               type="button"
               onClick={() => void handlePasswordReset()}

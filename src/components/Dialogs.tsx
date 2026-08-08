@@ -339,76 +339,77 @@ export function DatabaseSettingsDialog({
 
         <div className="mt-5 space-y-4">
           <section className="rounded-2xl border border-ink/10 bg-ink/5 px-4 py-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-semibold text-ink">{t('settings.storageModeTitle')}</h4>
-                  <span className="rounded-full bg-white px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
-                    {t(
-                      appMode === 'local'
-                        ? 'settings.storageModeLocal'
-                        : 'settings.storageModeCloud'
-                    )}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-muted">
-                  {t(
-                    appMode === 'local'
-                      ? 'settings.storageModeLocalDescription'
-                      : 'settings.storageModeCloudDescription'
-                  )}
-                </p>
-                {appMode === 'cloud' && userEmail ? (
-                  <p className="mt-2 truncate text-xs text-ink" title={userEmail}>
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-sm font-semibold text-ink">{t('settings.storageModeTitle')}</h4>
+              <span className="rounded-full bg-white px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+                {t(
+                  appMode === 'local'
+                    ? 'settings.storageModeLocal'
+                    : 'settings.storageModeCloud'
+                )}
+              </span>
+            </div>
+            <p className="mt-1 max-w-lg text-xs leading-5 text-muted">
+              {t(
+                appMode === 'local'
+                  ? 'settings.storageModeLocalDescription'
+                  : 'settings.storageModeCloudDescription'
+              )}
+            </p>
+            {appMode === 'cloud' ? (
+              <div className="mt-4 rounded-xl border border-ink/10 bg-white px-3 py-3">
+                {userEmail ? (
+                  <p className="truncate text-xs font-medium text-ink" title={userEmail}>
                     {t('settings.storageModeAccount', { email: userEmail })}
                   </p>
                 ) : null}
-                {appMode === 'cloud' ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        cloudSyncStatus.phase === 'idle'
-                          ? 'bg-benefit'
-                          : cloudSyncStatus.phase === 'syncing'
-                            ? 'animate-pulse bg-accent'
-                            : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
-                              ? 'bg-red-600'
-                              : 'bg-muted'
-                      }`}
-                    />
-                    <span className="text-ink">{syncStatusMessage}</span>
-                    {cloudSyncStatus.pendingCount > 0 ? (
-                      <span className="text-muted">
-                        {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
+                <div className={`${userEmail ? 'mt-2' : ''} flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]`}>
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${
+                      cloudSyncStatus.phase === 'idle'
+                        ? 'bg-benefit'
+                        : cloudSyncStatus.phase === 'syncing'
+                          ? 'animate-pulse bg-accent'
+                          : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
+                            ? 'bg-red-600'
+                            : 'bg-muted'
+                    }`}
+                  />
+                  <span className="text-ink">{syncStatusMessage}</span>
+                  {cloudSyncStatus.pendingCount > 0 ? (
+                    <span className="text-muted">
+                      {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-[11px] leading-5 text-muted">
+                  {t('settings.sessionRemembered')}
+                </p>
               </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {appMode === 'cloud' ? (
-                  <button
-                    type="button"
-                    onClick={onSyncNow}
-                    disabled={cloudSyncStatus.phase === 'syncing'}
-                    className="btn btn-primary text-[10px] sm:text-[11px]"
-                  >
-                    {cloudSyncStatus.phase === 'syncing'
-                      ? t('settings.syncingNow')
-                      : t('settings.syncNow')}
-                  </button>
-                ) : null}
+            ) : null}
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {appMode === 'cloud' ? (
                 <button
                   type="button"
-                  onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
-                  disabled={appMode === 'cloud' && cloudSyncStatus.phase === 'syncing'}
-                  className={`btn text-[10px] sm:text-[11px] ${
-                    appMode === 'local' ? 'btn-primary' : 'btn-neutral'
-                  }`}
+                  onClick={onSyncNow}
+                  disabled={cloudSyncStatus.phase === 'syncing'}
+                  className="btn btn-primary w-full justify-center text-[10px] sm:text-[11px]"
                 >
-                  {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
+                  {cloudSyncStatus.phase === 'syncing'
+                    ? t('settings.syncingNow')
+                    : t('settings.syncNow')}
                 </button>
-              </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
+                disabled={appMode === 'cloud' && cloudSyncStatus.phase === 'syncing'}
+                className={`btn w-full justify-center text-[10px] sm:text-[11px] ${
+                  appMode === 'local' ? 'btn-primary sm:col-span-2' : 'btn-neutral'
+                }`}
+              >
+                {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
+              </button>
             </div>
             {appMode === 'cloud' && cloudSyncStatus.conflictCount > 0 ? (
               <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3">

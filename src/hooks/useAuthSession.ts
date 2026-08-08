@@ -24,26 +24,42 @@ export function useAuthSession(enabled: boolean) {
       return;
     }
     setLoading(true);
-    let firebaseAuth: Auth;
-    try {
-      firebaseAuth = getFirebaseAuth();
-    } catch (error) {
-      setInitializationError(error);
-      setLoading(false);
-      return;
-    }
-    return onAuthStateChanged(
-      firebaseAuth,
-      (nextUser) => {
-        setUser(nextUser);
-        setInitializationError(null);
-        setLoading(false);
-      },
-      (error) => {
-        setInitializationError(error);
-        setLoading(false);
+    let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
+
+    const initializeSession = async () => {
+      try {
+        const firebaseAuth: Auth = getFirebaseAuth();
+        await setPersistence(firebaseAuth, browserLocalPersistence);
+        if (cancelled) {
+          return;
+        }
+        unsubscribe = onAuthStateChanged(
+          firebaseAuth,
+          (nextUser) => {
+            setUser(nextUser);
+            setInitializationError(null);
+            setLoading(false);
+          },
+          (error) => {
+            setInitializationError(error);
+            setLoading(false);
+          }
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setInitializationError(error);
+          setLoading(false);
+        }
       }
-    );
+    };
+
+    void initializeSession();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [enabled]);
 
   const signIn = useCallback(async (email: string, password: string) => {
