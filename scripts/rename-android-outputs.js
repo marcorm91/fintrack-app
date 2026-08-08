@@ -44,22 +44,25 @@ function walkFiles(dir) {
 }
 
 function pickOutputFile(ext) {
-  const files = walkFiles(outputsRoot).filter((file) =>
-    file.toLowerCase().endsWith(ext)
-  );
+  const files = walkFiles(outputsRoot).filter((file) => {
+    const lower = file.toLowerCase();
+    return (
+      lower.endsWith(ext) &&
+      !lower.includes('androidtest') &&
+      !lower.includes('unsigned')
+    );
+  });
   if (files.length === 0) {
     return null;
   }
 
   const scored = files
-    .filter((file) => !file.toLowerCase().includes('androidtest'))
     .map((file) => {
       const lower = file.toLowerCase();
       let score = 0;
       if (lower.includes(`${path.sep}release${path.sep}`)) score += 30;
       if (lower.includes('universal')) score += 10;
       if (lower.includes('app-release')) score += 20;
-      if (lower.includes('unsigned')) score -= 5;
       return { file, score };
     })
     .sort((a, b) => b.score - a.score || a.file.localeCompare(b.file));
@@ -78,9 +81,28 @@ function copyOutput(filePath, targetName) {
 }
 
 function renameOutputs() {
+  const requiredSigningVariables = [
+    'ANDROID_KEYSTORE_PATH',
+    'ANDROID_KEYSTORE_PASSWORD',
+    'ANDROID_KEY_ALIAS',
+    'ANDROID_KEY_PASSWORD'
+  ];
+  const missingSigningVariables = requiredSigningVariables.filter(
+    (name) => !process.env[name]?.trim()
+  );
+  if (missingSigningVariables.length > 0) {
+    throw new Error(
+      `Android release signing is incomplete. Missing: ${missingSigningVariables.join(', ')}`
+    );
+  }
+
   const version = readPackageVersion();
   const apkFile = pickOutputFile('.apk');
   const aabFile = pickOutputFile('.aab');
+
+  if (!apkFile && !aabFile) {
+    throw new Error('No signed Android APK or AAB was found. Unsigned outputs are not published.');
+  }
 
   const apkDest = copyOutput(apkFile, `Fintrack_${version}_android.apk`);
   const aabDest = copyOutput(aabFile, `Fintrack_${version}_android.aab`);

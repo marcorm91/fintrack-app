@@ -12,13 +12,24 @@ fn resolve_portable_db_path(app: tauri::AppHandle) -> Option<String> {
 }
 
 #[tauri::command]
-fn write_text_file(path: String, contents: String) -> Result<(), String> {
-  std::fs::write(&path, contents).map_err(|err| err.to_string())
-}
+fn backup_database_file(source: String, destination: String) -> Result<(), String> {
+  let source_path = std::path::Path::new(&source);
+  let destination_path = std::path::Path::new(&destination);
+  let source_name = source_path
+    .file_name()
+    .and_then(|name| name.to_str())
+    .unwrap_or_default();
+  let valid_source = matches!(source_name, "finanzas.db" | "finanzas.mocks.db");
+  let valid_destination = destination_path
+    .extension()
+    .and_then(|extension| extension.to_str())
+    .is_some_and(|extension| extension.eq_ignore_ascii_case("db"));
 
-#[tauri::command]
-fn copy_file(source: String, destination: String) -> Result<(), String> {
-  std::fs::copy(&source, &destination)
+  if !valid_source || !valid_destination || source_path == destination_path {
+    return Err("Invalid database backup path".to_string());
+  }
+
+  std::fs::copy(source_path, destination_path)
     .map(|_| ())
     .map_err(|err| err.to_string())
 }
@@ -28,10 +39,10 @@ pub fn run() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       resolve_portable_db_path,
-      write_text_file,
-      copy_file
+      backup_database_file
     ])
     .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_sql::Builder::default().build())
     .run(tauri::generate_context!())

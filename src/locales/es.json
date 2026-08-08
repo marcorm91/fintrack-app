@@ -164,6 +164,8 @@
     "otherFormatsTitle": "Otros formatos",
     "databaseLocationTitle": "Ubicación de la base de datos",
     "databaseLocationDescription": "Consulta o cambia dónde se guarda el archivo SQLite local.",
+    "databaseLocationMobileDescription": "En Android, Fintrack guarda SQLite en el almacenamiento interno protegido de la aplicación.",
+    "databaseLocationMobileHelp": "Para mover tus datos a otro dispositivo, utiliza Exportar copia e Importar copia en formato JSON.",
     "aboutTitle": "Acerca de Fintrack",
     "currentPath": "Ruta actual",
     "defaultPath": "Ruta por defecto",

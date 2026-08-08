@@ -14,6 +14,7 @@ export function useDatabaseSettings({ onPathChange }: UseDatabaseSettingsOptions
     isDefaultPath,
     loading,
     error,
+    canChangePath,
     setError,
     savePath,
     browsePath,
@@ -59,6 +60,7 @@ export function useDatabaseSettings({ onPathChange }: UseDatabaseSettingsOptions
     isDefaultPath,
     loading,
     error,
+    canChangePath,
     browsePath
   };
 }

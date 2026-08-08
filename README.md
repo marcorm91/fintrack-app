@@ -25,7 +25,7 @@ Aplicación *offline-first* para el control mensual, anual e histórico de finan
 - Sesión persistente por dispositivo, cierre de sesión y vinculación de la base local a su propietario.
 - PIN local de emergencia opcional para acceder a SQLite cuando Firebase no está disponible.
 - Filtros por rango y paginación en histórico.
-- Configuración de ruta de base de datos desde la app.
+- Configuración de ruta de base de datos desde la app en escritorio; Android utiliza almacenamiento interno protegido.
 - Modo solo lectura desde ajustes.
 - Cartera de inversión opcional: si se desactiva, la app no la muestra ni la incluye en cálculos de patrimonio.
 - Notas opcionales para documentar ingresos, gastos o circunstancias excepcionales de cada mes.
@@ -34,16 +34,16 @@ Aplicación *offline-first* para el control mensual, anual e histórico de finan
 
 ## Descargas
 
-- Windows (instalador .exe): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64-setup.exe)
-- Windows (MSI): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_aarch64.dmg)
-- Linux (AppImage): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.AppImage)
-- Linux (DEB): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.deb)
-- Linux (RPM): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0-1.x86_64.rpm)
+- Windows (instalador .exe): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_x64-setup.exe)
+- Windows (MSI): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_aarch64.dmg)
+- Linux (AppImage): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_amd64.AppImage)
+- Linux (DEB): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_amd64.deb)
+- Linux (RPM): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1-1.x86_64.rpm)
 - Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
 
-Los enlaces estarán disponibles cuando se publique la release `v3.0.0`.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.1`.
 
 ## Modalidades de uso y acceso
 
@@ -61,16 +61,12 @@ Quien prefiera gestionar su propia infraestructura puede clonar o bifurcar este 
 
 En este caso, la administración de usuarios, seguridad, disponibilidad, costes y copias de seguridad de la infraestructura propia corresponde a quien realice el despliegue.
 
-## Novedades 3.0.0
+## Novedades 3.0.1
 
-- Incorpora el modo cloud opcional con Firebase Authentication y Firestore, manteniendo SQLite como almacenamiento principal.
-- Sincroniza automáticamente los cambios al iniciar, guardar, recuperar conexión o recibir actualizaciones remotas.
-- Conserva cambios y eliminaciones pendientes durante periodos sin conexión, incluso aunque duren semanas o meses.
-- Añade control de versiones, detección de conflictos y elección entre la copia local y la cloud.
-- Mantiene la sesión iniciada por dispositivo e incorpora cierre de sesión y protección de la base local por propietario.
-- Añade un PIN local de emergencia opcional para acceder a los datos sin conexión cuando no es posible validar la sesión cloud.
-- Reorganiza Ajustes y reúne importación, exportación y backups en un bloque más claro.
-- Añade backups JSON portables para migrar todos los datos y ajustes entre dispositivos o proveedores.
+- Corrige el arranque de Windows portable cuando el dispositivo conserva una ruta de base de datos de una instalación anterior.
+- Adapta las exportaciones y copias de seguridad al selector de archivos de Android.
+- Mantiene SQLite en el almacenamiento interno protegido de Android y simplifica sus ajustes de ubicación.
+- Impide publicar artefactos Android sin una configuración de firma completa.
 
 ## Stack
 
@@ -183,7 +179,7 @@ Notas:
 
 ## CI / Releases
 
-Al subir un tag `v*`, como `v3.0.0`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*`, como `v3.0.1`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
 
 ## Campos de entrada
 

@@ -166,6 +166,7 @@ export function DatabaseSettingsDialog({
   currentPath,
   inputPath,
   isDefaultPath,
+  canChangeDatabasePath,
   loading,
   error,
   readOnly,
@@ -210,6 +211,7 @@ export function DatabaseSettingsDialog({
   currentPath: string;
   inputPath: string;
   isDefaultPath: boolean;
+  canChangeDatabasePath: boolean;
   loading: boolean;
   error: string | null;
   readOnly: boolean;
@@ -273,7 +275,7 @@ export function DatabaseSettingsDialog({
     tone: 'success' | 'error';
     message: string;
   } | null>(null);
-  const hasUnsavedChanges = inputPath.trim() !== currentPath;
+  const hasUnsavedChanges = canChangeDatabasePath && inputPath.trim() !== currentPath;
   const handleExternalLink = async (event: MouseEvent<HTMLAnchorElement>, url: string) => {
     event.preventDefault();
     await openExternal(url);
@@ -651,14 +653,16 @@ export function DatabaseSettingsDialog({
                 >
                   {exportingSql ? t('settings.exportingSql') : t('settings.exportSql')}
                 </button>
-                <button
-                  type="button"
-                  onClick={onBackupDatabase}
-                  disabled={backupDisabled}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
-                >
-                  {backingUp ? t('settings.backupRunning') : t('settings.backupDatabaseAction')}
-                </button>
+                {canChangeDatabasePath ? (
+                  <button
+                    type="button"
+                    onClick={onBackupDatabase}
+                    disabled={backupDisabled}
+                    className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  >
+                    {backingUp ? t('settings.backupRunning') : t('settings.backupDatabaseAction')}
+                  </button>
+                ) : null}
               </div>
             </div>
             {exportStatus ? (
@@ -680,7 +684,11 @@ export function DatabaseSettingsDialog({
               <span>
                 <span className="block text-sm font-semibold text-ink">{t('settings.databaseLocationTitle')}</span>
                 <span className="mt-1 block text-xs text-muted">
-                  {t('settings.databaseLocationDescription')}
+                  {t(
+                    canChangeDatabasePath
+                      ? 'settings.databaseLocationDescription'
+                      : 'settings.databaseLocationMobileDescription'
+                  )}
                 </span>
               </span>
               <svg
@@ -707,53 +715,61 @@ export function DatabaseSettingsDialog({
                   </div>
                 </div>
               </div>
-              <label className="mt-4 flex flex-col gap-2 text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs">
-                {t('settings.inputLabel')}
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="text"
-                    value={inputPath}
-                    onChange={(event) => onInputChange(event.target.value)}
-                    placeholder={t('settings.inputPlaceholder')}
-                    className="min-w-[220px] flex-1 truncate rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-[11px] tracking-normal text-ink focus:border-accent focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={onBrowse}
-                    disabled={loading}
-                    className="btn btn-neutral text-[9px] sm:text-[10px]"
-                  >
-                    {t('settings.browse')}
-                  </button>
-                </div>
-                <span className="text-[10px] normal-case tracking-normal text-muted sm:text-xs">
-                  {t('settings.inputHelp')}
-                </span>
-              </label>
-              {errorMessage ? (
-                <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
-              ) : null}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void handleSave()}
-                  disabled={loading}
-                  className="btn btn-primary text-[10px] sm:text-xs"
-                >
-                  {t('settings.savePath')}
-                </button>
-                <button
-                  type="button"
-                  onClick={onReset}
-                  disabled={loading}
-                  className="btn btn-neutral text-[10px] sm:text-xs"
-                >
-                  {t('settings.useDefault')}
-                </button>
-              </div>
-              {pathStatus ? (
-                <p className={`mt-3 text-xs ${pathStatusClass}`}>{pathStatus.message}</p>
-              ) : null}
+              {canChangeDatabasePath ? (
+                <>
+                  <label className="mt-4 flex flex-col gap-2 text-[10px] uppercase tracking-[0.16em] text-muted sm:text-xs">
+                    {t('settings.inputLabel')}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        value={inputPath}
+                        onChange={(event) => onInputChange(event.target.value)}
+                        placeholder={t('settings.inputPlaceholder')}
+                        className="min-w-[220px] flex-1 truncate rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-[11px] tracking-normal text-ink focus:border-accent focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={onBrowse}
+                        disabled={loading}
+                        className="btn btn-neutral text-[9px] sm:text-[10px]"
+                      >
+                        {t('settings.browse')}
+                      </button>
+                    </div>
+                    <span className="text-[10px] normal-case tracking-normal text-muted sm:text-xs">
+                      {t('settings.inputHelp')}
+                    </span>
+                  </label>
+                  {errorMessage ? (
+                    <p className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleSave()}
+                      disabled={loading}
+                      className="btn btn-primary text-[10px] sm:text-xs"
+                    >
+                      {t('settings.savePath')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onReset}
+                      disabled={loading}
+                      className="btn btn-neutral text-[10px] sm:text-xs"
+                    >
+                      {t('settings.useDefault')}
+                    </button>
+                  </div>
+                  {pathStatus ? (
+                    <p className={`mt-3 text-xs ${pathStatusClass}`}>{pathStatus.message}</p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-4 rounded-xl bg-ink/5 px-3 py-3 text-xs text-muted">
+                  {t('settings.databaseLocationMobileHelp')}
+                </p>
+              )}
             </div>
           </details>
 
