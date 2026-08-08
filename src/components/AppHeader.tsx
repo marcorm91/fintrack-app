@@ -7,6 +7,7 @@ type AppHeaderProps = {
   onOpenSettings: () => void;
   appMode: AppMode;
   userEmail: string | null;
+  offlineAccess: boolean;
   onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
@@ -18,6 +19,7 @@ export function AppHeader({
   onOpenSettings,
   appMode,
   userEmail,
+  offlineAccess,
   onSignOut,
   onChangeAppMode,
   t
@@ -62,10 +64,14 @@ export function AppHeader({
             <button
               type="button"
               onClick={onSignOut}
-              title={`${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()}
+              title={
+                offlineAccess
+                  ? t('auth.offlineAccessActive')
+                  : `${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()
+              }
               className="btn btn-neutral px-3 text-[9px] text-muted hover:text-ink sm:text-[10px]"
             >
-              {t('auth.signOut')}
+              {t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
             </button>
           ) : (
             <button

@@ -8,6 +8,7 @@ export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
 const MOCK_DATABASE_FILENAME = 'finanzas.mocks.db';
 const DB_PATH_STORAGE_KEY = 'fintrack.dbPath';
 const MOCK_INVESTMENT_PORTFOLIO_STORAGE_KEY = 'fintrack.mockInvestmentPortfolioEnabled';
+const MOCK_OFFLINE_PIN_STORAGE_KEY = 'fintrack.mockOfflinePin';
 
 function shouldUseMockDatabase() {
   return import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DB === 'true';
@@ -471,7 +472,13 @@ ON CONFLICT(key) DO UPDATE SET
   value = excluded.value;
 `;
 
+const DELETE_APP_SETTING_SQL = `
+DELETE FROM app_settings
+WHERE key = ?;
+`;
+
 const INVESTMENT_PORTFOLIO_SETTING_KEY = 'investmentPortfolioEnabled';
+const OFFLINE_PIN_SETTING_KEY = 'offlinePin';
 const DATABASE_ACCESS_SETTING_KEY = 'databaseAccess';
 const DATABASE_ACCESS_LOCAL = 'local';
 const DATABASE_ACCESS_CLOUD = 'cloud';
@@ -758,6 +765,41 @@ export async function checkpointDatabase(): Promise<void> {
   }
   const db = await initDb();
   await db.execute('PRAGMA wal_checkpoint(FULL);');
+}
+
+export async function getOfflinePinRecord(): Promise<string | null> {
+  if (shouldUseMockDatabase()) {
+    return typeof window === 'undefined'
+      ? null
+      : window.localStorage.getItem(MOCK_OFFLINE_PIN_STORAGE_KEY);
+  }
+  const db = await initDb();
+  const rows = await db.select<Array<{ value: string }>>(GET_APP_SETTING_SQL, [
+    OFFLINE_PIN_SETTING_KEY
+  ]);
+  return rows[0]?.value ?? null;
+}
+
+export async function setOfflinePinRecord(value: string): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MOCK_OFFLINE_PIN_STORAGE_KEY, value);
+    }
+    return;
+  }
+  const db = await initDb();
+  await db.execute(UPSERT_APP_SETTING_SQL, [OFFLINE_PIN_SETTING_KEY, value]);
+}
+
+export async function clearOfflinePinRecord(): Promise<void> {
+  if (shouldUseMockDatabase()) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(MOCK_OFFLINE_PIN_STORAGE_KEY);
+    }
+    return;
+  }
+  const db = await initDb();
+  await db.execute(DELETE_APP_SETTING_SQL, [OFFLINE_PIN_SETTING_KEY]);
 }
 
 export async function getMonthlySummary(month: string): Promise<MonthlySummary | null> {

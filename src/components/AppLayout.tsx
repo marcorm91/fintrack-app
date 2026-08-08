@@ -9,6 +9,7 @@ type AppLayoutProps = {
   onOpenSettings: () => void;
   appMode: AppMode;
   userEmail: string | null;
+  offlineAccess: boolean;
   onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
@@ -27,6 +28,7 @@ export function AppLayout({
   onOpenSettings,
   appMode,
   userEmail,
+  offlineAccess,
   onSignOut,
   onChangeAppMode,
   t,
@@ -47,6 +49,7 @@ export function AppLayout({
           onOpenSettings={onOpenSettings}
           appMode={appMode}
           userEmail={userEmail}
+          offlineAccess={offlineAccess}
           onSignOut={onSignOut}
           onChangeAppMode={onChangeAppMode}
           t={t}

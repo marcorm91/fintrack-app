@@ -225,6 +225,8 @@ SQLite sigue siendo la fuente de datos de la app y continúa funcionando sin con
 
 Esta rama permite elegir en el primer arranque entre modo local y modo cloud. En modo local no hace falta iniciar sesión ni se inicializa Firebase. En modo cloud se usa Firebase Authentication, sin registro público desde la app y con sesión persistente en cada dispositivo. La base local queda vinculada al UID autenticado: cerrar sesión bloquea también el acceso desde el modo local y otra cuenta no puede sincronizar esa SQLite. El propietario puede desvincularla expresamente cambiando a modo local desde Ajustes, sin borrar datos.
 
+Desde Ajustes se puede configurar un PIN local de emergencia de 6 dígitos. El PIN no se guarda: se almacena un verificador PBKDF2-SHA-256 con sal aleatoria y 600.000 iteraciones. Tras cinco intentos fallidos, el acceso se bloquea temporalmente. Este modo permite trabajar únicamente en SQLite; la sincronización permanece pausada hasta volver a iniciar sesión en Firebase.
+
 Las reglas que validan propietario, formato y avance de versión están en `firestore.rules` y deben publicarse en Firebase antes de probar la sincronización.
 
 **Base de datos (.db)** <br/>

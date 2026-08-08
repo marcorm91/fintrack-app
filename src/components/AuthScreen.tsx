@@ -3,12 +3,15 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EyeToggle } from './EyeToggle';
 import type { DatabaseAccessError } from '../hooks/useDatabaseAccess';
+import type { OfflinePinVerification } from '../services/offlinePin';
 
 type AuthScreenProps = {
   initializationError: unknown;
   accessError: DatabaseAccessError;
+  offlinePinConfigured: boolean;
   onSignIn: (email: string, password: string) => Promise<void>;
   onRequestPasswordReset: (email: string) => Promise<void>;
+  onUnlockOffline: (pin: string) => Promise<OfflinePinVerification>;
   onUseLocal?: () => void;
 };
 
@@ -34,8 +37,10 @@ function authErrorKey(error: unknown) {
 export function AuthScreen({
   initializationError,
   accessError,
+  offlinePinConfigured,
   onSignIn,
   onRequestPasswordReset,
+  onUnlockOffline,
   onUseLocal
 }: AuthScreenProps) {
   const { t, i18n } = useTranslation();
@@ -44,6 +49,10 @@ export function AuthScreen({
   const [passwordHidden, setPasswordHidden] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [offlinePin, setOfflinePin] = useState('');
+  const [offlinePinHidden, setOfflinePinHidden] = useState(true);
+  const [unlockingOffline, setUnlockingOffline] = useState(false);
+  const [offlinePinError, setOfflinePinError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const activeLanguage = i18n.language.startsWith('en') ? 'en' : 'es';
@@ -85,6 +94,33 @@ export function AuthScreen({
       setError(t(authErrorKey(nextError)));
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleOfflineUnlock = async () => {
+    setOfflinePinError(null);
+    if (!/^\d{6}$/.test(offlinePin)) {
+      setOfflinePinError(t('auth.offlinePinInvalidFormat'));
+      return;
+    }
+    setUnlockingOffline(true);
+    try {
+      const result = await onUnlockOffline(offlinePin);
+      if (result.status === 'invalid') {
+        setOfflinePinError(
+          t('auth.offlinePinInvalid', { count: result.remainingAttempts })
+        );
+      } else if (result.status === 'locked') {
+        setOfflinePinError(
+          t('auth.offlinePinLocked', { seconds: result.retryAfterSeconds })
+        );
+      } else if (result.status === 'not-configured') {
+        setOfflinePinError(t('auth.offlinePinUnavailable'));
+      }
+    } catch {
+      setOfflinePinError(t('auth.offlinePinUnavailable'));
+    } finally {
+      setUnlockingOffline(false);
     }
   };
 
@@ -183,6 +219,52 @@ export function AuthScreen({
           <p className="mt-7 border-t border-ink/10 pt-5 text-center text-xs leading-5 text-muted">
             {t('auth.privateAccess')}
           </p>
+          {offlinePinConfigured ? (
+            <details className="group mt-4 rounded-xl border border-ink/10 bg-ink/5">
+              <summary className="cursor-pointer list-none px-4 py-3 text-center text-xs font-semibold text-ink">
+                {t('auth.offlineAccessAction')}
+              </summary>
+              <div className="border-t border-ink/10 px-4 pb-4 pt-3">
+                <p className="text-center text-[11px] leading-5 text-muted">
+                  {t('auth.offlineAccessDescription')}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type={offlinePinHidden ? 'password' : 'text'}
+                    value={offlinePin}
+                    onChange={(event) =>
+                      setOfflinePin(event.target.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={6}
+                    aria-label={t('auth.offlinePinLabel')}
+                    placeholder={t('auth.offlinePinPlaceholder')}
+                    disabled={unlockingOffline}
+                    className="min-w-0 flex-1 rounded-xl border border-ink/15 bg-white px-4 py-3 text-center text-sm tracking-[0.4em] text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
+                  />
+                  <EyeToggle
+                    hidden={offlinePinHidden}
+                    onClick={() => setOfflinePinHidden((hidden) => !hidden)}
+                    label={t('auth.offlinePinLabel')}
+                  />
+                </div>
+                {offlinePinError ? (
+                  <p className="mt-2 text-center text-[11px] leading-5 text-red-700" aria-live="polite">
+                    {offlinePinError}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void handleOfflineUnlock()}
+                  disabled={unlockingOffline}
+                  className="btn btn-neutral mt-3 w-full justify-center py-3 text-xs"
+                >
+                  {unlockingOffline ? t('auth.offlineUnlocking') : t('auth.offlineUnlock')}
+                </button>
+              </div>
+            </details>
+          ) : null}
           {onUseLocal ? (
             <>
               <button

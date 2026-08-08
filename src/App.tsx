@@ -24,6 +24,7 @@ import { useAuthSession } from './hooks/useAuthSession';
 import { useAppMode, type AppMode } from './hooks/useAppMode';
 import { useCloudSync } from './hooks/useCloudSync';
 import { useDatabaseAccess } from './hooks/useDatabaseAccess';
+import { useOfflinePin } from './hooks/useOfflinePin';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
@@ -37,6 +38,7 @@ import { Toast } from './components/Toast';
 import { AuthScreen } from './components/AuthScreen';
 import { AccessModeScreen } from './components/AccessModeScreen';
 import { dismissSplash } from './utils/splash';
+import { DATABASE_PATH_CHANGED_EVENT } from './db';
 const HistoryView = lazy(() =>
   import('./features/history/HistoryView').then((module) => ({ default: module.HistoryView }))
 );
@@ -50,6 +52,7 @@ const YearView = lazy(() =>
 export default function App() {
   useSafeAreaInsets();
   const modeChangeInProgressRef = useRef(false);
+  const [offlineUnlocked, setOfflineUnlocked] = useState(false);
   const { mode, setMode } = useAppMode();
   const {
     policy: databaseAccessPolicy,
@@ -60,6 +63,13 @@ export default function App() {
     clearError: clearDatabaseAccessError,
     reload: reloadDatabaseAccess
   } = useDatabaseAccess();
+  const {
+    configured: offlinePinConfigured,
+    loading: offlinePinLoading,
+    configure: configureOfflinePin,
+    disable: disableOfflinePin,
+    verify: verifyOfflinePin
+  } = useOfflinePin();
   const {
     user,
     loading,
@@ -107,6 +117,20 @@ export default function App() {
     }
   }, [databaseAccessError, signOut, user]);
 
+  useEffect(() => {
+    if (user || mode !== 'cloud') {
+      setOfflineUnlocked(false);
+    }
+  }, [mode, user]);
+
+  useEffect(() => {
+    const handleDatabasePathChange = () => setOfflineUnlocked(false);
+    window.addEventListener(DATABASE_PATH_CHANGED_EVENT, handleDatabasePathChange);
+    return () => {
+      window.removeEventListener(DATABASE_PATH_CHANGED_EVENT, handleDatabasePathChange);
+    };
+  }, []);
+
   const handleSignIn = useCallback(
     async (email: string, password: string) => {
       clearDatabaseAccessError();
@@ -148,7 +172,7 @@ export default function App() {
     return dismissSplash();
   }, [loading, mode, user]);
 
-  if (databaseAccessLoading) {
+  if (databaseAccessLoading || offlinePinLoading) {
     return null;
   }
   if (!databaseAccessPolicy || databaseAccessError === 'unavailable') {
@@ -168,13 +192,23 @@ export default function App() {
   if (mode === 'cloud' && loading) {
     return null;
   }
-  if (mode === 'cloud' && !user) {
+  if (mode === 'cloud' && !user && !offlineUnlocked) {
     return (
       <AuthScreen
         initializationError={initializationError}
         accessError={databaseAccessError}
+        offlinePinConfigured={
+          databaseAccessPolicy.mode === 'cloud' && offlinePinConfigured
+        }
         onSignIn={handleSignIn}
         onRequestPasswordReset={requestPasswordReset}
+        onUnlockOffline={async (pin) => {
+          const result = await verifyOfflinePin(pin);
+          if (result.status === 'success') {
+            setOfflineUnlocked(true);
+          }
+          return result;
+        }}
         onUseLocal={
           databaseAccessPolicy.mode === 'local'
             ? () => {
@@ -202,7 +236,17 @@ export default function App() {
       appMode={mode}
       userId={mode === 'cloud' ? (user?.uid ?? null) : null}
       userEmail={mode === 'cloud' ? (user?.email ?? null) : null}
-      onSignOut={signOut}
+      offlineAccess={mode === 'cloud' && offlineUnlocked && !user}
+      offlinePinConfigured={offlinePinConfigured}
+      onConfigureOfflinePin={configureOfflinePin}
+      onDisableOfflinePin={disableOfflinePin}
+      onSignOut={
+        offlineUnlocked
+          ? async () => {
+              setOfflineUnlocked(false);
+            }
+          : signOut
+      }
       onChangeAppMode={handleAppModeChange}
     />
   );
@@ -228,12 +272,20 @@ function FintrackApp({
   appMode,
   userId,
   userEmail,
+  offlineAccess,
+  offlinePinConfigured,
+  onConfigureOfflinePin,
+  onDisableOfflinePin,
   onSignOut,
   onChangeAppMode
 }: {
   appMode: AppMode;
   userId: string | null;
   userEmail: string | null;
+  offlineAccess: boolean;
+  offlinePinConfigured: boolean;
+  onConfigureOfflinePin: (pin: string) => Promise<void>;
+  onDisableOfflinePin: () => Promise<void>;
   onSignOut: () => Promise<void>;
   onChangeAppMode: (mode: AppMode) => Promise<void>;
 }) {
@@ -333,7 +385,7 @@ function FintrackApp({
     syncNow: syncCloudNow,
     resolveConflicts: resolveCloudSyncConflicts
   } = useCloudSync({
-    enabled: appMode === 'cloud',
+    enabled: appMode === 'cloud' && !offlineAccess,
     userId,
     onRemoteChange: refreshData
   });
@@ -582,6 +634,7 @@ function FintrackApp({
       onOpenSettings={openSettings}
       appMode={appMode}
       userEmail={userEmail}
+      offlineAccess={offlineAccess}
       onSignOut={() => {
         void onSignOut();
       }}
@@ -661,6 +714,10 @@ function FintrackApp({
             open={settingsOpen}
             appMode={appMode}
             userEmail={userEmail}
+            offlineAccess={offlineAccess}
+            offlinePinConfigured={offlinePinConfigured}
+            onConfigureOfflinePin={onConfigureOfflinePin}
+            onDisableOfflinePin={onDisableOfflinePin}
             onChangeAppMode={(nextMode) => {
               void onChangeAppMode(nextMode);
             }}

@@ -8,6 +8,7 @@ import type { ExportStatus } from '../hooks/useExportData';
 import type { AppMode } from '../hooks/useAppMode';
 import type { CloudSyncStatus } from '../hooks/useCloudSync';
 import type { CloudConflictResolution } from '../services/cloudSync';
+import { EyeToggle } from './EyeToggle';
 
 export function ConfirmDialog({
   open,
@@ -154,6 +155,10 @@ export function DatabaseSettingsDialog({
   open,
   appMode,
   userEmail,
+  offlineAccess,
+  offlinePinConfigured,
+  onConfigureOfflinePin,
+  onDisableOfflinePin,
   onChangeAppMode,
   cloudSyncStatus,
   onSyncNow,
@@ -194,6 +199,10 @@ export function DatabaseSettingsDialog({
   open: boolean;
   appMode: AppMode;
   userEmail: string | null;
+  offlineAccess: boolean;
+  offlinePinConfigured: boolean;
+  onConfigureOfflinePin: (pin: string) => Promise<void>;
+  onDisableOfflinePin: () => Promise<void>;
   onChangeAppMode: (mode: AppMode) => void;
   cloudSyncStatus: CloudSyncStatus;
   onSyncNow: () => void;
@@ -251,12 +260,19 @@ export function DatabaseSettingsDialog({
   }
   const updateActionLabel =
     updateStatus === 'checking' ? t('settings.updateChecking') : t('settings.checkUpdates');
-  const syncStatusMessage = t(`settings.syncStatus.${cloudSyncStatus.phase}`);
+  const syncStatusMessage = offlineAccess
+    ? t('settings.syncStatus.offlineAccess')
+    : t(`settings.syncStatus.${cloudSyncStatus.phase}`);
   const exportStatusClass =
     exportStatus?.tone === 'error' ? 'text-red-700' : 'text-benefit';
   const exportDisabled = loading || exportingCsv || exportingSql;
   const backupDisabled = loading || backingUp || exportingJson || importingJson;
   const [pathStatus, setPathStatus] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [offlinePinDialogOpen, setOfflinePinDialogOpen] = useState(false);
+  const [offlinePinStatus, setOfflinePinStatus] = useState<{
+    tone: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const hasUnsavedChanges = inputPath.trim() !== currentPath;
   const handleExternalLink = async (event: MouseEvent<HTMLAnchorElement>, url: string) => {
     event.preventDefault();
@@ -304,6 +320,32 @@ export function DatabaseSettingsDialog({
     );
     if (confirmed) {
       await onResolveSyncConflicts(resolution);
+    }
+  };
+  const handleSaveOfflinePin = async (pin: string) => {
+    setOfflinePinStatus(null);
+    try {
+      await onConfigureOfflinePin(pin);
+      setOfflinePinDialogOpen(false);
+      setOfflinePinStatus({ tone: 'success', message: t('settings.offlinePinSaved') });
+    } catch {
+      setOfflinePinStatus({ tone: 'error', message: t('settings.offlinePinSaveError') });
+      throw new Error('offline-pin-save-failed');
+    }
+  };
+  const handleDisableOfflinePin = async () => {
+    const confirmed = await confirm(t('settings.offlinePinDisableConfirm'), {
+      title: t('settings.offlinePinDisableTitle')
+    });
+    if (!confirmed) {
+      return;
+    }
+    setOfflinePinStatus(null);
+    try {
+      await onDisableOfflinePin();
+      setOfflinePinStatus({ tone: 'success', message: t('settings.offlinePinDisabled') });
+    } catch {
+      setOfflinePinStatus({ tone: 'error', message: t('settings.offlinePinSaveError') });
     }
   };
   const pathStatusClass =
@@ -362,6 +404,10 @@ export function DatabaseSettingsDialog({
                   <p className="truncate text-xs font-medium text-ink" title={userEmail}>
                     {t('settings.storageModeAccount', { email: userEmail })}
                   </p>
+                ) : offlineAccess ? (
+                  <p className="text-xs font-medium text-ink">
+                    {t('settings.offlineAccessActive')}
+                  </p>
                 ) : null}
                 <div className={`${userEmail ? 'mt-2' : ''} flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]`}>
                   <span
@@ -383,12 +429,16 @@ export function DatabaseSettingsDialog({
                   ) : null}
                 </div>
                 <p className="mt-2 text-[11px] leading-5 text-muted">
-                  {t('settings.sessionRemembered')}
+                  {t(
+                    offlineAccess
+                      ? 'settings.offlineAccessDescription'
+                      : 'settings.sessionRemembered'
+                  )}
                 </p>
               </div>
             ) : null}
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {appMode === 'cloud' ? (
+              {appMode === 'cloud' && !offlineAccess ? (
                 <button
                   type="button"
                   onClick={onSyncNow}
@@ -400,16 +450,18 @@ export function DatabaseSettingsDialog({
                     : t('settings.syncNow')}
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
-                disabled={appMode === 'cloud' && cloudSyncStatus.phase === 'syncing'}
-                className={`btn w-full justify-center text-[10px] sm:text-[11px] ${
-                  appMode === 'local' ? 'btn-primary sm:col-span-2' : 'btn-neutral'
-                }`}
-              >
-                {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
-              </button>
+              {!offlineAccess ? (
+                <button
+                  type="button"
+                  onClick={() => onChangeAppMode(appMode === 'local' ? 'cloud' : 'local')}
+                  disabled={appMode === 'cloud' && cloudSyncStatus.phase === 'syncing'}
+                  className={`btn w-full justify-center text-[10px] sm:text-[11px] ${
+                    appMode === 'local' ? 'btn-primary sm:col-span-2' : 'btn-neutral'
+                  }`}
+                >
+                  {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
+                </button>
+              ) : null}
             </div>
             {appMode === 'cloud' && cloudSyncStatus.conflictCount > 0 ? (
               <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3">
@@ -439,7 +491,72 @@ export function DatabaseSettingsDialog({
                 </div>
               </div>
             ) : null}
-            <p className="mt-3 text-[11px] leading-5 text-muted">{t('settings.storageModeSafety')}</p>
+            <p className="mt-3 text-[11px] leading-5 text-muted">
+              {t(
+                offlineAccess
+                  ? 'settings.offlineAccessSafety'
+                  : 'settings.storageModeSafety'
+              )}
+            </p>
+            {appMode === 'cloud' ? (
+              <div className="mt-4 border-t border-ink/10 pt-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-semibold text-ink">
+                        {t('settings.offlinePinTitle')}
+                      </p>
+                      <span className="rounded-full bg-white px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">
+                        {t(
+                          offlinePinConfigured
+                            ? 'settings.offlinePinConfigured'
+                            : 'settings.offlinePinNotConfigured'
+                        )}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-5 text-muted">
+                      {t('settings.offlinePinDescription')}
+                    </p>
+                  </div>
+                  {!offlineAccess ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOfflinePinStatus(null);
+                          setOfflinePinDialogOpen(true);
+                        }}
+                        className="btn btn-neutral text-[10px] sm:text-[11px]"
+                      >
+                        {t(
+                          offlinePinConfigured
+                            ? 'settings.offlinePinChange'
+                            : 'settings.offlinePinConfigure'
+                        )}
+                      </button>
+                      {offlinePinConfigured ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleDisableOfflinePin()}
+                          className="btn btn-neutral text-[10px] text-red-700 sm:text-[11px]"
+                        >
+                          {t('settings.offlinePinDisable')}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                {offlinePinStatus ? (
+                  <p
+                    className={`mt-2 text-[11px] ${
+                      offlinePinStatus.tone === 'error' ? 'text-red-700' : 'text-benefit'
+                    }`}
+                  >
+                    {offlinePinStatus.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
@@ -700,6 +817,136 @@ export function DatabaseSettingsDialog({
           </div>
         </div>
       </div>
+      <OfflinePinSetupDialog
+        open={offlinePinDialogOpen}
+        onSave={handleSaveOfflinePin}
+        onCancel={() => setOfflinePinDialogOpen(false)}
+      />
+    </div>
+  );
+}
+
+function OfflinePinSetupDialog({
+  open,
+  onSave,
+  onCancel
+}: {
+  open: boolean;
+  onSave: (pin: string) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const { t } = useTranslation();
+  const [pin, setPin] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [hidden, setHidden] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setPin('');
+      setConfirmation('');
+      setHidden(true);
+      setSaving(false);
+      setError(null);
+    }
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const normalizePin = (value: string) => value.replace(/\D/g, '').slice(0, 6);
+  const handleSave = async () => {
+    setError(null);
+    if (!/^\d{6}$/.test(pin)) {
+      setError(t('settings.offlinePinInvalidFormat'));
+      return;
+    }
+    if (pin !== confirmation) {
+      setError(t('settings.offlinePinMismatch'));
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(pin);
+    } catch {
+      setError(t('settings.offlinePinSaveError'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 px-4">
+      <section className="w-full max-w-sm rounded-2xl border border-ink/10 bg-white p-5 shadow-card sm:p-6">
+        <h4 className="text-lg font-semibold text-ink">{t('settings.offlinePinDialogTitle')}</h4>
+        <p className="mt-2 text-xs leading-5 text-muted">
+          {t('settings.offlinePinDialogDescription')}
+        </p>
+        <div className="mt-5 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold text-ink">
+              {t('settings.offlinePinNew')}
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type={hidden ? 'password' : 'text'}
+                value={pin}
+                onChange={(event) => setPin(normalizePin(event.target.value))}
+                inputMode="numeric"
+                autoComplete="new-password"
+                maxLength={6}
+                disabled={saving}
+                className="min-w-0 flex-1 rounded-xl border border-ink/15 bg-white px-4 py-3 text-center text-sm tracking-[0.4em] text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
+              />
+              <EyeToggle
+                hidden={hidden}
+                onClick={() => setHidden((current) => !current)}
+                label={t('settings.offlinePinTitle')}
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold text-ink">
+              {t('settings.offlinePinConfirm')}
+            </span>
+            <input
+              type={hidden ? 'password' : 'text'}
+              value={confirmation}
+              onChange={(event) => setConfirmation(normalizePin(event.target.value))}
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={6}
+              disabled={saving}
+              className="w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-center text-sm tracking-[0.4em] text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
+            />
+          </label>
+        </div>
+        {error ? (
+          <p className="mt-3 text-xs leading-5 text-red-700" aria-live="polite">
+            {error}
+          </p>
+        ) : null}
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="btn btn-neutral text-xs"
+          >
+            {t('actions.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving}
+            className="btn btn-primary text-xs"
+          >
+            {saving ? t('settings.offlinePinSaving') : t('settings.offlinePinSave')}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
