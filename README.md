@@ -32,13 +32,18 @@ Aplicación *offline-first* para el control mensual, anual e histórico de finan
 - Tarjetas responsive para consultar el detalle anual e histórico sin tablas horizontales en móvil.
 - Mocks de desarrollo con histórico desde 2019.
 
-## Versión actual
+## Descargas
 
-**Fintrack 3.0.0**
+- Windows (instalador .exe): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64-setup.exe)
+- Windows (MSI): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_aarch64.dmg)
+- Linux (AppImage): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.AppImage)
+- Linux (DEB): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0_amd64.deb)
+- Linux (RPM): [Fintrack 3.0.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.0/Fintrack_3.0.0-1.x86_64.rpm)
+- Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
 
-Los instaladores para Windows, macOS y Linux se publican en [GitHub Releases](https://github.com/marcorm91/fintrack-app/releases). El APK de Android se genera mediante el workflow manual `Android APK (artifact)` y debe adjuntarse a la versión que se quiera distribuir.
-
-La publicación de los instaladores de `3.0.0` se realizará al crear el tag `v3.0.0`. Hasta entonces, las versiones anteriores continúan disponibles en el histórico de releases.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.0`.
 
 ## Modalidades de uso y acceso
 
@@ -66,44 +71,6 @@ En este caso, la administración de usuarios, seguridad, disponibilidad, costes 
 - Añade un PIN local de emergencia opcional para acceder a los datos sin conexión cuando no es posible validar la sesión cloud.
 - Reorganiza Ajustes y reúne importación, exportación y backups en un bloque más claro.
 - Añade backups JSON portables para migrar todos los datos y ajustes entre dispositivos o proveedores.
-
-## Novedades 2.0.5
-
-- Documenta la columna opcional de notas en los ejemplos de importación mensual, anual e histórica.
-- Mantiene visible la tarjeta «Nota del mes» incluso cuando está vacía para evitar saltos en el diseño.
-- Añade el estado «Sin notas para este mes» en español e inglés.
-
-## Novedades 2.0.4
-- Añade notas opcionales a los cierres mensuales, con migración automática para bases de datos existentes.
-- Incluye las notas en la importación y exportación CSV y en los volcados SQL.
-- Muestra las notas en la vista mensual y en un diálogo accesible desde el detalle anual.
-- Rediseña los detalles anual e histórico como tarjetas en móvil, sin perder ordenación, tendencias, filtros ni paginación.
-- Mantiene los controles de ordenación en una fila horizontal desplazable y conserva las tablas originales en escritorio.
-- Compacta el panel móvil de cierre mensual y bloquea el scroll del contenido de fondo mientras está abierto.
-- Añade una animación de cierre descendente al panel mensual.
-- Corrige el menú de importación para cerrarlo al pulsar fuera o utilizar la tecla `Escape`.
-- Reduce el JavaScript inicial mediante carga diferida de vistas y reorganiza lógica reutilizable en hooks y utilidades.
-
-## Novedades 2.0.3
-- Extiende el swipe mensual a todo el contenido de la pestaña de mes.
-- Elimina los chevrons flotantes móviles y deja el swipe como gesto lateral principal.
-- Mueve el botón flotante `+` a un portal para evitar problemas con padres transformados.
-- Añade animación de entrada al botón `+` y mantiene su posición fixed durante el swipe.
-- Corrige el overflow horizontal de la vista anual móvil al cambiar a años con datos.
-- Abre los modales de gráficas anual e histórico a pantalla completa también en desktop.
-- Permite cerrar los modales de gráficas con la tecla `Escape`.
-- Añade el año seleccionado al título del modal de gráfica anual.
-- Elimina constantes de series y props obsoletas sin uso.
-- Refuerza tipados de resultados SQL, tooltips de gráficas, bloqueo de orientación e imports de insights.
-
-## Novedades 2.0.2
-- Mantiene patrimonio, efectivo y cartera desde el último mes con saldo al cierre informado.
-- Evita que meses posteriores sin datos o con saldo al cierre `0` corten el patrimonio acumulado.
-- Precarga saldo al cierre y cartera inversión en meses nuevos desde el último cierre real.
-- Mejora la importación de CSV antiguos: ignora filas vacías con todo a `0` y no usa una columna de cartera completamente a `0` para sobrescribir cartera existente.
-- Mejora la vista móvil mensual: dona sin tooltips superpuestos y formulario de guardado en panel inferior.
-- Mantiene las mejoras de 2.0.1: ancho estable del selector de mes y porcentaje de ingresos/gastos en la dona mensual.
-- Mantiene los cambios principales de 2.0.0: nuevo diseño, cartera opcional, comparativas anual/histórica, mocks desde 2019 e icono renovado.
 
 ## Stack
 
