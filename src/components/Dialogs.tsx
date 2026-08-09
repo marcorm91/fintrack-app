@@ -181,6 +181,7 @@ export function DatabaseSettingsDialog({
   exportingCsv,
   exportingSql,
   exportingJson,
+  canShareJson,
   sharingJson,
   importingJson,
   backingUp,
@@ -228,6 +229,7 @@ export function DatabaseSettingsDialog({
   exportingCsv: boolean;
   exportingSql: boolean;
   exportingJson: boolean;
+  canShareJson: boolean;
   sharingJson: boolean;
   importingJson: boolean;
   backingUp: boolean;
@@ -630,14 +632,16 @@ export function DatabaseSettingsDialog({
                 >
                   {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
                 </button>
-                <button
-                  type="button"
-                  onClick={onShareJson}
-                  disabled={backupDisabled}
-                  className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
-                >
-                  {sharingJson ? t('settings.sharingJson') : t('settings.shareJson')}
-                </button>
+                {canShareJson ? (
+                  <button
+                    type="button"
+                    onClick={onShareJson}
+                    disabled={backupDisabled}
+                    className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
+                  >
+                    {sharingJson ? t('settings.sharingJson') : t('settings.shareJson')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={onImportJson}

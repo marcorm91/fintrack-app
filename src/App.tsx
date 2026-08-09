@@ -586,6 +586,12 @@ function FintrackApp({
     refreshData,
     t
   });
+  const canShareJsonBackup = useMemo(() => {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return false;
+    }
+    return /Android/i.test(navigator.userAgent);
+  }, []);
   const infoDialogContent = useInfoDialogContent(infoDialog);
 
   useEffect(() => {
@@ -749,6 +755,7 @@ function FintrackApp({
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
             exportingJson={exportingJson}
+            canShareJson={canShareJsonBackup}
             sharingJson={sharingJson}
             importingJson={importingJson}
             backingUp={backingUp}
