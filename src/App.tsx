@@ -562,6 +562,7 @@ function FintrackApp({
     exportCsv,
     exportSql,
     exportJson,
+    shareJson,
     openJsonImport,
     onJsonBackupFileChange,
     backupInputRef,
@@ -569,6 +570,7 @@ function FintrackApp({
     exportingCsv,
     exportingSql,
     exportingJson,
+    sharingJson,
     importingJson,
     backingUp,
     exportStatus,
@@ -584,6 +586,12 @@ function FintrackApp({
     refreshData,
     t
   });
+  const canShareJsonBackup = useMemo(() => {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return false;
+    }
+    return /Android/i.test(navigator.userAgent);
+  }, []);
   const infoDialogContent = useInfoDialogContent(infoDialog);
 
   useEffect(() => {
@@ -747,6 +755,8 @@ function FintrackApp({
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
             exportingJson={exportingJson}
+            canShareJson={canShareJsonBackup}
+            sharingJson={sharingJson}
             importingJson={importingJson}
             backingUp={backingUp}
             exportStatus={exportStatus}
@@ -759,6 +769,7 @@ function FintrackApp({
             onExportCsv={exportCsv}
             onExportSql={exportSql}
             onExportJson={exportJson}
+            onShareJson={shareJson}
             onImportJson={openJsonImport}
             onBackupDatabase={backupDatabase}
             onClose={closeSettings}

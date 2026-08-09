@@ -85,6 +85,7 @@ export function useExportData({
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingSql, setExportingSql] = useState(false);
   const [exportingJson, setExportingJson] = useState(false);
+  const [sharingJson, setSharingJson] = useState(false);
   const [importingJson, setImportingJson] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
   const [exportStatus, setExportStatus] = useState<ExportStatus>(null);
@@ -165,6 +166,40 @@ export function useExportData({
       setExportingJson(false);
     }
   }, [currentPath, currentVersion, hasInvestmentPortfolio, t]);
+
+  const shareJson = useCallback(async () => {
+    setExportStatus(null);
+    setBackupStatus(null);
+    setSharingJson(true);
+    try {
+      const series = await getMonthlySeries();
+      const json = buildJsonBackup(series, hasInvestmentPortfolio, currentVersion ?? 'unknown');
+      const fileName = getExportFileName('json');
+      const file = new File([json], fileName, { type: 'application/json' });
+      const shareData = {
+        title: fileName,
+        text: t('settings.shareJsonText'),
+        files: [file]
+      };
+      if (
+        typeof navigator === 'undefined' ||
+        typeof navigator.share !== 'function' ||
+        (typeof navigator.canShare === 'function' && !navigator.canShare(shareData))
+      ) {
+        await exportJson();
+        return;
+      }
+      await navigator.share(shareData);
+      setBackupStatus({ tone: 'success', message: t('settings.shareJsonSuccess') });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+      setBackupStatus({ tone: 'error', message: formatExportError(error, t('settings.shareJsonError')) });
+    } finally {
+      setSharingJson(false);
+    }
+  }, [currentVersion, exportJson, hasInvestmentPortfolio, t]);
 
   const openJsonImport = useCallback(() => {
     if (readOnly || importingJson) {
@@ -259,6 +294,7 @@ export function useExportData({
     exportCsv,
     exportSql,
     exportJson,
+    shareJson,
     openJsonImport,
     onJsonBackupFileChange,
     backupInputRef,
@@ -266,6 +302,7 @@ export function useExportData({
     exportingCsv,
     exportingSql,
     exportingJson,
+    sharingJson,
     importingJson,
     backingUp,
     exportStatus,

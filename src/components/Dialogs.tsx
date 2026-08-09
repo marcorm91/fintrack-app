@@ -181,6 +181,8 @@ export function DatabaseSettingsDialog({
   exportingCsv,
   exportingSql,
   exportingJson,
+  canShareJson,
+  sharingJson,
   importingJson,
   backingUp,
   exportStatus,
@@ -193,6 +195,7 @@ export function DatabaseSettingsDialog({
   onExportCsv,
   onExportSql,
   onExportJson,
+  onShareJson,
   onImportJson,
   onBackupDatabase,
   onClose
@@ -226,6 +229,8 @@ export function DatabaseSettingsDialog({
   exportingCsv: boolean;
   exportingSql: boolean;
   exportingJson: boolean;
+  canShareJson: boolean;
+  sharingJson: boolean;
   importingJson: boolean;
   backingUp: boolean;
   exportStatus: ExportStatus;
@@ -238,6 +243,7 @@ export function DatabaseSettingsDialog({
   onExportCsv: () => void;
   onExportSql: () => void;
   onExportJson: () => void;
+  onShareJson: () => void;
   onImportJson: () => void;
   onBackupDatabase: () => void;
   onClose: () => void;
@@ -268,7 +274,7 @@ export function DatabaseSettingsDialog({
   const exportStatusClass =
     exportStatus?.tone === 'error' ? 'text-red-700' : 'text-benefit';
   const exportDisabled = loading || exportingCsv || exportingSql;
-  const backupDisabled = loading || backingUp || exportingJson || importingJson;
+  const backupDisabled = loading || backingUp || exportingJson || sharingJson || importingJson;
   const [pathStatus, setPathStatus] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [offlinePinDialogOpen, setOfflinePinDialogOpen] = useState(false);
   const [offlinePinStatus, setOfflinePinStatus] = useState<{
@@ -622,15 +628,25 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onExportJson}
                   disabled={backupDisabled}
-                  className="btn btn-primary text-[10px] sm:text-[11px]"
+                  className="btn btn-primary w-full text-[10px] sm:w-auto sm:text-[11px]"
                 >
                   {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
                 </button>
+                {canShareJson ? (
+                  <button
+                    type="button"
+                    onClick={onShareJson}
+                    disabled={backupDisabled}
+                    className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
+                  >
+                    {sharingJson ? t('settings.sharingJson') : t('settings.shareJson')}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={onImportJson}
                   disabled={backupDisabled || readOnly}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
                 >
                   {importingJson ? t('settings.importingJson') : t('settings.importJson')}
                 </button>
