@@ -10,6 +10,25 @@ import {
 
 export type DatabaseAccessError = 'owner-mismatch' | 'unavailable' | null;
 
+function wait(milliseconds: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+async function getDatabaseAccessPolicyWithRetry() {
+  try {
+    return await getDatabaseAccessPolicy();
+  } catch (error) {
+    await wait(450);
+    try {
+      return await getDatabaseAccessPolicy();
+    } catch {
+      throw error;
+    }
+  }
+}
+
 export function useDatabaseAccess() {
   const [policy, setPolicy] = useState<DatabaseAccessPolicy | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +38,7 @@ export function useDatabaseAccess() {
     setLoading(true);
     setError(null);
     try {
-      setPolicy(await getDatabaseAccessPolicy());
+      setPolicy(await getDatabaseAccessPolicyWithRetry());
     } catch {
       setPolicy(null);
       setError('unavailable');
