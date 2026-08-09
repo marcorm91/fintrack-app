@@ -9,14 +9,15 @@
     "tauri:dev:mocks": "node scripts/start-mocks.js --tauri",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings=0",
     "preview": "vite preview",
     "tauri": "tauri",
     "android:patch": "node scripts/patch-android-immersive.js",
     "android:init": "tauri android init && npm run android:patch",
     "android:build": "npm run android:patch && tauri android build && node scripts/rename-android-outputs.js",
-    "android:dev": "npm run android:patch && tauri android dev"
+    "android:dev": "npm run android:patch && tauri android dev",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/api": "2.9.1",
@@ -47,6 +48,7 @@
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^4.1.10"
   }
 }
