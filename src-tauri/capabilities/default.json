@@ -5,10 +5,11 @@
   "permissions": [
     "core:default",
     "dialog:default",
-    "fs:default",
+    "fs:allow-app-read",
+    "fs:allow-app-write",
+    "fs:allow-download-dir-read",
     "fs:allow-write-text-file",
     "sql:default",
-    "sql:allow-execute",
-    "shell:default"
+    "sql:allow-execute"
   ]
 }
