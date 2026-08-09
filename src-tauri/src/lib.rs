@@ -1,10 +1,23 @@
 use tauri::Manager;
 
+fn resolve_portable_dir(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+  let exe_dir = std::env::current_exe()
+    .ok()
+    .and_then(|path| path.parent().map(std::path::Path::to_path_buf));
+  if let Some(dir) = exe_dir {
+    if dir.join("fintrack.portable").exists() || dir.join("finanzas.db").exists() {
+      return Some(dir);
+    }
+  }
+
+  app.path().resource_dir().ok()
+}
+
 #[tauri::command]
 fn resolve_portable_db_path(app: tauri::AppHandle) -> Option<String> {
-  let resource_dir = app.path().resource_dir().ok()?;
-  let db_path = resource_dir.join("finanzas.db");
-  let marker_path = resource_dir.join("fintrack.portable");
+  let portable_dir = resolve_portable_dir(&app)?;
+  let db_path = portable_dir.join("finanzas.db");
+  let marker_path = portable_dir.join("fintrack.portable");
   if marker_path.exists() {
     if db_path
       .metadata()
