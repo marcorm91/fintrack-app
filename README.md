@@ -34,16 +34,16 @@ Aplicación *offline-first* para el control mensual, anual e histórico de finan
 
 ## Descargas
 
-- Windows (instalador .exe): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_x64-setup.exe)
-- Windows (MSI): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_aarch64.dmg)
-- Linux (AppImage): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_amd64.AppImage)
-- Linux (DEB): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1_amd64.deb)
-- Linux (RPM): [Fintrack 3.0.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.1/Fintrack_3.0.1-1.x86_64.rpm)
-- Android (APK): se genera desde el workflow manual `Android APK (artifact)` y debe adjuntarse a la release si se quiere distribuir.
+- Windows (instalador .exe): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_x64-setup.exe)
+- Windows (MSI): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_aarch64.dmg)
+- Linux (AppImage): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_amd64.AppImage)
+- Linux (DEB): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_amd64.deb)
+- Linux (RPM): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2-1.x86_64.rpm)
+- Android (APK): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_android.apk)
 
-Los enlaces estarán disponibles cuando se publique la release `v3.0.1`.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.2`.
 
 ## Modalidades de uso y acceso
 
@@ -61,12 +61,12 @@ Quien prefiera gestionar su propia infraestructura puede clonar o bifurcar este 
 
 En este caso, la administración de usuarios, seguridad, disponibilidad, costes y copias de seguridad de la infraestructura propia corresponde a quien realice el despliegue.
 
-## Novedades 3.0.1
+## Novedades 3.0.2
 
-- Corrige el arranque de Windows portable cuando el dispositivo conserva una ruta de base de datos de una instalación anterior.
-- Adapta las exportaciones y copias de seguridad al selector de archivos de Android.
-- Mantiene SQLite en el almacenamiento interno protegido de Android y simplifica sus ajustes de ubicación.
-- Impide publicar artefactos Android sin una configuración de firma completa.
+- Añade la generación automática del APK y AAB de Android al publicar una nueva versión.
+- Adjunta los paquetes Android firmados directamente a la release de GitHub.
+- Mejora la cabecera móvil para evitar cortes y aprovechar mejor el espacio disponible.
+- Corrige la disposición del PIN de emergencia y sus acciones en pantallas pequeñas.
 
 ## Stack
 
@@ -179,7 +179,7 @@ Notas:
 
 ## CI / Releases
 
-Al subir un tag `v*`, como `v3.0.1`, GitHub Actions genera builds para Windows/macOS/Linux y crea un release en borrador.
+Al subir un tag `v*`, como `v3.0.2`, GitHub Actions genera los paquetes para Windows, macOS, Linux y Android, y crea una release en borrador con los artefactos correspondientes.
 
 ## Campos de entrada
 
