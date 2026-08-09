@@ -58,7 +58,7 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
           if (-not $tag) { $tag = "v0.0.0" }
-          $version = $tag.TrimStart('v')
+          $version = $tag.TrimStart('v') -replace '[^A-Za-z0-9_.-]', '-'
           $portableDir = "portable"
           if (Test-Path $portableDir) { Remove-Item $portableDir -Recurse -Force }
           New-Item -ItemType Directory -Path $portableDir | Out-Null
@@ -66,7 +66,7 @@ jobs:
           New-Item -ItemType File -Path "$portableDir/fintrack.portable" -Force | Out-Null
           $zipName = "Fintrack_${version}_portable_windows.zip"
           if (Test-Path $zipName) { Remove-Item $zipName -Force }
-          Compress-Archive -Path "$portableDir/*" -DestinationPath $zipName
+          Compress-Archive -Path (Join-Path $portableDir '*') -DestinationPath $zipName
 
       - name: Upload portable zip
         if: matrix.platform == 'windows-latest'
