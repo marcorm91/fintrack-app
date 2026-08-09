@@ -5,7 +5,16 @@ fn resolve_portable_db_path(app: tauri::AppHandle) -> Option<String> {
   let resource_dir = app.path().resource_dir().ok()?;
   let db_path = resource_dir.join("finanzas.db");
   let marker_path = resource_dir.join("fintrack.portable");
-  if marker_path.exists() || db_path.exists() {
+  if marker_path.exists() {
+    if db_path
+      .metadata()
+      .is_ok_and(|metadata| metadata.is_file() && metadata.len() == 0)
+    {
+      let _ = std::fs::remove_file(&db_path);
+    }
+    return Some(db_path.to_string_lossy().to_string());
+  }
+  if db_path.exists() {
     return Some(db_path.to_string_lossy().to_string());
   }
   None
