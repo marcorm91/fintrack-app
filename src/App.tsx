@@ -562,6 +562,7 @@ function FintrackApp({
     exportCsv,
     exportSql,
     exportJson,
+    shareJson,
     openJsonImport,
     onJsonBackupFileChange,
     backupInputRef,
@@ -569,6 +570,7 @@ function FintrackApp({
     exportingCsv,
     exportingSql,
     exportingJson,
+    sharingJson,
     importingJson,
     backingUp,
     exportStatus,
@@ -747,6 +749,7 @@ function FintrackApp({
             exportingCsv={exportingCsv}
             exportingSql={exportingSql}
             exportingJson={exportingJson}
+            sharingJson={sharingJson}
             importingJson={importingJson}
             backingUp={backingUp}
             exportStatus={exportStatus}
@@ -759,6 +762,7 @@ function FintrackApp({
             onExportCsv={exportCsv}
             onExportSql={exportSql}
             onExportJson={exportJson}
+            onShareJson={shareJson}
             onImportJson={openJsonImport}
             onBackupDatabase={backupDatabase}
             onClose={closeSettings}
