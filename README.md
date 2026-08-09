@@ -34,16 +34,16 @@ Aplicación *offline-first* para el control mensual, anual e histórico de finan
 
 ## Descargas
 
-- Windows (instalador .exe): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_x64-setup.exe)
-- Windows (MSI): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_x64_en-US.msi)
-- Windows (portable .zip): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_portable_windows.zip)
-- macOS (Apple Silicon, .dmg): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_aarch64.dmg)
-- Linux (AppImage): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_amd64.AppImage)
-- Linux (DEB): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_amd64.deb)
-- Linux (RPM): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2-1.x86_64.rpm)
-- Android (APK): [Fintrack 3.0.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.2/Fintrack_3.0.2_android.apk)
+- Windows (instalador .exe): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_x64-setup.exe)
+- Windows (MSI): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_x64_en-US.msi)
+- Windows (portable .zip): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_portable_windows.zip)
+- macOS (Apple Silicon, .dmg): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_aarch64.dmg)
+- Linux (AppImage): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_amd64.AppImage)
+- Linux (DEB): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_amd64.deb)
+- Linux (RPM): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3-1.x86_64.rpm)
+- Android (APK): [Fintrack 3.0.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.3/Fintrack_3.0.3_android.apk)
 
-Los enlaces estarán disponibles cuando se publique la release `v3.0.2`.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.3`.
 
 ## Modalidades de uso y acceso
 
@@ -179,7 +179,7 @@ Notas:
 
 ## CI / Releases
 
-Al subir un tag `v*`, como `v3.0.2`, GitHub Actions genera los paquetes para Windows, macOS, Linux y Android, y crea una release en borrador con los artefactos correspondientes.
+Al subir un tag `v*`, como `v3.0.3`, GitHub Actions genera los paquetes para Windows, macOS, Linux y Android, y crea una release en borrador con los artefactos correspondientes.
 
 ## Campos de entrada
 
