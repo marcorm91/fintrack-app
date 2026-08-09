@@ -626,7 +626,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onExportJson}
                   disabled={backupDisabled}
-                  className="btn btn-primary text-[10px] sm:text-[11px]"
+                  className="btn btn-primary w-full text-[10px] sm:w-auto sm:text-[11px]"
                 >
                   {exportingJson ? t('settings.exportingJson') : t('settings.exportJson')}
                 </button>
@@ -634,7 +634,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onShareJson}
                   disabled={backupDisabled}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
                 >
                   {sharingJson ? t('settings.sharingJson') : t('settings.shareJson')}
                 </button>
@@ -642,7 +642,7 @@ export function DatabaseSettingsDialog({
                   type="button"
                   onClick={onImportJson}
                   disabled={backupDisabled || readOnly}
-                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                  className="btn btn-neutral w-full text-[10px] sm:w-auto sm:text-[11px]"
                 >
                   {importingJson ? t('settings.importingJson') : t('settings.importJson')}
                 </button>
