@@ -51,15 +51,6 @@
     @apply h-7 w-7 shrink-0 p-0;
   }
 
-  .metric-card {
-    @apply min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2.5 text-xs text-muted sm:p-3 sm:text-sm;
-    min-height: 5.25rem;
-  }
-
-  .metric-card > div:first-child > span:first-child {
-    @apply min-w-0 break-words leading-tight;
-  }
-
   .mobile-fab {
     animation: mobile-fab-enter 180ms ease-out;
     will-change: transform, opacity;

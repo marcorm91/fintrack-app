@@ -358,7 +358,7 @@ export function HistoryView({
                 {t('labels.cashFlow')}
               </p>
               <div className={`mt-3 grid grid-cols-2 gap-2 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
-                <div className="metric-card">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalIncome')}</span>
                     <EyeToggle
@@ -372,7 +372,7 @@ export function HistoryView({
                     <span className="min-w-0 break-words">{formatCents(historyTotals.incomeCents)} EUR</span>
                   </div>
                 </div>
-                <div className="metric-card">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalExpense')}</span>
                     <EyeToggle
@@ -386,7 +386,7 @@ export function HistoryView({
                     <span className="min-w-0 break-words">{formatCents(historyTotals.expenseCents)} EUR</span>
                   </div>
                 </div>
-                <div className="metric-card">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalBenefit')}</span>
                     <EyeToggle
@@ -407,7 +407,7 @@ export function HistoryView({
                 {t('labels.wealth')}
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
-                <div className="metric-card">
+                <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.finalBalance')}</span>
                     <EyeToggle
@@ -423,7 +423,7 @@ export function HistoryView({
                 </div>
                 {hasInvestmentPortfolio ? (
                   <>
-                    <div className="metric-card">
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalPortfolio')}</span>
                         <EyeToggle
@@ -437,7 +437,7 @@ export function HistoryView({
                         <span className="min-w-0 break-words">{formatCents(historyTotals.portfolioCents)} EUR</span>
                       </div>
                     </div>
-                    <div className="metric-card">
+                    <div className="rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalWealth')}</span>
                         <EyeToggle

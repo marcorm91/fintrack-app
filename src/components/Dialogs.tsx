@@ -31,8 +31,8 @@ export function ConfirmDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/40 px-4 py-4 sm:py-6">
+      <div className="w-full max-w-md max-h-[82vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:max-h-[90vh] sm:p-6">
         <h3 className="text-lg font-semibold text-ink">{title}</h3>
         <p className="mt-2 text-sm text-muted">{message}</p>
         <div className="mt-6 flex justify-end gap-3">
@@ -73,8 +73,8 @@ export function InfoDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/40 px-4 py-4 sm:py-6">
+      <div className="w-full max-w-md max-h-[82vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:max-h-[90vh] sm:p-6">
         <h3 className="text-lg font-semibold text-ink">{title}</h3>
         <div className="mt-3 text-sm text-muted">{content}</div>
         <div className="mt-6 flex justify-end">
@@ -118,16 +118,16 @@ export function TextImportDialog({
   const isEmpty = value.trim().length === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
-      <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/40 px-4 py-4 sm:py-6">
+      <div className="w-full max-w-xl max-h-[82vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:max-h-[90vh] sm:p-6">
         <h3 className="text-lg font-semibold text-ink">{title}</h3>
         <p className="mt-2 text-sm text-muted">{description}</p>
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          rows={8}
-          className="mt-4 w-full resize-y rounded-xl border border-ink/10 bg-white px-3 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none sm:text-sm"
+          rows={6}
+          className="mt-4 h-36 w-full resize-y rounded-xl border border-ink/10 bg-white px-3 py-2 text-base text-ink shadow-sm focus:border-accent focus:outline-none sm:h-auto sm:text-sm"
         />
         <div className="mt-6 flex justify-end gap-3">
           <button
@@ -384,8 +384,8 @@ export function DatabaseSettingsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
-      <div className="relative flex w-full max-h-[90vh] max-w-xl flex-col overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:p-5 lg:max-w-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4 py-4 sm:py-6">
+      <div className="relative flex w-full max-h-[82vh] max-w-xl flex-col overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:max-h-[90vh] sm:p-5 lg:max-w-2xl">
         <button
           type="button"
           onClick={() => void handleClose()}

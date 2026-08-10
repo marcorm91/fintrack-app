@@ -5,7 +5,6 @@
   "permissions": [
     "core:default",
     "dialog:default",
-    "shell:allow-open",
     "fs:allow-app-read",
     "fs:allow-app-write",
     "fs:allow-download-read",
