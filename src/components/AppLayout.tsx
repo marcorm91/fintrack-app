@@ -1,16 +1,12 @@
 import type { ChangeEvent, ReactNode, RefObject } from 'react';
 import { AppFooter } from './AppFooter';
 import { AppHeader } from './AppHeader';
-import type { AppMode } from '../hooks/useAppMode';
 
 type AppLayoutProps = {
-  activeLanguage: 'en' | 'es';
-  onLanguageChange: (languageValue: 'en' | 'es') => void;
   onOpenSettings: () => void;
-  appMode: AppMode;
-  userEmail: string | null;
-  offlineAccess: boolean;
-  onChangeAppMode: (mode: AppMode) => void;
+  showSignOut: boolean;
+  signOutLabel: string;
+  onSignOut: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   importInputRef: RefObject<HTMLInputElement>;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -22,13 +18,10 @@ type AppLayoutProps = {
 };
 
 export function AppLayout({
-  activeLanguage,
-  onLanguageChange,
   onOpenSettings,
-  appMode,
-  userEmail,
-  offlineAccess,
-  onChangeAppMode,
+  showSignOut,
+  signOutLabel,
+  onSignOut,
   t,
   importInputRef,
   onFileChange,
@@ -42,13 +35,10 @@ export function AppLayout({
     <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(180deg,#f9fffb_0%,#f4fbf8_46%,#fff7fa_100%)]">
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 py-3 pb-[calc(6rem+var(--app-safe-bottom))] sm:px-5 sm:py-6 sm:pb-8 md:px-8">
         <AppHeader
-          activeLanguage={activeLanguage}
-          onLanguageChange={onLanguageChange}
           onOpenSettings={onOpenSettings}
-          appMode={appMode}
-          userEmail={userEmail}
-          offlineAccess={offlineAccess}
-          onChangeAppMode={onChangeAppMode}
+          showSignOut={showSignOut}
+          signOutLabel={signOutLabel}
+          onSignOut={onSignOut}
           t={t}
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />

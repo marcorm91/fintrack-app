@@ -326,7 +326,6 @@ function FintrackApp({
   const [yearComparisonValue, setYearComparisonValue] = useState('');
   const { t, i18n } = useTranslation();
   const language = i18n.language;
-  const activeLanguage = language.startsWith('en') ? 'en' : 'es';
   const {
     summary,
     series,
@@ -626,17 +625,10 @@ function FintrackApp({
 
   return (
     <AppLayout
-      activeLanguage={activeLanguage}
-      onLanguageChange={(languageValue) => {
-        void i18n.changeLanguage(languageValue);
-      }}
       onOpenSettings={openSettings}
-      appMode={appMode}
-      userEmail={userEmail}
-      offlineAccess={offlineAccess}
-      onChangeAppMode={(nextMode) => {
-        void onChangeAppMode(nextMode);
-      }}
+      showSignOut={appMode === 'cloud' && (Boolean(userEmail) || offlineAccess)}
+      signOutLabel={t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
+      onSignOut={() => setSignOutConfirmOpen(true)}
       t={t}
       importInputRef={importInputRef}
       onFileChange={onFileChange}
@@ -712,7 +704,6 @@ function FintrackApp({
             offlinePinConfigured={offlinePinConfigured}
             onConfigureOfflinePin={onConfigureOfflinePin}
             onDisableOfflinePin={onDisableOfflinePin}
-            onSignOut={() => setSignOutConfirmOpen(true)}
             onChangeAppMode={(nextMode) => {
               void onChangeAppMode(nextMode);
             }}
