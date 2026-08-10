@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ImportScope } from '../types';
-import { DotsVerticalIcon, InfoIcon } from './icons';
+import { DotsVerticalIcon } from './icons';
 
 type TabActionsProps = {
   activeTab: ImportScope;
@@ -10,7 +10,6 @@ type TabActionsProps = {
   toggleImportMenu: (scope: ImportScope) => void;
   openFileImport: (scope: ImportScope) => void;
   openTextImport: (scope: ImportScope) => void;
-  setInfoScope: (scope: ImportScope | null) => void;
   closeImportMenu: () => void;
   openDeleteMonth: (month: string) => void;
   openDeleteYear: (year: string) => void;
@@ -113,7 +112,6 @@ export function TabActions({
   toggleImportMenu,
   openFileImport,
   openTextImport,
-  setInfoScope,
   closeImportMenu,
   openDeleteMonth,
   openDeleteYear,
@@ -173,14 +171,6 @@ export function TabActions({
           disabled={importDisabled}
           t={t}
         />
-        <button
-          type="button"
-          onClick={() => setInfoScope(activeConfig.scope)}
-          className="btn btn-neutral px-3"
-        >
-          <InfoIcon />
-          <span>{t('actions.info')}</span>
-        </button>
       </div>
       <button
         type="button"
