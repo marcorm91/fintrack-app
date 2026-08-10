@@ -12,7 +12,6 @@ type TabsBarProps = {
   toggleImportMenu: (scope: ImportScope) => void;
   openFileImport: (scope: ImportScope) => void;
   openTextImport: (scope: ImportScope) => void;
-  setInfoScope: (scope: ImportScope | null) => void;
   closeImportMenu: () => void;
   openDeleteMonth: (month: string) => void;
   openDeleteYear: (year: string) => void;
@@ -34,7 +33,6 @@ export function TabsBar({
   toggleImportMenu,
   openFileImport,
   openTextImport,
-  setInfoScope,
   closeImportMenu,
   openDeleteMonth,
   openDeleteYear,
@@ -75,7 +73,6 @@ export function TabsBar({
             toggleImportMenu={toggleImportMenu}
             openFileImport={openFileImport}
             openTextImport={openTextImport}
-            setInfoScope={setInfoScope}
             closeImportMenu={closeImportMenu}
           openDeleteMonth={openDeleteMonth}
           openDeleteYear={openDeleteYear}
@@ -127,7 +124,6 @@ export function TabsBar({
         toggleImportMenu={toggleImportMenu}
         openFileImport={openFileImport}
         openTextImport={openTextImport}
-        setInfoScope={setInfoScope}
         closeImportMenu={closeImportMenu}
         openDeleteMonth={openDeleteMonth}
         openDeleteYear={openDeleteYear}
