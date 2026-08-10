@@ -8,7 +8,8 @@ import type { ExportStatus } from '../hooks/useExportData';
 import type { AppMode } from '../hooks/useAppMode';
 import type { CloudSyncStatus } from '../hooks/useCloudSync';
 import type { CloudConflictResolution } from '../services/cloudSync';
-import { EyeToggle } from './EyeToggle';
+import { OfflinePinSetupDialog } from './OfflinePinSetupDialog';
+import { LogoutIcon } from './icons';
 
 export function ConfirmDialog({
   open,
@@ -159,6 +160,7 @@ export function DatabaseSettingsDialog({
   offlinePinConfigured,
   onConfigureOfflinePin,
   onDisableOfflinePin,
+  onSignOut,
   onChangeAppMode,
   cloudSyncStatus,
   onSyncNow,
@@ -184,6 +186,7 @@ export function DatabaseSettingsDialog({
   canShareJson,
   sharingJson,
   importingJson,
+  importingCsv,
   backingUp,
   exportStatus,
   backupStatus,
@@ -197,6 +200,8 @@ export function DatabaseSettingsDialog({
   onExportJson,
   onShareJson,
   onImportJson,
+  onImportCsv,
+  onPasteCsv,
   onBackupDatabase,
   onClose
 }: {
@@ -207,6 +212,7 @@ export function DatabaseSettingsDialog({
   offlinePinConfigured: boolean;
   onConfigureOfflinePin: (pin: string) => Promise<void>;
   onDisableOfflinePin: () => Promise<void>;
+  onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   cloudSyncStatus: CloudSyncStatus;
   onSyncNow: () => void;
@@ -232,6 +238,7 @@ export function DatabaseSettingsDialog({
   canShareJson: boolean;
   sharingJson: boolean;
   importingJson: boolean;
+  importingCsv: boolean;
   backingUp: boolean;
   exportStatus: ExportStatus;
   backupStatus: ExportStatus;
@@ -245,6 +252,8 @@ export function DatabaseSettingsDialog({
   onExportJson: () => void;
   onShareJson: () => void;
   onImportJson: () => void;
+  onImportCsv: () => void;
+  onPasteCsv: () => void;
   onBackupDatabase: () => void;
   onClose: () => void;
 }) {
@@ -275,6 +284,7 @@ export function DatabaseSettingsDialog({
     exportStatus?.tone === 'error' ? 'text-red-700' : 'text-benefit';
   const exportDisabled = loading || exportingCsv || exportingSql;
   const backupDisabled = loading || backingUp || exportingJson || sharingJson || importingJson;
+  const csvImportDisabled = backupDisabled || importingCsv || readOnly;
   const [pathStatus, setPathStatus] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [offlinePinDialogOpen, setOfflinePinDialogOpen] = useState(false);
   const [offlinePinStatus, setOfflinePinStatus] = useState<{
@@ -284,7 +294,11 @@ export function DatabaseSettingsDialog({
   const hasUnsavedChanges = canChangeDatabasePath && inputPath.trim() !== currentPath;
   const handleExternalLink = async (event: MouseEvent<HTMLAnchorElement>, url: string) => {
     event.preventDefault();
-    await openExternal(url);
+    try {
+      await openExternal(url);
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
   const handleClose = async () => {
     if (hasUnsavedChanges) {
@@ -373,7 +387,7 @@ export function DatabaseSettingsDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
-      <div className="flex flex-col relative w-full min-h-[70vh] max-h-[90vh] max-w-xl overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:min-h-[700px] sm:p-6">
+      <div className="relative flex w-full max-h-[90vh] max-w-xl flex-col overflow-y-auto rounded-2xl border border-ink/10 bg-white p-4 shadow-card sm:p-5 lg:max-w-2xl">
         <button
           type="button"
           onClick={() => void handleClose()}
@@ -468,6 +482,18 @@ export function DatabaseSettingsDialog({
                   }`}
                 >
                   {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
+                </button>
+              ) : null}
+              {appMode === 'cloud' ? (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="btn btn-neutral w-full justify-center text-[10px] text-red-700 sm:w-auto sm:text-[11px]"
+                >
+                  <LogoutIcon />
+                  <span className="sr-only sm:not-sr-only">
+                    {t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
+                  </span>
                 </button>
               ) : null}
             </div>
@@ -667,6 +693,22 @@ export function DatabaseSettingsDialog({
                 </button>
                 <button
                   type="button"
+                  onClick={onImportCsv}
+                  disabled={csvImportDisabled}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {importingCsv ? t('settings.importingCsv') : t('settings.importCsv')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onPasteCsv}
+                  disabled={csvImportDisabled}
+                  className="btn btn-neutral text-[10px] sm:text-[11px]"
+                >
+                  {t('settings.pasteCsv')}
+                </button>
+                <button
+                  type="button"
                   onClick={onExportSql}
                   disabled={exportDisabled}
                   className="btn btn-neutral text-[10px] sm:text-[11px]"
@@ -833,12 +875,14 @@ export function DatabaseSettingsDialog({
             ) : null}
           </section>
         </div>
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 pt-4 text-xs text-muted">
-          <span>{t('settings.authorLabel')}</span>
-          <div className="flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-col gap-3 border-t border-ink/10 pt-4 text-xs text-muted sm:mt-auto sm:flex-row sm:items-center sm:justify-between">
+          <span className="leading-5">{t('settings.authorLabel')}</span>
+          <div className="flex flex-wrap gap-4">
             <a
               href="https://github.com/marcorm91"
               onClick={(event) => handleExternalLink(event, 'https://github.com/marcorm91')}
+              target="_blank"
+              rel="noreferrer"
               className="font-semibold text-ink transition hover:text-muted"
             >
               GitHub
@@ -846,6 +890,8 @@ export function DatabaseSettingsDialog({
             <a
               href="https://www.linkedin.com/in/marcorm91/"
               onClick={(event) => handleExternalLink(event, 'https://www.linkedin.com/in/marcorm91/')}
+              target="_blank"
+              rel="noreferrer"
               className="font-semibold text-ink transition hover:text-muted"
             >
               LinkedIn
@@ -858,131 +904,6 @@ export function DatabaseSettingsDialog({
         onSave={handleSaveOfflinePin}
         onCancel={() => setOfflinePinDialogOpen(false)}
       />
-    </div>
-  );
-}
-
-function OfflinePinSetupDialog({
-  open,
-  onSave,
-  onCancel
-}: {
-  open: boolean;
-  onSave: (pin: string) => Promise<void>;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const [pin, setPin] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [hidden, setHidden] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setPin('');
-      setConfirmation('');
-      setHidden(true);
-      setSaving(false);
-      setError(null);
-    }
-  }, [open]);
-
-  if (!open) {
-    return null;
-  }
-
-  const normalizePin = (value: string) => value.replace(/\D/g, '').slice(0, 6);
-  const handleSave = async () => {
-    setError(null);
-    if (!/^\d{6}$/.test(pin)) {
-      setError(t('settings.offlinePinInvalidFormat'));
-      return;
-    }
-    if (pin !== confirmation) {
-      setError(t('settings.offlinePinMismatch'));
-      return;
-    }
-    setSaving(true);
-    try {
-      await onSave(pin);
-    } catch {
-      setError(t('settings.offlinePinSaveError'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 px-4">
-      <section className="w-full max-w-sm rounded-2xl border border-ink/10 bg-white p-5 shadow-card sm:p-6">
-        <h4 className="text-lg font-semibold text-ink">{t('settings.offlinePinDialogTitle')}</h4>
-        <p className="mt-2 text-xs leading-5 text-muted">
-          {t('settings.offlinePinDialogDescription')}
-        </p>
-        <div className="mt-5 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold text-ink">
-              {t('settings.offlinePinNew')}
-            </span>
-            <div className="flex items-center gap-2">
-              <input
-                type={hidden ? 'password' : 'text'}
-                value={pin}
-                onChange={(event) => setPin(normalizePin(event.target.value))}
-                inputMode="numeric"
-                autoComplete="new-password"
-                maxLength={6}
-                disabled={saving}
-                className="min-w-0 flex-1 rounded-xl border border-ink/15 bg-white px-4 py-3 text-center text-sm tracking-[0.4em] text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
-              />
-              <EyeToggle
-                hidden={hidden}
-                onClick={() => setHidden((current) => !current)}
-                label={t('settings.offlinePinTitle')}
-              />
-            </div>
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-semibold text-ink">
-              {t('settings.offlinePinConfirm')}
-            </span>
-            <input
-              type={hidden ? 'password' : 'text'}
-              value={confirmation}
-              onChange={(event) => setConfirmation(normalizePin(event.target.value))}
-              inputMode="numeric"
-              autoComplete="new-password"
-              maxLength={6}
-              disabled={saving}
-              className="w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-center text-sm tracking-[0.4em] text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
-            />
-          </label>
-        </div>
-        {error ? (
-          <p className="mt-3 text-xs leading-5 text-red-700" aria-live="polite">
-            {error}
-          </p>
-        ) : null}
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="btn btn-neutral text-xs"
-          >
-            {t('actions.cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={saving}
-            className="btn btn-primary text-xs"
-          >
-            {saving ? t('settings.offlinePinSaving') : t('settings.offlinePinSave')}
-          </button>
-        </div>
-      </section>
     </div>
   );
 }
