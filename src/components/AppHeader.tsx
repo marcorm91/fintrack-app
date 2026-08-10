@@ -8,7 +8,6 @@ type AppHeaderProps = {
   appMode: AppMode;
   userEmail: string | null;
   offlineAccess: boolean;
-  onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
@@ -20,7 +19,6 @@ export function AppHeader({
   appMode,
   userEmail,
   offlineAccess,
-  onSignOut,
   onChangeAppMode,
   t
 }: AppHeaderProps) {
@@ -69,20 +67,7 @@ export function AppHeader({
               {t('language.en')}
             </button>
           </div>
-          {appMode === 'cloud' ? (
-            <button
-              type="button"
-              onClick={onSignOut}
-              title={
-                offlineAccess
-                  ? t('auth.offlineAccessActive')
-                  : `${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()
-              }
-              className="btn btn-neutral min-w-0 flex-1 whitespace-nowrap px-3 text-[9px] text-muted hover:text-ink sm:flex-none sm:text-[10px]"
-            >
-              {t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
-            </button>
-          ) : (
+          {appMode !== 'cloud' ? (
             <button
               type="button"
               onClick={() => onChangeAppMode('cloud')}
@@ -91,7 +76,18 @@ export function AppHeader({
             >
               {t('auth.localBadge')}
             </button>
-          )}
+          ) : userEmail || offlineAccess ? (
+            <span
+              title={
+                offlineAccess
+                  ? t('auth.offlineAccessActive')
+                  : `${t('auth.signedInAs')} ${userEmail ?? ''}`.trim()
+              }
+              className="hidden max-w-[180px] truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted md:block"
+            >
+              {offlineAccess ? t('auth.offlineAccessActive') : userEmail}
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={onOpenSettings}
