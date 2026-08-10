@@ -295,7 +295,7 @@ export function DatabaseSettingsDialog({
     try {
       await openExternal(url);
     } catch {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.location.href = url;
     }
   };
   const handleClose = async () => {

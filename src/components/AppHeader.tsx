@@ -17,12 +17,12 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 rounded-b-2xl border-b border-ink/5 bg-white/95 shadow-card backdrop-blur">
-      <div className="px-3 py-3 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-4 md:px-5">
-        <div className="flex min-w-0 items-center gap-3 sm:flex-1">
-          <img src="/app-icon.svg" alt="" className="h-10 w-10 shrink-0 rounded-2xl shadow-sm sm:h-9 sm:w-9" />
-          <h1 className="truncate text-2xl font-semibold text-ink sm:text-3xl">{t('app.title')}</h1>
+      <div className="flex items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <img src="/app-icon.svg" alt="" className="h-9 w-9 shrink-0 rounded-2xl shadow-sm sm:h-10 sm:w-10" />
+          <h1 className="truncate text-xl font-semibold text-ink sm:text-3xl">{t('app.title')}</h1>
         </div>
-        <div className="mt-3 flex items-center justify-end gap-2 border-t border-ink/5 pt-3 sm:mt-0 sm:border-0 sm:pt-0">
+        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
           {showSignOut ? (
             <button
               type="button"
