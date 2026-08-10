@@ -12,6 +12,7 @@ type TabsBarProps = {
   toggleImportMenu: (scope: ImportScope) => void;
   openFileImport: (scope: ImportScope) => void;
   openTextImport: (scope: ImportScope) => void;
+  setInfoScope: (scope: ImportScope | null) => void;
   closeImportMenu: () => void;
   openDeleteMonth: (month: string) => void;
   openDeleteYear: (year: string) => void;
