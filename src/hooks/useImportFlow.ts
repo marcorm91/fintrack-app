@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import type { ImportScope, ToastTone } from '../types';
+import type { ToastTone } from '../types';
 import type { MonthlySnapshotInput } from './useMonthlyData';
 
 type ConfirmAction =
-  | { type: 'import'; snapshots: MonthlySnapshotInput[]; fileName: string; scope: ImportScope }
+  | { type: 'import'; snapshots: MonthlySnapshotInput[]; fileName: string }
   | { type: 'delete-month'; month: string }
   | { type: 'delete-year'; year: string }
   | { type: 'delete-all' };
@@ -15,12 +15,6 @@ type ConfirmDialog = {
   confirmLabel: string;
 };
 
-type InfoDialog = {
-  title: string;
-  lines: string[];
-  examples: string[];
-};
-
 type TextImportDetails = {
   title: string;
   description: string;
@@ -28,11 +22,7 @@ type TextImportDetails = {
 };
 
 type UseImportFlowOptions = {
-  monthValue: string;
-  yearValue: string;
-  language: string;
   t: (key: string, options?: Record<string, unknown>) => string;
-  parseMonthCsv: (text: string, month: string) => MonthlySnapshotInput[];
   parseCsvSnapshots: (text: string) => MonthlySnapshotInput[];
   saveSnapshot: (snapshot: MonthlySnapshotInput) => Promise<void>;
   deleteMonth: (month: string) => Promise<void>;
@@ -45,11 +35,7 @@ type UseImportFlowOptions = {
 };
 
 export function useImportFlow({
-  monthValue,
-  yearValue,
-  language,
   t,
-  parseMonthCsv,
   parseCsvSnapshots,
   saveSnapshot,
   deleteMonth,
@@ -60,44 +46,28 @@ export function useImportFlow({
   onToast,
   onMonthDeleted
 }: UseImportFlowOptions) {
-  const [importMenuOpen, setImportMenuOpen] = useState<ImportScope | null>(null);
-  const [importScope, setImportScope] = useState<ImportScope | null>(null);
-  const [textImportScope, setTextImportScope] = useState<ImportScope | null>(null);
+  const [fileImportPending, setFileImportPending] = useState(false);
+  const [textImportOpen, setTextImportOpen] = useState(false);
   const [textImportValue, setTextImportValue] = useState('');
-  const [infoScope, setInfoScope] = useState<ImportScope | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [importing, setImporting] = useState(false);
   const [deletingMonth, setDeletingMonth] = useState(false);
   const [deletingYear, setDeletingYear] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
-  const translate = useCallback(
-    (key: string, options?: Record<string, unknown>) => t(key, { ...options, lng: language }),
-    [language, t]
-  );
 
-  const toggleImportMenu = useCallback((scope: ImportScope) => {
-    setImportMenuOpen((prev) => (prev === scope ? null : scope));
-  }, []);
-
-  const closeImportMenu = useCallback(() => {
-    setImportMenuOpen(null);
-  }, []);
-
-  const openFileImport = useCallback((scope: ImportScope) => {
-    setImportScope(scope);
-    setImportMenuOpen(null);
+  const openFileImport = useCallback(() => {
+    setFileImportPending(true);
     importInputRef.current?.click();
   }, []);
 
-  const openTextImport = useCallback((scope: ImportScope) => {
-    setTextImportScope(scope);
+  const openTextImport = useCallback(() => {
+    setTextImportOpen(true);
     setTextImportValue('');
-    setImportMenuOpen(null);
   }, []);
 
   const closeTextImport = useCallback(() => {
-    setTextImportScope(null);
+    setTextImportOpen(false);
     setTextImportValue('');
   }, []);
 
@@ -121,11 +91,10 @@ export function useImportFlow({
     async (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) {
-        setImportScope(null);
+        setFileImportPending(false);
         return;
       }
-      const scope = importScope;
-      if (!scope) {
+      if (!fileImportPending) {
         setError(t('errors.importType'));
         event.target.value = '';
         return;
@@ -133,10 +102,8 @@ export function useImportFlow({
       setError(null);
       setImporting(true);
       try {
-        const text = await file.text();
-        const snapshots =
-          scope === 'month' ? parseMonthCsv(text, monthValue) : parseCsvSnapshots(text);
-        setConfirmAction({ type: 'import', snapshots, fileName: file.name, scope });
+        const snapshots = parseCsvSnapshots(await file.text());
+        setConfirmAction({ type: 'import', snapshots, fileName: file.name });
       } catch (err) {
         const message =
           err instanceof Error
@@ -148,27 +115,23 @@ export function useImportFlow({
       } finally {
         setImporting(false);
         event.target.value = '';
-        setImportScope(null);
+        setFileImportPending(false);
       }
     },
-    [importScope, monthValue, parseCsvSnapshots, parseMonthCsv, setError, t]
+    [fileImportPending, parseCsvSnapshots, setError, t]
   );
 
   const confirmTextImport = useCallback(() => {
-    if (!textImportScope) {
+    if (!textImportOpen) {
       return;
     }
     setError(null);
     try {
-      const snapshots =
-        textImportScope === 'month'
-          ? parseMonthCsv(textImportValue, monthValue)
-          : parseCsvSnapshots(textImportValue);
+      const snapshots = parseCsvSnapshots(textImportValue);
       setConfirmAction({
         type: 'import',
         snapshots,
-        fileName: t('imports.pastedLabel'),
-        scope: textImportScope
+        fileName: t('imports.pastedLabel')
       });
       closeTextImport();
     } catch (err) {
@@ -180,7 +143,7 @@ export function useImportFlow({
             : JSON.stringify(err);
       setError(message || t('errors.importText'));
     }
-  }, [closeTextImport, monthValue, parseCsvSnapshots, parseMonthCsv, setError, t, textImportScope, textImportValue]);
+  }, [closeTextImport, parseCsvSnapshots, setError, t, textImportOpen, textImportValue]);
 
   const onConfirm = useCallback(async () => {
     if (!confirmAction) {
@@ -211,8 +174,7 @@ export function useImportFlow({
         await deleteMonth(confirmAction.month);
         onMonthDeleted?.();
         await refreshData();
-        const message = t('messages.deletedMonth', { month: confirmAction.month });
-        onToast?.({ message, tone: 'danger' });
+        onToast?.({ message: t('messages.deletedMonth', { month: confirmAction.month }), tone: 'danger' });
       } catch (err) {
         const message =
           err instanceof Error
@@ -229,8 +191,7 @@ export function useImportFlow({
       try {
         await deleteYear(confirmAction.year);
         await refreshData();
-        const message = t('messages.deletedYear', { year: confirmAction.year });
-        onToast?.({ message, tone: 'danger' });
+        onToast?.({ message: t('messages.deletedYear', { year: confirmAction.year }), tone: 'danger' });
       } catch (err) {
         const message =
           err instanceof Error
@@ -247,8 +208,7 @@ export function useImportFlow({
       try {
         await deleteAll();
         await refreshData();
-        const message = t('messages.deletedAll');
-        onToast?.({ message, tone: 'danger' });
+        onToast?.({ message: t('messages.deletedAll'), tone: 'danger' });
       } catch (err) {
         const message =
           err instanceof Error
@@ -266,116 +226,59 @@ export function useImportFlow({
   }, [confirmAction, deleteAll, deleteMonth, deleteYear, onMonthDeleted, onToast, refreshData, saveSnapshot, setError, t]);
 
   const textImportDetails = useMemo<TextImportDetails | null>(() => {
-    if (!textImportScope) {
+    if (!textImportOpen) {
       return null;
     }
-    if (textImportScope === 'month') {
-      return {
-        title: translate('imports.text.month.title'),
-        description: translate('imports.text.month.description'),
-        placeholder: translate('imports.text.month.placeholder')
-      };
-    }
-    if (textImportScope === 'year') {
-      return {
-        title: translate('imports.text.year.title', { year: yearValue }),
-        description: translate('imports.text.year.description'),
-        placeholder: translate('imports.text.year.placeholder')
-      };
-    }
     return {
-      title: translate('imports.text.all.title'),
-      description: translate('imports.text.all.description'),
-      placeholder: translate('imports.text.all.placeholder')
+      title: t('imports.text.all.title'),
+      description: t('imports.text.all.description'),
+      placeholder: t('imports.text.all.placeholder')
     };
-  }, [textImportScope, translate, yearValue]);
+  }, [t, textImportOpen]);
 
   const confirmDialog = useMemo<ConfirmDialog | null>(() => {
     if (!confirmAction) {
       return null;
     }
     if (confirmAction.type === 'import') {
-      const scopeLabel =
-        confirmAction.scope === 'month'
-          ? translate('importScopes.month', { month: monthValue })
-          : confirmAction.scope === 'year'
-            ? translate('importScopes.year', { year: yearValue })
-            : translate('importScopes.all');
       return {
-        title: translate('dialogs.confirmImportTitle'),
-        message: translate('dialogs.confirmImportMessage', {
+        title: t('dialogs.confirmImportTitle'),
+        message: t('dialogs.confirmImportMessage', {
           count: confirmAction.snapshots.length,
-          scope: scopeLabel,
           fileName: confirmAction.fileName
         }),
-        confirmLabel: translate('actions.import')
+        confirmLabel: t('actions.import')
       };
     }
     if (confirmAction.type === 'delete-month') {
       return {
-        title: translate('dialogs.confirmDeleteMonthTitle'),
-        message: translate('dialogs.confirmDeleteMonthMessage', { month: confirmAction.month }),
-        confirmLabel: translate('dialogs.confirmDeleteMonthCta')
+        title: t('dialogs.confirmDeleteMonthTitle'),
+        message: t('dialogs.confirmDeleteMonthMessage', { month: confirmAction.month }),
+        confirmLabel: t('dialogs.confirmDeleteMonthCta')
       };
     }
     if (confirmAction.type === 'delete-year') {
       return {
-        title: translate('dialogs.confirmDeleteYearTitle'),
-        message: translate('dialogs.confirmDeleteYearMessage', { year: confirmAction.year }),
-        confirmLabel: translate('dialogs.confirmDeleteYearCta')
+        title: t('dialogs.confirmDeleteYearTitle'),
+        message: t('dialogs.confirmDeleteYearMessage', { year: confirmAction.year }),
+        confirmLabel: t('dialogs.confirmDeleteYearCta')
       };
     }
     return {
-      title: translate('dialogs.confirmDeleteAllTitle'),
-      message: translate('dialogs.confirmDeleteAllMessage'),
-      confirmLabel: translate('dialogs.confirmDeleteAllCta')
+      title: t('dialogs.confirmDeleteAllTitle'),
+      message: t('dialogs.confirmDeleteAllMessage'),
+      confirmLabel: t('dialogs.confirmDeleteAllCta')
     };
-  }, [confirmAction, monthValue, translate, yearValue]);
-
-  const infoDialog = useMemo<InfoDialog | null>(() => {
-    if (!infoScope) {
-      return null;
-    }
-    if (infoScope === 'month') {
-      return {
-        title: translate('info.month.title'),
-        lines: [translate('info.month.line1'), translate('info.month.line2')],
-        examples: [translate('info.month.exampleHeader'), translate('info.month.exampleRow')]
-      };
-    }
-    if (infoScope === 'year') {
-      return {
-        title: translate('info.year.title'),
-        lines: [translate('info.year.line1'), translate('info.year.line2')],
-        examples: [translate('info.year.exampleHeader'), translate('info.year.exampleRow')]
-      };
-    }
-    return {
-      title: translate('info.all.title'),
-      lines: [translate('info.all.line1'), translate('info.all.line2')],
-      examples: [
-        translate('info.all.exampleHeader'),
-        translate('info.all.exampleRow1'),
-        translate('info.all.exampleRow2')
-      ]
-    };
-  }, [infoScope, translate]);
+  }, [confirmAction, t]);
 
   return {
     importInputRef,
-    importMenuOpen,
-    setImportMenuOpen,
-    toggleImportMenu,
-    closeImportMenu,
-    textImportScope,
+    textImportOpen,
     textImportValue,
     setTextImportValue,
-    infoScope,
-    setInfoScope,
     confirmAction,
     confirmDialog,
     textImportDetails,
-    infoDialog,
     importing,
     deletingMonth,
     deletingYear,

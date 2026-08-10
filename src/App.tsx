@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useCharts } from './hooks/useCharts';
 import { useDatabaseSettings } from './hooks/useDatabaseSettings';
 import { useExportData } from './hooks/useExportData';
-import { useInfoDialogContent } from './hooks/useInfoDialogContent';
 import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
@@ -26,14 +25,14 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { useDatabaseAccess } from './hooks/useDatabaseAccess';
 import { useOfflinePin } from './hooks/useOfflinePin';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
-import { parseCsvSnapshots, parseMonthCsv } from './utils/csv';
+import { parseCsvSnapshots } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
 import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { InsightsPanel } from './components/InsightsPanel';
 import { TabsBar } from './components/TabsBar';
-import { ConfirmDialog, DatabaseSettingsDialog, InfoDialog, TextImportDialog } from './components/Dialogs';
+import { ConfirmDialog, DatabaseSettingsDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
 import { AuthScreen } from './components/AuthScreen';
 import { AccessModeScreen } from './components/AccessModeScreen';
@@ -292,6 +291,7 @@ function FintrackApp({
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const isMobile = useIsMobile();
   const {
     monthValue,
@@ -436,16 +436,11 @@ function FintrackApp({
   });
   const {
     importInputRef,
-    importMenuOpen,
-    toggleImportMenu,
-    closeImportMenu,
-    textImportScope,
+    textImportOpen,
     textImportValue,
     setTextImportValue,
-    setInfoScope,
     confirmDialog,
     textImportDetails,
-    infoDialog,
     importing,
     deletingMonth,
     deletingYear,
@@ -461,11 +456,7 @@ function FintrackApp({
     openDeleteYear,
     openDeleteAll
   } = useImportFlow({
-    monthValue,
-    yearValue,
-    language,
     t,
-    parseMonthCsv,
     parseCsvSnapshots,
     saveSnapshot,
     deleteMonth,
@@ -592,7 +583,6 @@ function FintrackApp({
     }
     return /Android/i.test(navigator.userAgent);
   }, []);
-  const infoDialogContent = useInfoDialogContent(infoDialog);
 
   useEffect(() => {
     let active = true;
@@ -644,9 +634,6 @@ function FintrackApp({
       appMode={appMode}
       userEmail={userEmail}
       offlineAccess={offlineAccess}
-      onSignOut={() => {
-        void onSignOut();
-      }}
       onChangeAppMode={(nextMode) => {
         void onChangeAppMode(nextMode);
       }}
@@ -667,16 +654,9 @@ function FintrackApp({
           setActiveTab={setActiveTab}
           monthValue={monthValue}
           yearValue={yearValue}
-          importMenuOpen={importMenuOpen}
-          toggleImportMenu={toggleImportMenu}
-          openFileImport={openFileImport}
-          openTextImport={openTextImport}
-          setInfoScope={setInfoScope}
-          closeImportMenu={closeImportMenu}
           openDeleteMonth={openDeleteMonth}
           openDeleteYear={openDeleteYear}
           openDeleteAll={openDeleteAll}
-          importing={importing}
           deletingMonth={deletingMonth}
           deletingYear={deletingYear}
           deletingAll={deletingAll}
@@ -703,8 +683,19 @@ function FintrackApp({
             onConfirm={onConfirm}
             onCancel={closeConfirm}
           />
+          <ConfirmDialog
+            open={signOutConfirmOpen}
+            title={t(offlineAccess ? 'auth.connectCloudConfirmTitle' : 'auth.signOutConfirmTitle')}
+            message={t(offlineAccess ? 'auth.connectCloudConfirmMessage' : 'auth.signOutConfirmMessage')}
+            confirmLabel={t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
+            onConfirm={() => {
+              setSignOutConfirmOpen(false);
+              void onSignOut();
+            }}
+            onCancel={() => setSignOutConfirmOpen(false)}
+          />
           <TextImportDialog
-            open={Boolean(textImportScope)}
+            open={textImportOpen}
             title={textImportDetails?.title ?? ''}
             description={textImportDetails?.description ?? ''}
             placeholder={textImportDetails?.placeholder ?? ''}
@@ -712,12 +703,6 @@ function FintrackApp({
             onChange={setTextImportValue}
             onConfirm={confirmTextImport}
             onCancel={closeTextImport}
-          />
-          <InfoDialog
-            open={Boolean(infoDialog)}
-            title={infoDialog?.title ?? ''}
-            content={infoDialogContent}
-            onClose={() => setInfoScope(null)}
           />
           <DatabaseSettingsDialog
             open={settingsOpen}
@@ -727,6 +712,7 @@ function FintrackApp({
             offlinePinConfigured={offlinePinConfigured}
             onConfigureOfflinePin={onConfigureOfflinePin}
             onDisableOfflinePin={onDisableOfflinePin}
+            onSignOut={() => setSignOutConfirmOpen(true)}
             onChangeAppMode={(nextMode) => {
               void onChangeAppMode(nextMode);
             }}
@@ -758,6 +744,7 @@ function FintrackApp({
             canShareJson={canShareJsonBackup}
             sharingJson={sharingJson}
             importingJson={importingJson}
+            importingCsv={importing}
             backingUp={backingUp}
             exportStatus={exportStatus}
             backupStatus={backupStatus}
@@ -771,6 +758,8 @@ function FintrackApp({
             onExportJson={exportJson}
             onShareJson={shareJson}
             onImportJson={openJsonImport}
+            onImportCsv={openFileImport}
+            onPasteCsv={openTextImport}
             onBackupDatabase={backupDatabase}
             onClose={closeSettings}
           />

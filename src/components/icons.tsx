@@ -71,6 +71,15 @@ export function SettingsIcon() {
   );
 }
 
+export function LogoutIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M6.5 3H3.75A1.25 1.25 0 0 0 2.5 4.25v7.5A1.25 1.25 0 0 0 3.75 13H6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M6.5 8h6M10 5.5 12.5 8 10 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
   const path = direction === 'left' ? 'M10.5 3.5L6 8l4.5 4.5' : 'M5.5 3.5L10 8l-4.5 4.5';
   return (

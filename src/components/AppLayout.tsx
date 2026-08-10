@@ -10,7 +10,6 @@ type AppLayoutProps = {
   appMode: AppMode;
   userEmail: string | null;
   offlineAccess: boolean;
-  onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   importInputRef: RefObject<HTMLInputElement>;
@@ -29,7 +28,6 @@ export function AppLayout({
   appMode,
   userEmail,
   offlineAccess,
-  onSignOut,
   onChangeAppMode,
   t,
   importInputRef,
@@ -50,7 +48,6 @@ export function AppLayout({
           appMode={appMode}
           userEmail={userEmail}
           offlineAccess={offlineAccess}
-          onSignOut={onSignOut}
           onChangeAppMode={onChangeAppMode}
           t={t}
         />
