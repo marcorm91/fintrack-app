@@ -285,7 +285,7 @@ export function YearView({
                 {t('labels.cashFlow')}
               </p>
               <div className={`mt-3 grid grid-cols-2 gap-2 sm:gap-4 ${hasInvestmentPortfolio ? 'sm:grid-cols-3' : ''}`}>
-                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                <div className="metric-card">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalIncome')}</span>
                     <EyeToggle
@@ -299,7 +299,7 @@ export function YearView({
                     <span className="min-w-0 break-words">{formatCents(yearTotals.incomeCents)} EUR</span>
                   </div>
                 </div>
-                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                <div className="metric-card">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalExpense')}</span>
                     <EyeToggle
@@ -313,7 +313,7 @@ export function YearView({
                     <span className="min-w-0 break-words">{formatCents(yearTotals.expenseCents)} EUR</span>
                   </div>
                 </div>
-                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                <div className="metric-card">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.totalBenefit')}</span>
                     <EyeToggle
@@ -334,7 +334,7 @@ export function YearView({
                 {t('labels.wealth')}
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
-                <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                <div className="metric-card">
                   <div className="flex items-center justify-between">
                     <span>{t('labels.finalBalance')}</span>
                     <EyeToggle
@@ -350,7 +350,7 @@ export function YearView({
                 </div>
                 {hasInvestmentPortfolio ? (
                   <>
-                    <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                    <div className="metric-card">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalPortfolio')}</span>
                         <EyeToggle
@@ -364,7 +364,7 @@ export function YearView({
                         <span className="min-w-0 break-words">{formatCents(yearTotals.portfolioCents)} EUR</span>
                       </div>
                     </div>
-                    <div className="min-w-0 rounded-xl border border-ink/10 bg-white/90 p-2 text-xs text-muted sm:p-3 sm:text-sm">
+                    <div className="metric-card">
                       <div className="flex items-center justify-between">
                         <span>{t('labels.finalWealth')}</span>
                         <EyeToggle
