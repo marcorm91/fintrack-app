@@ -9,7 +9,6 @@ import type { AppMode } from '../hooks/useAppMode';
 import type { CloudSyncStatus } from '../hooks/useCloudSync';
 import type { CloudConflictResolution } from '../services/cloudSync';
 import { OfflinePinSetupDialog } from './OfflinePinSetupDialog';
-import { LogoutIcon } from './icons';
 
 export function ConfirmDialog({
   open,
@@ -160,7 +159,6 @@ export function DatabaseSettingsDialog({
   offlinePinConfigured,
   onConfigureOfflinePin,
   onDisableOfflinePin,
-  onSignOut,
   onChangeAppMode,
   cloudSyncStatus,
   onSyncNow,
@@ -212,7 +210,6 @@ export function DatabaseSettingsDialog({
   offlinePinConfigured: boolean;
   onConfigureOfflinePin: (pin: string) => Promise<void>;
   onDisableOfflinePin: () => Promise<void>;
-  onSignOut: () => void;
   onChangeAppMode: (mode: AppMode) => void;
   cloudSyncStatus: CloudSyncStatus;
   onSyncNow: () => void;
@@ -257,7 +254,8 @@ export function DatabaseSettingsDialog({
   onBackupDatabase: () => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const activeLanguage = i18n.language.startsWith('en') ? 'en' : 'es';
   const resolvedCurrent = currentPath || t('settings.unknownPath');
   const errorMessage = error ? t(error) : null;
   const resolvedCurrentVersion = currentVersion ?? t('settings.updateUnknown');
@@ -484,18 +482,6 @@ export function DatabaseSettingsDialog({
                   {t(appMode === 'local' ? 'settings.enableCloud' : 'settings.useLocal')}
                 </button>
               ) : null}
-              {appMode === 'cloud' ? (
-                <button
-                  type="button"
-                  onClick={onSignOut}
-                  className="btn btn-neutral w-full justify-center text-[10px] text-red-700 sm:w-auto sm:text-[11px]"
-                >
-                  <LogoutIcon />
-                  <span className="sr-only sm:not-sr-only">
-                    {t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
-                  </span>
-                </button>
-              ) : null}
             </div>
             {appMode === 'cloud' && cloudSyncStatus.conflictCount > 0 ? (
               <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3">
@@ -595,6 +581,36 @@ export function DatabaseSettingsDialog({
                 ) : null}
               </div>
             ) : null}
+          </section>
+
+          <section className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
+            <h4 className="text-sm font-semibold text-ink">{t('language.label')}</h4>
+            <div
+              className="segmented mt-3 inline-flex text-[10px]"
+              role="group"
+              aria-label={t('language.label')}
+            >
+              <button
+                type="button"
+                onClick={() => void i18n.changeLanguage('es')}
+                aria-pressed={activeLanguage === 'es'}
+                className={`segmented-option px-4 py-2 text-[10px] ${
+                  activeLanguage === 'es' ? 'segmented-option-active' : ''
+                }`}
+              >
+                {t('language.es')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void i18n.changeLanguage('en')}
+                aria-pressed={activeLanguage === 'en'}
+                className={`segmented-option px-4 py-2 text-[10px] ${
+                  activeLanguage === 'en' ? 'segmented-option-active' : ''
+                }`}
+              >
+                {t('language.en')}
+              </button>
+            </div>
           </section>
 
           <section className="rounded-2xl border border-ink/10 bg-white px-4 py-4">
