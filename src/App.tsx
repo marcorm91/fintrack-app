@@ -291,6 +291,7 @@ function FintrackApp({
   const [activeTab, setActiveTab] = useState<TabKey>('month');
   const [appReady, setAppReady] = useState(false);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const isMobile = useIsMobile();
   const {
     monthValue,
@@ -633,9 +634,6 @@ function FintrackApp({
       appMode={appMode}
       userEmail={userEmail}
       offlineAccess={offlineAccess}
-      onSignOut={() => {
-        void onSignOut();
-      }}
       onChangeAppMode={(nextMode) => {
         void onChangeAppMode(nextMode);
       }}
@@ -685,6 +683,17 @@ function FintrackApp({
             onConfirm={onConfirm}
             onCancel={closeConfirm}
           />
+          <ConfirmDialog
+            open={signOutConfirmOpen}
+            title={t(offlineAccess ? 'auth.connectCloudConfirmTitle' : 'auth.signOutConfirmTitle')}
+            message={t(offlineAccess ? 'auth.connectCloudConfirmMessage' : 'auth.signOutConfirmMessage')}
+            confirmLabel={t(offlineAccess ? 'auth.connectCloud' : 'auth.signOut')}
+            onConfirm={() => {
+              setSignOutConfirmOpen(false);
+              void onSignOut();
+            }}
+            onCancel={() => setSignOutConfirmOpen(false)}
+          />
           <TextImportDialog
             open={textImportOpen}
             title={textImportDetails?.title ?? ''}
@@ -703,6 +712,7 @@ function FintrackApp({
             offlinePinConfigured={offlinePinConfigured}
             onConfigureOfflinePin={onConfigureOfflinePin}
             onDisableOfflinePin={onDisableOfflinePin}
+            onSignOut={() => setSignOutConfirmOpen(true)}
             onChangeAppMode={(nextMode) => {
               void onChangeAppMode(nextMode);
             }}
