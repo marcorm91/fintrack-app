@@ -90,7 +90,7 @@ export function ChartModal({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex bg-ink/50 ${
+      className={`fixed inset-0 z-[60] flex bg-ink/50 ${
         fullScreen ? 'items-stretch justify-stretch px-0 py-0' : 'items-center justify-center px-4 py-6'
       }`}
     >
@@ -118,7 +118,7 @@ export function ChartModal({
           </div>
         ) : null}
         <div className={`px-4 py-4 ${fullScreen ? 'flex-1 min-h-0' : ''}`}>
-          <div className={fullScreen ? 'h-full' : 'h-[60vh]'}>{children}</div>
+          <div className={fullScreen ? 'h-full' : 'h-[52vh] sm:h-[60vh]'}>{children}</div>
         </div>
       </div>
     </div>

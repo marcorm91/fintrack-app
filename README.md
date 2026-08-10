@@ -8,16 +8,16 @@ Fintrack es una app *offline-first* para controlar ingresos, gastos, efectivo, p
 
 ## Descargas
 
-- Windows instalador: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_x64-setup.exe)
-- Windows MSI: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_amd64.AppImage)
-- Linux DEB: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_amd64.deb)
-- Linux RPM: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7-1.x86_64.rpm)
-- Android APK: [Fintrack 3.0.7](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.7/Fintrack_3.0.7_android.apk)
+- Windows instalador: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_x64-setup.exe)
+- Windows MSI: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_amd64.AppImage)
+- Linux DEB: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_amd64.deb)
+- Linux RPM: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6-1.x86_64.rpm)
+- Android APK: [Fintrack 3.0.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.0.6/Fintrack_3.0.6_android.apk)
 
-Los enlaces estarán disponibles cuando se publique la release `v3.0.7`.
+Los enlaces estarán disponibles cuando se publique la release `v3.0.6`.
 
 ## Qué incluye
 
@@ -119,7 +119,7 @@ firestore.rules reglas de seguridad para Firestore
 
 ## Releases
 
-Al publicar un tag `v*`, por ejemplo `v3.0.7`, GitHub Actions genera los paquetes de Windows, macOS, Linux y Android, y crea la release con sus artefactos.
+Al publicar un tag `v*`, por ejemplo `v3.0.6`, GitHub Actions genera los paquetes de Windows, macOS, Linux y Android, y crea la release con sus artefactos.
 
 ## Licencia
 

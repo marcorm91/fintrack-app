@@ -55,8 +55,8 @@ export function OfflinePinSetupDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 px-4">
-      <section className="w-full max-w-sm rounded-2xl border border-ink/10 bg-white p-5 shadow-card sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/50 px-4 py-4">
+      <section className="w-full max-w-sm max-h-[82vh] overflow-y-auto rounded-2xl border border-ink/10 bg-white p-5 shadow-card sm:max-h-[90vh] sm:p-6">
         <h4 className="text-lg font-semibold text-ink">{t('settings.offlinePinDialogTitle')}</h4>
         <p className="mt-2 text-xs leading-5 text-muted">
           {t('settings.offlinePinDialogDescription')}
