@@ -7,6 +7,7 @@ type MonthlyRecapProps = {
   summary: MonthlySummary;
   previousMonth: MonthlySeriesPoint | null;
   hasMonthData: boolean;
+  isCurrentMonth: boolean;
   locale: string;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
@@ -31,9 +32,9 @@ function RecapMetric({ label, currentCents, previousCents, tone }: RecapMetricPr
         : 'text-muted';
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl bg-ink/[0.035] px-3 py-2.5 text-sm">
+    <div className="rounded-xl bg-ink/[0.035] px-3 py-3 text-sm">
       <span className="text-muted">{label}</span>
-      <div className="text-right">
+      <div className="mt-1.5">
         <p className={`font-semibold ${toneClass}`}>
           {deltaCents > 0 ? '+' : deltaCents < 0 ? '-' : ''}
           {formatAbsoluteAmount(deltaCents)}
@@ -51,6 +52,7 @@ export function MonthlyRecap({
   summary,
   previousMonth,
   hasMonthData,
+  isCurrentMonth,
   locale,
   t
 }: MonthlyRecapProps) {
@@ -103,33 +105,27 @@ export function MonthlyRecap({
       </p>
       <p className="mt-3 text-base font-semibold leading-6 text-ink">{headline}</p>
       <p className="mt-1 text-sm leading-5 text-muted">{status}</p>
-
-      <details className="group mt-4 border-t border-ink/10 pt-3">
-        <summary className="cursor-pointer list-none text-sm font-semibold text-accent [&::-webkit-details-marker]:hidden">
-          <span className="group-open:hidden">{t('monthlyRecap.showDetail')}</span>
-          <span className="hidden group-open:inline">{t('monthlyRecap.hideDetail')}</span>
-        </summary>
-        <div className="mt-3 grid gap-2">
-          <RecapMetric
-            label={t('monthlyRecap.expenses')}
-            currentCents={summary.expenseCents}
-            previousCents={previousMonth.expenseCents}
-            tone={expenseDelta < 0 ? 'positive' : expenseDelta > 0 ? 'negative' : 'neutral'}
-          />
-          <RecapMetric
-            label={t('monthlyRecap.savings')}
-            currentCents={summary.benefitCents}
-            previousCents={previousMonth.benefitCents}
-            tone={benefitDelta > 0 ? 'positive' : benefitDelta < 0 ? 'negative' : 'neutral'}
-          />
-          <RecapMetric
-            label={t('monthlyRecap.wealth')}
-            currentCents={summary.totalWealthCents}
-            previousCents={previousMonth.totalWealthCents}
-            tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}
-          />
-        </div>
-      </details>
+      {isCurrentMonth ? <p className="mt-3 text-xs leading-5 text-muted">{t('monthlyRecap.inProgress')}</p> : null}
+      <div className="mt-4 grid gap-2 border-t border-ink/10 pt-3 lg:grid-cols-3">
+        <RecapMetric
+          label={t('monthlyRecap.expenses')}
+          currentCents={summary.expenseCents}
+          previousCents={previousMonth.expenseCents}
+          tone={expenseDelta < 0 ? 'positive' : expenseDelta > 0 ? 'negative' : 'neutral'}
+        />
+        <RecapMetric
+          label={t('monthlyRecap.savings')}
+          currentCents={summary.benefitCents}
+          previousCents={previousMonth.benefitCents}
+          tone={benefitDelta > 0 ? 'positive' : benefitDelta < 0 ? 'negative' : 'neutral'}
+        />
+        <RecapMetric
+          label={t('monthlyRecap.wealth')}
+          currentCents={summary.totalWealthCents}
+          previousCents={previousMonth.totalWealthCents}
+          tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}
+        />
+      </div>
     </section>
   );
 }

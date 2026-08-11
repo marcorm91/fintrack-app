@@ -9,8 +9,7 @@ export const monthlyRecapTranslations = {
     statusBetter: 'Buen mes: has contenido el gasto y tu ahorro ha mejorado.',
     statusWorse: 'Este mes se ha desviado un poco. El detalle te ayuda a ver qué ha cambiado.',
     statusSimilar: 'Has mantenido un ritmo parecido al mes pasado.',
-    showDetail: 'Ver comparación completa',
-    hideDetail: 'Ocultar comparación completa',
+    inProgress: 'Tus datos están guardados. Entrarán en los gráficos, totales y comparativas al empezar el mes siguiente.',
     expenses: 'Gastos',
     savings: 'Ahorro',
     wealth: 'Patrimonio'
@@ -25,8 +24,7 @@ export const monthlyRecapTranslations = {
     statusBetter: 'A good month: spending stayed under control and your savings improved.',
     statusWorse: 'This month drifted a little. The detail helps you see what changed.',
     statusSimilar: 'You kept a similar pace to last month.',
-    showDetail: 'View full comparison',
-    hideDetail: 'Hide full comparison',
+    inProgress: 'Your data is saved. It will be included in charts, totals, and comparisons at the start of next month.',
     expenses: 'Expenses',
     savings: 'Savings',
     wealth: 'Wealth'

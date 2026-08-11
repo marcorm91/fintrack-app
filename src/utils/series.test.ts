@@ -3,6 +3,7 @@ import {
   applyInvestmentPortfolioSetting,
   buildYearSeries,
   getBalanceTrend,
+  getClosedMonthlySeries,
   getLatestClosingBalancePointAtOrBefore
 } from './series';
 import type { MonthlySeriesPoint } from '../db';
@@ -43,6 +44,15 @@ describe('series utilities', () => {
     );
 
     expect(result?.month).toBe('2026-02');
+  });
+
+  it('keeps the current and future months out of closed insights', () => {
+    expect(
+      getClosedMonthlySeries(
+        [point('2026-07', 700), point('2026-08', 800), point('2026-09', 900)],
+        '2026-08'
+      ).map((item) => item.month)
+    ).toEqual(['2026-07']);
   });
 
   it('calculates balance trends', () => {

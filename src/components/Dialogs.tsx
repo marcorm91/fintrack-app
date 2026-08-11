@@ -882,6 +882,7 @@ export function DatabaseSettingsDialog({
             {updateStatus === 'updateAvailable' && latestReleaseUrl ? (
               <a
                 href={latestReleaseUrl}
+                onClick={(event) => handleExternalLink(event, latestReleaseUrl)}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-neutral mt-3 text-[10px] sm:text-[11px]"

@@ -10,6 +10,7 @@
     "fs:allow-download-read",
     "fs:allow-write-text-file",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    "shell:allow-open"
   ]
 }
