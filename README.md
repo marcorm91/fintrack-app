@@ -4,11 +4,11 @@
 
 # Fintrack
 
-Fintrack es una app *offline-first* para controlar ingresos, gastos, efectivo, patrimonio e histórico mensual. Funciona con SQLite en local y, de forma opcional, puede sincronizarse con Firebase para usar los mismos datos en varios dispositivos.
+Fintrack is an *offline-first* app for tracking income, expenses, cash, net worth, and monthly history. It uses a local SQLite database and can optionally sync with Firebase to use the same data across multiple devices.
 
-## Descargas
+## Downloads
 
-- Windows instalador: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_x64-setup.exe)
+- Windows installer: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_x64-setup.exe)
 - Windows MSI: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_x64_en-US.msi)
 - Windows portable ZIP: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_portable_windows.zip)
 - macOS Apple Silicon: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_aarch64.dmg)
@@ -17,46 +17,46 @@ Fintrack es una app *offline-first* para controlar ingresos, gastos, efectivo, p
 - Linux RPM: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0-1.x86_64.rpm)
 - Android APK: [Fintrack 3.1.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.1.0/Fintrack_3.1.0_android.apk)
 
-Los enlaces estarán disponibles cuando se publique la release `v3.1.0`.
+The links will be available once release `v3.1.0` is published.
 
-## Qué incluye
+## Features
 
-- Vista mensual, anual e histórica.
-- Importación desde CSV o texto pegado.
-- Exportación CSV, SQL y backup JSON.
-- Compartir backup JSON desde Android con el menú nativo del sistema.
-- Gráficas de efectivo, beneficio y patrimonio.
-- Modo local sin cuenta.
-- Modo cloud con Firebase Authentication y Firestore.
-- Sincronización automática y resolución explícita de conflictos.
-- PIN local de emergencia para trabajar sin Firebase si ya estaba configurado.
-- Cartera de inversión opcional.
-- Notas mensuales e interfaz responsive.
+- Monthly, yearly, and history views.
+- Import from CSV files or pasted text.
+- CSV, SQL, and JSON backup export.
+- Share JSON backups from Android through the native system share menu.
+- Cash, profit, and net worth charts.
+- Local mode without an account.
+- Cloud mode with Firebase Authentication and Firestore.
+- Automatic sync and explicit conflict resolution.
+- Local emergency PIN for working without Firebase once it has been configured.
+- Optional investment portfolio.
+- Monthly notes and a responsive interface.
 
-## Modos de uso
+## Usage modes
 
-**Local**: no requiere cuenta ni conexión. Los datos quedan en una base SQLite del dispositivo.
+**Local**: no account or connection required. Data stays in a SQLite database on the device.
 
-**Cloud oficial**: usa la infraestructura Firebase privada de la distribución oficial. No hay registro público desde la app; el acceso se autoriza de forma individual.
+**Official cloud**: uses the private Firebase infrastructure of the official distribution. Public sign-up is not available from the app; access is granted individually.
 
-**Cloud propio**: puedes bifurcar el repo, crear tu propio proyecto Firebase, sustituir la configuración y publicar `firestore.rules`.
+**Self-hosted cloud**: fork the repository, create your own Firebase project, replace the configuration, and deploy `firestore.rules`.
 
-## Rutas de datos
+## Data locations
 
-En escritorio, Fintrack guarda datos y configuración en las rutas estándar de Tauri/WebView del usuario. En Windows suelen estar aquí:
+On desktop, Fintrack stores data and configuration in the user's standard Tauri/WebView locations. On Windows, they are usually located here:
 
 ```text
-C:\Users\<usuario>\AppData\Roaming\com.fintrack.app
-C:\Users\<usuario>\AppData\Local\com.fintrack.app
+C:\\Users\\<username>\\AppData\\Roaming\\com.fintrack.app
+C:\\Users\\<username>\\AppData\\Local\\com.fintrack.app
 ```
 
-La base SQLite por defecto se llama:
+The default SQLite database is named:
 
 ```text
 finanzas.db
 ```
 
-En Windows portable, si existe `fintrack.portable` junto a `fintrack-app.exe`, la base se crea junto al ejecutable:
+In Windows portable mode, if `fintrack.portable` is placed next to `fintrack-app.exe`, the database is created beside the executable:
 
 ```text
 fintrack-app.exe
@@ -64,32 +64,32 @@ fintrack.portable
 finanzas.db
 ```
 
-Android usa el almacenamiento interno protegido de la app.
+Android uses the app's protected internal storage.
 
-## Copias de seguridad
+## Backups
 
-El formato recomendado es **Backup JSON** desde:
+The recommended format is **JSON Backup**, available from:
 
 ```text
-Ajustes > Tus datos > Exportar copia
+Settings > Your data > Export backup
 ```
 
-Ese JSON sirve para migrar a otro dispositivo o conservar una copia externa. En Android también puedes usar **Compartir copia** para enviarlo a Telegram, WhatsApp, Drive u otra app compatible.
+Use this JSON file to migrate to another device or keep an external copy. On Android, you can also use **Share backup** to send it through Telegram, WhatsApp, Drive, or any compatible app.
 
-## Desarrollo
+## Development
 
-Requisitos:
+Requirements:
 
 - Node.js 20+
-- Rust y dependencias de Tauri
+- Rust and Tauri dependencies
 
-Instalación:
+Install:
 
 ```bash
 npm install
 ```
 
-Comandos habituales:
+Common commands:
 
 ```bash
 npm run dev
@@ -99,28 +99,28 @@ npm run build
 npm run tauri build
 ```
 
-Datos simulados:
+Mock data:
 
 ```bash
 npm run dev:mocks
 npm run tauri:dev:mocks
 ```
 
-Los mocks usan `finanzas.mocks.db` y no modifican `finanzas.db`.
+Mocks use `finanzas.mocks.db` and do not modify `finanzas.db`.
 
-## Estructura
+## Project structure
 
 ```text
-src/          UI, hooks, features, servicios, utils y traducciones
-src-tauri/    configuración y código nativo Tauri
-scripts/      utilidades de build Android y mocks
-firestore.rules reglas de seguridad para Firestore
+src/            UI, hooks, features, services, utilities, and translations
+src-tauri/      Tauri configuration and native code
+scripts/        Android build and mock utilities
+firestore.rules Firestore security rules
 ```
 
 ## Releases
 
-Al publicar un tag `v*`, por ejemplo `v3.1.0`, GitHub Actions genera los paquetes de Windows, macOS, Linux y Android, y crea la release con sus artefactos.
+When a `v*` tag is published, for example `v3.1.0`, GitHub Actions builds the Windows, macOS, Linux, and Android packages and creates the release with its artifacts.
 
-## Licencia
+## License
 
-MIT. Ver `LICENSE`.
+MIT. See `LICENSE`.
