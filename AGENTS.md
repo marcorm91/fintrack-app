@@ -1,56 +1,58 @@
-# Fintrack — instrucciones de trabajo
+# Fintrack — contribution guidelines
 
-## Flujo de Git y pull requests
+## Git and pull request workflow
 
-- Parte siempre de `main` actualizado para iniciar una tarea nueva.
-- Crea una rama y una pull request por cambio. No reutilices ni modifiques una PR que ya esté fusionada o cerrada.
-- Antes de abrir una PR, comprueba que la rama no arrastra commits ni cambios ajenos.
-- Cada PR debe explicar qué cambia, qué se ha validado y cualquier decisión relevante.
-- Antes de solicitar la PR, ejecuta `npm run check` y corrige los fallos relacionados con el cambio.
-- Revisa referencias, imports, hooks, tipos, traducciones y archivos que hayan quedado sin uso. Elimina el código residual en la misma PR cuando sea seguro hacerlo.
-- No fuerces actualizaciones de rama ni reescribas historial sin indicación expresa.
+- Always start a new task from up-to-date `main`.
+- Create one branch and one pull request per change. Never reuse or modify a merged or closed PR.
+- Before opening a PR, ensure the branch contains no unrelated commits or changes.
+- Every PR must explain what changed, what was validated, and any relevant decisions.
+- Run `npm run check` before requesting a PR and fix failures related to the change.
+- Review references, imports, hooks, types, translations, and files left unused. Remove residual code in the same PR when it is safe to do so.
+- Do not force-push or rewrite history unless explicitly instructed.
 
-## Convención de commits
+## Commit convention
 
-Usa un mensaje corto, descriptivo y con ámbito obligatorio:
-
-```text
-Tipo(ámbito): descripción en minúsculas
-```
-
-Tipos permitidos:
-
-- `Feat`: nueva funcionalidad.
-- `Fix`: corrección de un error.
-- `Refactor`: mejora interna sin cambio funcional.
-- `Docs`: documentación.
-- `Test`: pruebas.
-- `Chore`: mantenimiento, configuración o dependencias.
-- `Style`: formato o estilos sin cambiar la lógica.
-
-Ejemplos:
+Write every commit message in English. Use a short, descriptive message with a required scope:
 
 ```text
-Feat(monthly-recap): simplifica la comparación mensual
-Fix(settings-dialog): corrige la capa de los modales anidados
-Refactor(insights): elimina el hook mensual sin uso
-Docs(readme): actualiza los enlaces de la release
-Chore(release): prepara la versión 3.1.0
+Type(scope): lower-case subject
 ```
+
+Allowed types:
+
+- `Feat`: new functionality.
+- `Fix`: bug fix.
+- `Refactor`: internal improvement with no functional change.
+- `Docs`: documentation.
+- `Test`: tests.
+- `Chore`: maintenance, configuration, or dependencies.
+- `Style`: formatting or styling without logic changes.
+
+Examples:
+
+```text
+Feat(monthly-recap): simplify monthly comparison
+Fix(settings-dialog): correct nested modal layer
+Refactor(insights): remove unused monthly hook
+Docs(readme): update release links
+Chore(release): prepare version 3.1.0
+```
+
+Commitlint and Husky enforce this format on every commit. The scope is mandatory.
 
 ## Releases
 
-- Actualiza la versión solo cuando el cambio vaya a publicarse como release.
-- En una release, mantén alineados `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json` y `README.md`.
-- Actualiza en el README los enlaces y el texto de la nueva versión.
-- Crea y publica el tag únicamente después de fusionar la PR en `main`.
-- No modifiques ni reutilices un tag ya publicado: prepara una versión posterior.
+- Update the version only when the change will be published as a release.
+- For a release, keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`, and `README.md` aligned.
+- Update release links and copy in the README.
+- Create and publish the tag only after merging the PR into `main`.
+- Never modify or reuse a published tag; prepare a later version instead.
 
-## Producto y calidad
+## Product and quality
 
-- Fintrack es una app local-first, sencilla y privada. Evita añadir complejidad que no aporte valor claro.
-- Prioriza mobile, accesibilidad y una interfaz clara antes que añadir más datos o tarjetas.
-- Usa lenguaje cercano y humano; evita tecnicismos, porcentajes y métricas redundantes en la vista principal.
-- Mantén el detalle disponible bajo demanda cuando sea útil.
-- Si el cambio es visual, no alteres la lógica financiera, los datos guardados ni las importaciones/exportaciones.
-- Comprueba los estados vacíos, los flujos de error y los modales, especialmente en móvil.
+- Fintrack is a simple, private, local-first app. Avoid complexity that does not add clear value.
+- Prioritize mobile, accessibility, and a clear interface over adding more data or cards.
+- Use clear, human language. Avoid technical jargon, percentages, and redundant metrics in the main view.
+- Keep detailed information available on demand when useful.
+- If a change is visual, do not alter financial logic, saved data, or import/export flows.
+- Check empty states, error flows, and dialogs, especially on mobile.
