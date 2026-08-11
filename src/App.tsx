@@ -6,7 +6,6 @@ import { useExportData } from './hooks/useExportData';
 import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
-import { useMonthlyInsights } from './hooks/useMonthlyInsights';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
 import { useYearInsights } from './hooks/useYearInsights';
 import { useInvestmentPortfolioSetting } from './hooks/useInvestmentPortfolioSetting';
@@ -30,7 +29,7 @@ import { shiftMonthValue } from './utils/date';
 import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
-import { InsightsPanel } from './components/InsightsPanel';
+import { MonthlyRecap } from './components/MonthlyRecap';
 import { TabsBar } from './components/TabsBar';
 import { ConfirmDialog, DatabaseSettingsDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
@@ -352,17 +351,6 @@ function FintrackApp({
     () => (summary ? applyInvestmentPortfolioSetting(summary, hasInvestmentPortfolio) : null),
     [hasInvestmentPortfolio, summary]
   );
-  const monthInsightsVisibility = useMemo(
-    () => ({
-      income: true,
-      expense: true,
-      benefit: true,
-      balance: true,
-      portfolio: hasInvestmentPortfolio,
-      totalWealth: hasInvestmentPortfolio
-    }),
-    [hasInvestmentPortfolio]
-  );
   const effectiveYearSeriesVisibility = useMemo(
     () =>
       hasInvestmentPortfolio
@@ -503,15 +491,7 @@ function FintrackApp({
 
   const hasMonthData = Boolean(summary || series.find((point) => point.month === monthValue));
 
-  const monthInsights = useMonthlyInsights({
-    monthValue,
-    displaySummary,
-    series: effectiveSeries,
-    monthSeriesVisibility: monthInsightsVisibility,
-    hasMonthData,
-    isCurrentMonth,
-    t
-  });
+  const previousMonth = effectiveSeries.find((point) => point.month === shiftMonthValue(monthValue, -1)) ?? null;
   const yearInsights = useYearInsights({
     yearValue,
     yearTotals,
@@ -780,13 +760,13 @@ function FintrackApp({
             onOpenSettings={openSettings}
             onMobileFormOpenChange={setMonthSwipeBlocked}
           />
-          <InsightsPanel
-            title={monthInsights.title}
-            comparisons={monthInsights.comparisons}
-            emptyLabel={monthInsights.emptyLabel}
-            currentLabel={monthInsights.currentLabel}
-            previousLabel={monthInsights.previousLabel}
-            hasAnyData={monthInsights.hasAnyData}
+          <MonthlyRecap
+            monthValue={monthValue}
+            summary={displaySummary}
+            previousMonth={previousMonth}
+            hasMonthData={hasMonthData}
+            locale={language}
+            t={t}
           />
         </div>
       ) : null}
