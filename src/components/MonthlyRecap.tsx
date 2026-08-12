@@ -7,13 +7,14 @@ type MonthlyRecapProps = {
   summary: MonthlySummary;
   previousMonth: MonthlySeriesPoint | null;
   hasMonthData: boolean;
-  isCurrentMonth: boolean;
   locale: string;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
 
 type RecapMetricProps = {
   label: string;
+  currentPeriodLabel: string;
+  previousPeriodLabel: string;
   currentCents: number;
   previousCents: number;
   tone: 'positive' | 'negative' | 'neutral';
@@ -22,7 +23,14 @@ type RecapMetricProps = {
 const formatAmount = (valueCents: number) => `${formatCents(valueCents)} EUR`;
 const formatAbsoluteAmount = (valueCents: number) => formatAmount(Math.abs(valueCents));
 
-function RecapMetric({ label, currentCents, previousCents, tone }: RecapMetricProps) {
+function RecapMetric({
+  label,
+  currentPeriodLabel,
+  previousPeriodLabel,
+  currentCents,
+  previousCents,
+  tone
+}: RecapMetricProps) {
   const deltaCents = currentCents - previousCents;
   const toneClass =
     tone === 'positive'
@@ -40,7 +48,7 @@ function RecapMetric({ label, currentCents, previousCents, tone }: RecapMetricPr
           {formatAbsoluteAmount(deltaCents)}
         </p>
         <p className="mt-0.5 text-[11px] text-muted">
-          {formatAmount(currentCents)} · {formatAmount(previousCents)}
+          {currentPeriodLabel}: {formatAmount(currentCents)} · {previousPeriodLabel}: {formatAmount(previousCents)}
         </p>
       </div>
     </div>
@@ -52,7 +60,6 @@ export function MonthlyRecap({
   summary,
   previousMonth,
   hasMonthData,
-  isCurrentMonth,
   locale,
   t
 }: MonthlyRecapProps) {
@@ -85,6 +92,8 @@ export function MonthlyRecap({
   const benefitDelta = summary.benefitCents - previousMonth.benefitCents;
   const wealthDelta = summary.totalWealthCents - previousMonth.totalWealthCents;
   const previousMonthLabel = getMonthLabel(previousMonth.month, locale, 'long');
+  const currentPeriodLabel = getMonthLabel(monthValue, locale).toUpperCase();
+  const previousPeriodLabel = getMonthLabel(previousMonth.month, locale).toUpperCase();
   const headline =
     expenseDelta > 0
       ? t('monthlyRecap.expenseMore', { amount: formatAbsoluteAmount(expenseDelta), month: previousMonthLabel })
@@ -105,22 +114,27 @@ export function MonthlyRecap({
       </p>
       <p className="mt-3 text-base font-semibold leading-6 text-ink">{headline}</p>
       <p className="mt-1 text-sm leading-5 text-muted">{status}</p>
-      {isCurrentMonth ? <p className="mt-3 text-xs leading-5 text-muted">{t('monthlyRecap.inProgress')}</p> : null}
       <div className="mt-4 grid gap-2 border-t border-ink/10 pt-3 lg:grid-cols-3">
         <RecapMetric
           label={t('monthlyRecap.expenses')}
+          currentPeriodLabel={currentPeriodLabel}
+          previousPeriodLabel={previousPeriodLabel}
           currentCents={summary.expenseCents}
           previousCents={previousMonth.expenseCents}
           tone={expenseDelta < 0 ? 'positive' : expenseDelta > 0 ? 'negative' : 'neutral'}
         />
         <RecapMetric
           label={t('monthlyRecap.savings')}
+          currentPeriodLabel={currentPeriodLabel}
+          previousPeriodLabel={previousPeriodLabel}
           currentCents={summary.benefitCents}
           previousCents={previousMonth.benefitCents}
           tone={benefitDelta > 0 ? 'positive' : benefitDelta < 0 ? 'negative' : 'neutral'}
         />
         <RecapMetric
           label={t('monthlyRecap.wealth')}
+          currentPeriodLabel={currentPeriodLabel}
+          previousPeriodLabel={previousPeriodLabel}
           currentCents={summary.totalWealthCents}
           previousCents={previousMonth.totalWealthCents}
           tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}

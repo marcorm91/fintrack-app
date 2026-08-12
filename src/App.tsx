@@ -390,6 +390,20 @@ function FintrackApp({
     },
     [setMonthValue]
   );
+  const openMonthFromYear = useCallback(
+    (targetMonth: string) => {
+      setMonthValue(targetMonth);
+      setActiveTab('month');
+    },
+    [setMonthValue]
+  );
+  const openYearFromHistory = useCallback(
+    (targetYear: string) => {
+      setYearValue(targetYear);
+      setActiveTab('year');
+    },
+    [setYearValue]
+  );
   const { motionClassName: monthMotionClassName, swipeHandlers: monthSwipeHandlers } =
     useSwipeNavigation({
       enabled: isMobile,
@@ -783,7 +797,6 @@ function FintrackApp({
             summary={displaySummary}
             previousMonth={previousMonth}
             hasMonthData={hasMonthData}
-            isCurrentMonth={isCurrentMonth}
             locale={language}
             t={t}
           />
@@ -813,6 +826,7 @@ function FintrackApp({
           yearTableSort={yearTableSort}
           handleYearSort={handleYearSort}
           yearTrendByMonth={yearTrendByMonth}
+          onSelectMonth={openMonthFromYear}
         />
       ) : null}
       {activeTab === 'all' ? (
@@ -829,6 +843,7 @@ function FintrackApp({
           allYearsTableSort={allYearsTableSort}
           handleAllYearsSort={handleAllYearsSort}
           allYearsTrendByYear={allYearsTrendByYear}
+          onSelectYear={openYearFromHistory}
         />
       ) : null}
       </Suspense>

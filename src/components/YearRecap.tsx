@@ -14,6 +14,8 @@ type YearRecapProps = {
 
 type RecapMetricProps = {
   label: string;
+  currentPeriodLabel: string;
+  comparisonPeriodLabel: string;
   currentCents: number;
   previousCents: number;
   tone: 'positive' | 'negative' | 'neutral';
@@ -22,7 +24,14 @@ type RecapMetricProps = {
 const formatAmount = (valueCents: number) => `${formatCents(valueCents)} EUR`;
 const formatAbsoluteAmount = (valueCents: number) => formatAmount(Math.abs(valueCents));
 
-function RecapMetric({ label, currentCents, previousCents, tone }: RecapMetricProps) {
+function RecapMetric({
+  label,
+  currentPeriodLabel,
+  comparisonPeriodLabel,
+  currentCents,
+  previousCents,
+  tone
+}: RecapMetricProps) {
   const deltaCents = currentCents - previousCents;
   const toneClass =
     tone === 'positive'
@@ -40,7 +49,7 @@ function RecapMetric({ label, currentCents, previousCents, tone }: RecapMetricPr
           {formatAbsoluteAmount(deltaCents)}
         </p>
         <p className="mt-0.5 text-[11px] text-muted">
-          {formatAmount(currentCents)} · {formatAmount(previousCents)}
+          {currentPeriodLabel}: {formatAmount(currentCents)} · {comparisonPeriodLabel}: {formatAmount(previousCents)}
         </p>
       </div>
     </div>
@@ -105,12 +114,12 @@ export function YearRecap({
           <p className="mt-3 text-base font-semibold leading-6 text-ink">{savingsHeadline}</p>
           <p className="mt-1 text-sm leading-5 text-muted">{wealthHeadline}</p>
         </div>
-        <label className="grid gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted sm:min-w-36 sm:text-right">
-          {t('yearRecap.compareWith', { year: yearValue })}
+        <label className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted sm:flex-nowrap sm:text-right">
+          <span>{t('yearRecap.compareWith', { year: yearValue })}</span>
           <select
             value={comparisonYearValue}
             onChange={(event) => setComparisonYearValue(event.target.value)}
-            className="rounded-xl border border-ink/10 bg-white px-3 py-2 text-left text-sm font-normal normal-case tracking-normal text-ink shadow-sm focus:border-accent focus:outline-none sm:text-right"
+            className="rounded-xl border border-ink/10 bg-white px-3 py-2 text-left text-sm font-normal normal-case tracking-normal text-ink shadow-sm focus:border-accent focus:outline-none"
           >
             {comparisonYears.map((year) => (
               <option key={year} value={year}>
@@ -123,18 +132,24 @@ export function YearRecap({
       <div className="mt-4 grid gap-2 border-t border-ink/10 pt-3 lg:grid-cols-3">
         <RecapMetric
           label={t('yearRecap.expenses')}
+          currentPeriodLabel={yearValue}
+          comparisonPeriodLabel={comparisonYear.year}
           currentCents={yearTotals.expenseCents}
           previousCents={comparisonYear.expenseCents}
           tone={expenseDelta < 0 ? 'positive' : expenseDelta > 0 ? 'negative' : 'neutral'}
         />
         <RecapMetric
           label={t('yearRecap.savings')}
+          currentPeriodLabel={yearValue}
+          comparisonPeriodLabel={comparisonYear.year}
           currentCents={yearTotals.benefitCents}
           previousCents={comparisonYear.benefitCents}
           tone={savingsDelta > 0 ? 'positive' : savingsDelta < 0 ? 'negative' : 'neutral'}
         />
         <RecapMetric
           label={t('yearRecap.wealth')}
+          currentPeriodLabel={yearValue}
+          comparisonPeriodLabel={comparisonYear.year}
           currentCents={yearTotals.totalWealthCents}
           previousCents={comparisonYear.totalWealthCents}
           tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}
