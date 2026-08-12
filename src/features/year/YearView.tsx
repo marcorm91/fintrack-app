@@ -58,6 +58,7 @@ type YearViewProps = {
   yearTableSort: { key: YearTableSortKey; direction: SortDirection };
   handleYearSort: (key: YearTableSortKey) => void;
   yearTrendByMonth: Map<string, SeriesTrendMap>;
+  onSelectMonth: (month: string) => void;
 };
 
 export function YearView({
@@ -82,7 +83,8 @@ export function YearView({
   sortedYearSeries,
   yearTableSort,
   handleYearSort,
-  yearTrendByMonth
+  yearTrendByMonth,
+  onSelectMonth
 }: YearViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
@@ -465,6 +467,17 @@ export function YearView({
           </div>
         </details>
 
+        <YearRecap
+          yearValue={yearValue}
+          yearTotals={yearTotals}
+          comparisonYears={comparisonYears}
+          comparisonYear={comparisonYear}
+          comparisonYearValue={yearComparisonValue}
+          setComparisonYearValue={setYearComparisonValue}
+          hasYearData={hasChartData}
+          t={t}
+        />
+
         <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
             <span>{t('labels.monthDetail')} · {yearValue}</span>
@@ -515,9 +528,13 @@ export function YearView({
                   return (
                     <article key={point.month} className="rounded-xl border border-ink/10 bg-white/90 p-3 shadow-sm">
                       <header className="flex items-center justify-between gap-3 border-b border-ink/5 pb-2">
-                        <h3 className="font-semibold capitalize text-ink">
+                        <button
+                          type="button"
+                          onClick={() => onSelectMonth(point.month)}
+                          className="font-semibold capitalize text-ink transition hover:text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        >
                           {getMonthLabel(point.month, locale, 'long')}
-                        </h3>
+                        </button>
                         {point.note ? (
                           <button
                             type="button"
@@ -714,7 +731,13 @@ export function YearView({
                       <td className="py-3 pr-4 text-muted">
                         {point.note ? (
                           <span className="flex items-center gap-2">
-                            <span>{getMonthLabel(point.month, locale, 'long')}</span>
+                            <button
+                              type="button"
+                              onClick={() => onSelectMonth(point.month)}
+                              className="capitalize transition hover:text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            >
+                              {getMonthLabel(point.month, locale, 'long')}
+                            </button>
                             <button
                               type="button"
                               onClick={() => setSelectedNote({ month: point.month, note: point.note })}
@@ -726,7 +749,13 @@ export function YearView({
                             </button>
                           </span>
                         ) : (
-                          getMonthLabel(point.month, locale, 'long')
+                          <button
+                            type="button"
+                            onClick={() => onSelectMonth(point.month)}
+                            className="capitalize transition hover:text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          >
+                            {getMonthLabel(point.month, locale, 'long')}
+                          </button>
                         )}
                       </td>
                       {yearSeriesVisibility.income ? (
@@ -785,16 +814,6 @@ export function YearView({
           </table>
         </div>
       </details>
-      <YearRecap
-        yearValue={yearValue}
-        yearTotals={yearTotals}
-        comparisonYears={comparisonYears}
-        comparisonYear={comparisonYear}
-        comparisonYearValue={yearComparisonValue}
-        setComparisonYearValue={setYearComparisonValue}
-        hasYearData={hasChartData}
-        t={t}
-      />
       </div>
       <InfoDialog
         open={Boolean(selectedNote)}

@@ -8,16 +8,16 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, net wort
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_x64-setup.exe)
-- Windows MSI: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_amd64.AppImage)
-- Linux DEB: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_amd64.deb)
-- Linux RPM: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0-1.x86_64.rpm)
-- Android APK: [Fintrack 3.2.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.0/Fintrack_3.2.0_android.apk)
+- Windows installer: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_x64-setup.exe)
+- Windows MSI: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_amd64.AppImage)
+- Linux DEB: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_amd64.deb)
+- Linux RPM: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1-1.x86_64.rpm)
+- Android APK: [Fintrack 3.2.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.2.1/Fintrack_3.2.1_android.apk)
 
-The links will be available once release `v3.2.0` is published.
+The links will be available once release `v3.2.1` is published.
 
 ## Features
 

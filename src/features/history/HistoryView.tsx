@@ -52,6 +52,7 @@ type HistoryViewProps = {
   allYearsTableSort: { key: AllTableSortKey; direction: SortDirection };
   handleAllYearsSort: (key: AllTableSortKey) => void;
   allYearsTrendByYear: Map<string, SeriesTrendMap>;
+  onSelectYear: (year: string) => void;
 };
 
 export function HistoryView({
@@ -66,7 +67,8 @@ export function HistoryView({
   sortedAllYears,
   allYearsTableSort,
   handleAllYearsSort,
-  allYearsTrendByYear
+  allYearsTrendByYear,
+  onSelectYear
 }: HistoryViewProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -656,7 +658,13 @@ export function HistoryView({
                 ] as const;
                 return (
                   <article key={point.year} className="rounded-xl border border-ink/10 bg-white/90 p-3 shadow-sm">
-                    <h3 className="border-b border-ink/5 pb-2 font-semibold text-ink">{point.year}</h3>
+                    <button
+                      type="button"
+                      onClick={() => onSelectYear(point.year)}
+                      className="w-full border-b border-ink/5 pb-2 text-left font-semibold text-ink transition hover:text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    >
+                      {point.year}
+                    </button>
                     <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-4">
                       {metrics.map((metric) =>
                         metric.visible ? (
@@ -794,7 +802,15 @@ export function HistoryView({
                   const trends = allYearsTrendByYear.get(point.year);
                   return (
                     <tr key={point.year} className="border-b border-ink/5">
-                      <td className="py-3 pr-4 text-muted">{point.year}</td>
+                      <td className="py-3 pr-4 text-muted">
+                        <button
+                          type="button"
+                          onClick={() => onSelectYear(point.year)}
+                          className="transition hover:text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        >
+                          {point.year}
+                        </button>
+                      </td>
                       {allYearsSeriesVisibility.income ? (
                         <td className="py-3 pr-4 text-ink">
                           <div className="flex items-center gap-2">
