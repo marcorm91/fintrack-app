@@ -7,7 +7,6 @@ import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
-import { useYearInsights } from './hooks/useYearInsights';
 import { useInvestmentPortfolioSetting } from './hooks/useInvestmentPortfolioSetting';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
@@ -501,17 +500,22 @@ function FintrackApp({
   const hasMonthData = Boolean(summary || series.find((point) => point.month === monthValue));
 
   const previousMonth = effectiveSeries.find((point) => point.month === shiftMonthValue(monthValue, -1)) ?? null;
-  const yearInsights = useYearInsights({
-    yearValue,
-    yearTotals,
-    allYears,
-    yearSeriesVisibility: effectiveYearSeriesVisibility,
-    compareYearValue: yearComparisonValue,
-    t
-  });
   const yearComparisonYears = useMemo(
-    () => allYears.map((point) => point.year).filter((year) => year !== yearValue),
+    () => allYears.map((point) => point.year).filter((year) => year !== yearValue).reverse(),
     [allYears, yearValue]
+  );
+  useEffect(() => {
+    if (yearComparisonYears.includes(yearComparisonValue)) {
+      return;
+    }
+    const previousYear = String(Number(yearValue) - 1);
+    setYearComparisonValue(
+      yearComparisonYears.includes(previousYear) ? previousYear : (yearComparisonYears[0] ?? '')
+    );
+  }, [yearComparisonValue, yearComparisonYears, yearValue]);
+  const yearComparison = useMemo(
+    () => allYears.find((point) => point.year === yearComparisonValue) ?? null,
+    [allYears, yearComparisonValue]
   );
 
   const {
@@ -795,6 +799,7 @@ function FintrackApp({
           comparisonYears={yearComparisonYears}
           yearComparisonValue={yearComparisonValue}
           setYearComparisonValue={setYearComparisonValue}
+          comparisonYear={yearComparison}
           yearTotals={yearTotals}
           yearSeriesVisibility={effectiveYearSeriesVisibility}
           toggleYearSeries={toggleYearSeries}
@@ -808,7 +813,6 @@ function FintrackApp({
           yearTableSort={yearTableSort}
           handleYearSort={handleYearSort}
           yearTrendByMonth={yearTrendByMonth}
-          yearInsights={yearInsights}
         />
       ) : null}
       {activeTab === 'all' ? (

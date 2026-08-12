@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { SeriesKey, SeriesTrendMap, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
 import type { ChartData, ChartOptions } from 'chart.js';
@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { ChartModal } from '../../components/ChartModal';
 import { InfoDialog } from '../../components/Dialogs';
 import { EyeToggle } from '../../components/EyeToggle';
-import { InsightsPanel } from '../../components/InsightsPanel';
+import { YearRecap } from '../../components/YearRecap';
 import { SeriesBullet } from '../../components/SeriesBullet';
 import { SortIndicator } from '../../components/SortIndicator';
 import { ChevronIcon, NoteIcon, TrendIcon } from '../../components/icons';
@@ -19,7 +19,7 @@ import { useSwipeNavigation } from '../../hooks/useSwipeNavigation';
 import { FLOW_TYPES, WEALTH_TYPES } from '../../constants';
 import { formatCents, getBenefitClass } from '../../utils/format';
 import { getMonthLabel, shiftYearValue } from '../../utils/date';
-import type { InsightsPayload } from '../../types/insights';
+import type { AllYearsPoint } from '../../hooks/useSeriesDerived';
 import '../../utils/chartSetup';
 import { findBenefitExtremes } from '../../utils/metrics';
 
@@ -44,6 +44,7 @@ type YearViewProps = {
   comparisonYears: string[];
   yearComparisonValue: string;
   setYearComparisonValue: (value: string) => void;
+  comparisonYear: AllYearsPoint | null;
   yearTotals: YearTotals;
   yearSeriesVisibility: Record<SeriesKey, boolean>;
   toggleYearSeries: (key: SeriesKey) => void;
@@ -57,7 +58,6 @@ type YearViewProps = {
   yearTableSort: { key: YearTableSortKey; direction: SortDirection };
   handleYearSort: (key: YearTableSortKey) => void;
   yearTrendByMonth: Map<string, SeriesTrendMap>;
-  yearInsights: InsightsPayload;
 };
 
 export function YearView({
@@ -69,6 +69,7 @@ export function YearView({
   comparisonYears,
   yearComparisonValue,
   setYearComparisonValue,
+  comparisonYear,
   yearTotals,
   yearSeriesVisibility,
   toggleYearSeries,
@@ -81,8 +82,7 @@ export function YearView({
   sortedYearSeries,
   yearTableSort,
   handleYearSort,
-  yearTrendByMonth,
-  yearInsights
+  yearTrendByMonth
 }: YearViewProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
@@ -120,11 +120,6 @@ export function YearView({
     Number(yearSeriesVisibility.balance) +
     Number(yearSeriesVisibility.portfolio) +
     Number(yearSeriesVisibility.totalWealth);
-  useEffect(() => {
-    if (yearComparisonValue && !comparisonYears.includes(yearComparisonValue)) {
-      setYearComparisonValue('');
-    }
-  }, [comparisonYears, setYearComparisonValue, yearComparisonValue]);
   const openChartModal = useCallback(() => setChartModalOpen(true), []);
   const {
     interactiveOptions: yearChartOptionsWithClick,
@@ -790,44 +785,16 @@ export function YearView({
           </table>
         </div>
       </details>
-      <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
-          <span>{t('insights.title')}</span>
-          <span className="text-muted transition group-open:rotate-90">
-            <ChevronIcon direction="right" />
-          </span>
-        </summary>
-        <div className="mt-2">
-          <InsightsPanel
-            title={yearInsights.title}
-            comparisons={yearInsights.comparisons}
-            emptyLabel={yearInsights.emptyLabel}
-            currentLabel={yearInsights.currentLabel}
-            previousLabel={yearInsights.previousLabel}
-            hasAnyData={yearInsights.hasAnyData}
-            showTitle={false}
-            containerClassName="rounded-none border-0 bg-transparent p-0 shadow-none"
-            suppressEmptyComparisonKeys={['selectedYear']}
-            comparisonHeaderControls={{
-              selectedYear: (
-                <select
-                  aria-label={t('labels.compareYear')}
-                  value={yearComparisonValue}
-                  onChange={(event) => setYearComparisonValue(event.target.value)}
-                  className="h-6 w-20 rounded-lg border border-ink/10 bg-white px-2 py-0 text-center text-xs font-normal normal-case tracking-normal text-ink shadow-sm focus:border-accent focus:outline-none"
-                >
-                  <option value="">{t('actions.none')}</option>
-                  {comparisonYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              )
-            }}
-          />
-        </div>
-      </details>
+      <YearRecap
+        yearValue={yearValue}
+        yearTotals={yearTotals}
+        comparisonYears={comparisonYears}
+        comparisonYear={comparisonYear}
+        comparisonYearValue={yearComparisonValue}
+        setComparisonYearValue={setYearComparisonValue}
+        hasYearData={hasChartData}
+        t={t}
+      />
       </div>
       <InfoDialog
         open={Boolean(selectedNote)}
