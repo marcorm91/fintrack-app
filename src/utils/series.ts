@@ -28,6 +28,13 @@ export function applyInvestmentPortfolioSetting<T extends MonthlySummary | Month
   };
 }
 
+export function getClosedMonthlySeries(
+  series: MonthlySeriesPoint[],
+  currentMonthValue: string
+): MonthlySeriesPoint[] {
+  return series.filter((point) => point.month < currentMonthValue);
+}
+
 export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): MonthlySeriesPoint[] {
   const map = new Map(series.filter((point) => point.month.startsWith(`${year}-`)).map((point) => [point.month, point]));
   return Array.from({ length: 12 }, (_, index) => {

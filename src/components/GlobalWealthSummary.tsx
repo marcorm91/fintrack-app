@@ -1,28 +1,24 @@
 import { useTranslation } from 'react-i18next';
 import { formatCents } from '../utils/format';
+import { getMonthLabel } from '../utils/date';
 
 type GlobalWealthSummaryProps = {
   totalWealthCents: number;
   balanceCents: number;
   portfolioCents: number;
   hasInvestmentPortfolio: boolean;
+  asOfMonth: string | null;
 };
-
-function getTodayDateLabel() {
-  const date = new Date();
-  const dayText = String(date.getDate()).padStart(2, '0');
-  const monthText = String(date.getMonth() + 1).padStart(2, '0');
-  return `${dayText}/${monthText}/${date.getFullYear()}`;
-}
 
 export function GlobalWealthSummary({
   totalWealthCents,
   balanceCents,
   portfolioCents,
-  hasInvestmentPortfolio
+  hasInvestmentPortfolio,
+  asOfMonth
 }: GlobalWealthSummaryProps) {
-  const { t } = useTranslation();
-  const dateLabel = getTodayDateLabel();
+  const { t, i18n } = useTranslation();
+  const dateLabel = asOfMonth ? `${getMonthLabel(asOfMonth, i18n.language, 'long')} ${asOfMonth.slice(0, 4)}` : '—';
 
   return (
     <section className="mt-4 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card">

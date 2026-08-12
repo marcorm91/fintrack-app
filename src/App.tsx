@@ -7,7 +7,6 @@ import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
-import { useYearInsights } from './hooks/useYearInsights';
 import { useInvestmentPortfolioSetting } from './hooks/useInvestmentPortfolioSetting';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
@@ -26,7 +25,12 @@ import { useOfflinePin } from './hooks/useOfflinePin';
 import type { AllTableSortKey, TabKey, YearTableSortKey } from './types';
 import { parseCsvSnapshots } from './utils/csv';
 import { shiftMonthValue } from './utils/date';
-import { applyInvestmentPortfolioSetting, getLatestClosingBalancePointAtOrBefore, summaryFromSeries } from './utils/series';
+import {
+  applyInvestmentPortfolioSetting,
+  getClosedMonthlySeries,
+  getLatestClosingBalancePointAtOrBefore,
+  summaryFromSeries
+} from './utils/series';
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { MonthlyRecap } from './components/MonthlyRecap';
@@ -351,6 +355,10 @@ function FintrackApp({
     () => (summary ? applyInvestmentPortfolioSetting(summary, hasInvestmentPortfolio) : null),
     [hasInvestmentPortfolio, summary]
   );
+  const closedSeries = useMemo(
+    () => getClosedMonthlySeries(effectiveSeries, currentMonthValue),
+    [currentMonthValue, effectiveSeries]
+  );
   const effectiveYearSeriesVisibility = useMemo(
     () =>
       hasInvestmentPortfolio
@@ -466,7 +474,7 @@ function FintrackApp({
     hasChartData,
     hasAllYearsData
   } = useSeriesDerived({
-    series: effectiveSeries,
+    series: closedSeries,
     yearValue,
     monthValue,
     yearTableSort,
@@ -492,17 +500,22 @@ function FintrackApp({
   const hasMonthData = Boolean(summary || series.find((point) => point.month === monthValue));
 
   const previousMonth = effectiveSeries.find((point) => point.month === shiftMonthValue(monthValue, -1)) ?? null;
-  const yearInsights = useYearInsights({
-    yearValue,
-    yearTotals,
-    allYears,
-    yearSeriesVisibility: effectiveYearSeriesVisibility,
-    compareYearValue: yearComparisonValue,
-    t
-  });
   const yearComparisonYears = useMemo(
-    () => allYears.map((point) => point.year).filter((year) => year !== yearValue),
+    () => allYears.map((point) => point.year).filter((year) => year !== yearValue).reverse(),
     [allYears, yearValue]
+  );
+  useEffect(() => {
+    if (yearComparisonYears.includes(yearComparisonValue)) {
+      return;
+    }
+    const previousYear = String(Number(yearValue) - 1);
+    setYearComparisonValue(
+      yearComparisonYears.includes(previousYear) ? previousYear : (yearComparisonYears[0] ?? '')
+    );
+  }, [yearComparisonValue, yearComparisonYears, yearValue]);
+  const yearComparison = useMemo(
+    () => allYears.find((point) => point.year === yearComparisonValue) ?? null,
+    [allYears, yearComparisonValue]
   );
 
   const {
@@ -587,8 +600,12 @@ function FintrackApp({
     return dismissSplash();
   }, [appReady]);
 
+  const latestClosedPoint = useMemo(
+    () => getLatestClosingBalancePointAtOrBefore(closedSeries, currentMonthValue),
+    [closedSeries, currentMonthValue]
+  );
   const globalWealthSummary = useMemo(() => {
-    const latestPoint = getLatestClosingBalancePointAtOrBefore(effectiveSeries, currentMonthValue);
+    const latestPoint = latestClosedPoint;
     return latestPoint
       ? summaryFromSeries(latestPoint)
       : summaryFromSeries({
@@ -601,7 +618,7 @@ function FintrackApp({
           benefitCents: 0,
           note: ''
         });
-  }, [currentMonthValue, effectiveSeries]);
+  }, [currentMonthValue, latestClosedPoint]);
 
   return (
     <AppLayout
@@ -618,6 +635,7 @@ function FintrackApp({
           balanceCents={globalWealthSummary.balanceCents}
           portfolioCents={globalWealthSummary.portfolioCents}
           hasInvestmentPortfolio={hasInvestmentPortfolio}
+          asOfMonth={latestClosedPoint?.month ?? null}
         />
       }
       tabs={
@@ -765,6 +783,7 @@ function FintrackApp({
             summary={displaySummary}
             previousMonth={previousMonth}
             hasMonthData={hasMonthData}
+            isCurrentMonth={isCurrentMonth}
             locale={language}
             t={t}
           />
@@ -780,6 +799,7 @@ function FintrackApp({
           comparisonYears={yearComparisonYears}
           yearComparisonValue={yearComparisonValue}
           setYearComparisonValue={setYearComparisonValue}
+          comparisonYear={yearComparison}
           yearTotals={yearTotals}
           yearSeriesVisibility={effectiveYearSeriesVisibility}
           toggleYearSeries={toggleYearSeries}
@@ -793,7 +813,6 @@ function FintrackApp({
           yearTableSort={yearTableSort}
           handleYearSort={handleYearSort}
           yearTrendByMonth={yearTrendByMonth}
-          yearInsights={yearInsights}
         />
       ) : null}
       {activeTab === 'all' ? (
