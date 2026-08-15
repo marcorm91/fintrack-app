@@ -159,8 +159,14 @@ export function useCharts({
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (context: TooltipItem<'bar'>) =>
-              `${context.dataset.label}: ${formatEuro(context.parsed.y ?? 0)} EUR`
+            label: (context: TooltipItem<'bar'>) => {
+              const isPortfolioResult =
+                context.dataset.label === translate('investment.resultAccumulated');
+              const value = isPortfolioResult
+                ? (yearSeries[context.dataIndex]?.portfolioResultCents ?? 0) / 100
+                : (context.parsed.y ?? 0);
+              return `${context.dataset.label}: ${formatEuro(value)} EUR`;
+            }
           }
         }
       },
@@ -172,7 +178,7 @@ export function useCharts({
         }
       }
     }),
-    []
+    [translate, yearSeries]
   );
 
   const allYearsChartData = useMemo<SeriesChartData>(() => {
