@@ -40,11 +40,17 @@ Chore(release): prepare version 3.1.0
 
 Commitlint and Husky enforce this format on every commit. The scope is mandatory.
 
-## Releases
+## Releases and semantic versioning
 
-- Update the version only when the change will be published as a release.
-- For a release, keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`, and `README.md` aligned.
-- Update release links and copy in the README.
+- For every user-facing improvement or correction, decide the release impact from the current version using Semantic Versioning. Use the highest impact present in the PR.
+- `PATCH` (`x.y.z` -> `x.y.(z+1)`): backward-compatible bug fixes, corrections, or small polish that does not add a new capability. Example: `3.2.1` -> `3.2.2`.
+- `MINOR` (`x.y.z` -> `x.(y+1).0`): backward-compatible functionality, a new user capability, or a meaningful product improvement. Example: `3.2.1` -> `3.3.0`.
+- `MAJOR` (`x.y.z` -> `(x+1).0.0`): breaking changes, incompatible data/API behavior, or migrations that require users or integrations to change. Example: `3.2.1` -> `4.0.0`.
+- Docs, tests, CI, refactors, and chores alone do not require a version bump unless they are part of release preparation.
+- When a change is intended for the next release, update the version in the same PR; do not wait for a separate version-only PR unless explicitly requested.
+- Keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`, and `README.md` aligned with the chosen version.
+- Update the README whenever user-facing behavior changes: feature list, compatibility/migration notes when relevant, current download links, and release copy.
+- Derive the next version from the current version in the repository; never hardcode a stale baseline.
 - Create and publish the tag only after merging the PR into `main`.
 - Never modify or reuse a published tag; prepare a later version instead.
 
