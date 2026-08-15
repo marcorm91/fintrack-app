@@ -6,6 +6,9 @@ export const investmentTranslations = {
     closingPortfolio: 'Portfolio at close',
     investedAccumulated: 'Accumulated contributions',
     resultAccumulated: 'Accumulated result',
+    monthResult: 'Portfolio result this month',
+    yearResult: 'Portfolio result in {{year}}',
+    historyResult: 'Portfolio result in this period',
     monthSaveDescription: 'Enter income, expenses, the portfolio contribution, and closing wealth values.',
     invalidContribution: 'Enter a valid portfolio contribution.'
   },
@@ -16,6 +19,9 @@ export const investmentTranslations = {
     closingPortfolio: 'Cartera al cierre',
     investedAccumulated: 'Aportado acumulado',
     resultAccumulated: 'Resultado acumulado',
+    monthResult: 'Resultado de la cartera este mes',
+    yearResult: 'Resultado de la cartera en {{year}}',
+    historyResult: 'Resultado de la cartera en el periodo',
     monthSaveDescription: 'Introduce ingresos, gastos, la aportación a cartera y el patrimonio al cierre.',
     invalidContribution: 'Introduce una aportación a cartera válida.'
   }

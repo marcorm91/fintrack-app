@@ -25,6 +25,7 @@ type AllYearsPoint = {
   portfolioCents: number;
   totalWealthCents: number;
   benefitCents: number;
+  investmentResultCents?: number | null;
 };
 
 type HistoryTotals = {
@@ -34,6 +35,7 @@ type HistoryTotals = {
   portfolioCents: number;
   totalWealthCents: number;
   benefitCents: number;
+  investmentResultCents: number | null;
 };
 
 type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
@@ -206,7 +208,11 @@ export function HistoryView({
         ...acc,
         incomeCents: acc.incomeCents + point.incomeCents,
         expenseCents: acc.expenseCents + point.expenseCents,
-        benefitCents: acc.benefitCents + point.benefitCents
+        benefitCents: acc.benefitCents + point.benefitCents,
+        investmentResultCents:
+          point.investmentResultCents == null
+            ? acc.investmentResultCents
+            : (acc.investmentResultCents ?? 0) + point.investmentResultCents
       }),
       {
         incomeCents: 0,
@@ -214,7 +220,8 @@ export function HistoryView({
         balanceCents: 0,
         portfolioCents: 0,
         totalWealthCents: 0,
-        benefitCents: 0
+        benefitCents: 0,
+        investmentResultCents: null
       }
     );
     const latestPoint = filteredAllYears.reduce<AllYearsPoint | null>((latest, point) => {
@@ -458,25 +465,44 @@ export function HistoryView({
               </div>
             </div>
           </div>
-          {bestBenefitYear && allYearsSeriesVisibility.benefit ? (
+          {(bestBenefitYear && allYearsSeriesVisibility.benefit) ||
+          (hasInvestmentPortfolio && historyTotals.investmentResultCents != null) ? (
             <ul className="mt-4 space-y-2 text-sm text-muted">
-              <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
-                <TrendIcon trend="up" />
-                <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
-                  {t('labels.bestBenefitYear', { year: bestBenefitYear.year })}
-                  <span className="flex gap-1 items-center font-semibold text-benefit whitespace-nowrap">
-                    <TrendIcon trend="right" /> {formatCents(bestBenefitYear.benefitCents)} EUR
-                  </span>
-                </span>
-              </li>
-              {worstBenefitYear && worstBenefitYear.year !== bestBenefitYear.year ? (
+              {bestBenefitYear && allYearsSeriesVisibility.benefit ? (
+                <>
+                  <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
+                    <TrendIcon trend="up" />
+                    <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
+                      {t('labels.bestBenefitYear', { year: bestBenefitYear.year })}
+                      <span className="flex gap-1 items-center font-semibold text-benefit whitespace-nowrap">
+                        <TrendIcon trend="right" /> {formatCents(bestBenefitYear.benefitCents)} EUR
+                      </span>
+                    </span>
+                  </li>
+                  {worstBenefitYear && worstBenefitYear.year !== bestBenefitYear.year ? (
+                    <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
+                      <TrendIcon trend="down" />
+                      <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
+                        {t('labels.worstBenefitYear', { year: worstBenefitYear.year })}
+                        <span className="flex gap-1 items-center font-semibold text-benefitNegative whitespace-nowrap">
+                          <TrendIcon trend="right" />
+                          {formatCents(worstBenefitYear.benefitCents)} EUR
+                        </span>
+                      </span>
+                    </li>
+                  ) : null}
+                </>
+              ) : null}
+              {hasInvestmentPortfolio && historyTotals.investmentResultCents != null ? (
                 <li className={isMobile ? 'grid grid-cols-[16px_1fr] items-start gap-2' : 'flex items-center gap-2'}>
-                  <TrendIcon trend="down" />
+                  <TrendIcon trend={historyTotals.investmentResultCents >= 0 ? 'up' : 'down'} />
                   <span className={isMobile ? 'flex flex-col gap-1' : 'flex items-center gap-2'}>
-                    {t('labels.worstBenefitYear', { year: worstBenefitYear.year })}
-                    <span className="flex gap-1 items-center font-semibold text-benefitNegative whitespace-nowrap">
+                    {t('investment.historyResult')}
+                    <span className={`flex items-center gap-1 font-semibold whitespace-nowrap ${
+                      historyTotals.investmentResultCents >= 0 ? 'text-benefit' : 'text-benefitNegative'
+                    }`}>
                       <TrendIcon trend="right" />
-                      {formatCents(worstBenefitYear.benefitCents)} EUR
+                      {historyTotals.investmentResultCents > 0 ? '+' : ''}{formatCents(historyTotals.investmentResultCents)} EUR
                     </span>
                   </span>
                 </li>

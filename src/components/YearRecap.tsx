@@ -24,6 +24,18 @@ type RecapMetricProps = {
 const formatAmount = (valueCents: number) => `${formatCents(valueCents)} EUR`;
 const formatAbsoluteAmount = (valueCents: number) => formatAmount(Math.abs(valueCents));
 
+function PeriodResultMetric({ label, valueCents }: { label: string; valueCents: number }) {
+  const toneClass = valueCents > 0 ? 'text-benefit' : valueCents < 0 ? 'text-benefitNegative' : 'text-muted';
+  return (
+    <div className="rounded-xl bg-ink/[0.035] px-3 py-3 text-sm">
+      <span className="text-muted">{label}</span>
+      <p className={`mt-1.5 font-semibold ${toneClass}`}>
+        {valueCents > 0 ? '+' : ''}{formatAmount(valueCents)}
+      </p>
+    </div>
+  );
+}
+
 function RecapMetric({
   label,
   currentPeriodLabel,
@@ -129,7 +141,7 @@ export function YearRecap({
           </select>
         </label>
       </div>
-      <div className="mt-4 grid gap-2 border-t border-ink/10 pt-3 lg:grid-cols-3">
+      <div className={`mt-4 grid gap-2 border-t border-ink/10 pt-3 ${yearTotals.investmentResultCents == null ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
         <RecapMetric
           label={t('yearRecap.expenses')}
           currentPeriodLabel={yearValue}
@@ -154,6 +166,12 @@ export function YearRecap({
           previousCents={comparisonYear.totalWealthCents}
           tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}
         />
+        {yearTotals.investmentResultCents != null ? (
+          <PeriodResultMetric
+            label={t('investment.yearResult', { year: yearValue })}
+            valueCents={yearTotals.investmentResultCents}
+          />
+        ) : null}
       </div>
     </section>
   );
