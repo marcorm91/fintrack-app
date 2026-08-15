@@ -238,10 +238,12 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
     const portfolio = parsePortfolioValue(row, portfolioIndex, usePortfolioColumn);
+    const contributionCell =
+      portfolioContributionIndex < 0 ? '' : (row[portfolioContributionIndex] ?? '').trim();
     const portfolioContribution =
-      portfolioContributionIndex < 0
+      portfolioContributionIndex < 0 || !contributionCell
         ? undefined
-        : parseLooseNumber(row[portfolioContributionIndex] ?? '');
+        : parseLooseNumber(contributionCell);
     if (
       income === null ||
       expense === null ||

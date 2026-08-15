@@ -4,8 +4,6 @@ import schemaSql from './schema.sql?raw';
 import { notifyLocalDataChanged } from '../utils/localDataEvents';
 import { isMobilePlatform } from '../utils/platform';
 import { enrichInvestmentPerformance } from '../utils/investment';
-import { enrichInvestmentPerformance } from '../utils/investment';
-import { enrichInvestmentPerformance } from '../utils/investment';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';

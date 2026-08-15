@@ -28,7 +28,7 @@ export function buildCsvSnapshots(series: MonthlySeriesPoint[], locale: string) 
         formatCsvNumber(point.incomeCents, locale),
         formatCsvNumber(point.expenseCents, locale),
         formatCsvNumber(point.balanceCents, locale),
-        point.portfolioContributionCents === null
+        point.portfolioContributionCents == null
           ? ''
           : formatCsvNumber(point.portfolioContributionCents, locale),
         formatCsvNumber(point.portfolioCents, locale),
