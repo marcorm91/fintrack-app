@@ -1,0 +1,36 @@
+name: Apply investment contribution changes
+
+on:
+  push:
+    branches:
+      - feat/investment-contributions
+    paths:
+      - scripts/apply-investment-contributions.py
+      - .github/workflows/apply-investment-contributions.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/investment-contributions
+
+      - name: Apply focused changes
+        run: python3 scripts/apply-investment-contributions.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src firestore.rules
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Feat(investment): track monthly portfolio contributions"
+          git push origin HEAD:feat/investment-contributions
