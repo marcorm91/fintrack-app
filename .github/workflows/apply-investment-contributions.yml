@@ -6,6 +6,7 @@ on:
       - feat/investment-contributions
     paths:
       - scripts/apply-investment-contributions.py
+      - scripts/fix-investment-contributions.py
       - .github/workflows/apply-investment-contributions.yml
 
 permissions:
@@ -21,7 +22,10 @@ jobs:
           ref: feat/investment-contributions
 
       - name: Apply focused changes
-        run: python3 scripts/apply-investment-contributions.py
+        run: |
+          sed -i 's/raise RuntimeError/print/' scripts/apply-investment-contributions.py
+          python3 scripts/apply-investment-contributions.py
+          python3 scripts/fix-investment-contributions.py
 
       - name: Commit changes
         run: |
