@@ -22,11 +22,20 @@ export function applyInvestmentPortfolioSetting<T extends MonthlySummary | Month
   if (enabled) {
     return point;
   }
-  return {
+  const withoutPortfolio = {
     ...point,
     portfolioCents: 0,
+    portfolioContributionCents: null,
     totalWealthCents: point.balanceCents
   };
+  if ('portfolioResultCents' in point) {
+    return {
+      ...withoutPortfolio,
+      portfolioInvestedCents: null,
+      portfolioResultCents: null
+    } as T;
+  }
+  return withoutPortfolio as T;
 }
 
 export function getClosedMonthlySeries(
