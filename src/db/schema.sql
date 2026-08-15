@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS monthly_snapshots (
   expense_cents INTEGER NOT NULL CHECK (expense_cents >= 0),
   balance_cents INTEGER NOT NULL,
   portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0),
+  portfolio_contribution_cents INTEGER CHECK (portfolio_contribution_cents >= 0),
   note TEXT NOT NULL DEFAULT '',
   version INTEGER NOT NULL DEFAULT 0 CHECK (version >= 0),
   local_revision INTEGER NOT NULL DEFAULT 0 CHECK (local_revision >= 0),

@@ -16,7 +16,7 @@ type UseChartsOptions = {
   allYears: AllYearsPoint[];
 };
 
-type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
+type SeriesChartData = ChartData<'bar', Array<number | [number, number] | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar'>;
 
 export function useCharts({
@@ -88,13 +88,39 @@ export function useCharts({
           hidden: !yearSeriesVisibility.balance
         },
         {
-          label: translate('series.portfolio'),
-          data: yearSeries.map((point) => point.portfolioCents / 100),
+          label: translate('investment.investedAccumulated'),
+          data: yearSeries.map((point) =>
+            (point.portfolioInvestedCents ?? point.portfolioCents) / 100
+          ),
           backgroundColor: COLORS.portfolio,
           borderColor: COLORS.portfolio,
           pointBackgroundColor: COLORS.portfolio,
           borderWidth: 0,
           borderRadius: 4,
+          stack: 'portfolio',
+          hidden: !yearSeriesVisibility.portfolio
+        },
+        {
+          label: translate('investment.resultAccumulated'),
+          data: yearSeries.map((point) => {
+            if (point.portfolioInvestedCents === null || point.portfolioResultCents === null) {
+              return null;
+            }
+            const invested = point.portfolioInvestedCents / 100;
+            const portfolio = point.portfolioCents / 100;
+            return point.portfolioResultCents >= 0
+              ? [invested, portfolio]
+              : [portfolio, invested];
+          }),
+          backgroundColor: yearSeries.map((point) =>
+            (point.portfolioResultCents ?? 0) < 0 ? COLORS.portfolioLoss : COLORS.portfolioGain
+          ),
+          borderColor: yearSeries.map((point) =>
+            (point.portfolioResultCents ?? 0) < 0 ? COLORS.portfolioLoss : COLORS.portfolioGain
+          ),
+          borderWidth: 0,
+          borderRadius: 4,
+          stack: 'portfolio',
           hidden: !yearSeriesVisibility.portfolio
         },
         {

@@ -3,6 +3,7 @@ export type FormState = {
   expense: string;
   balance: string;
   portfolio: string;
+  portfolioContribution: string;
   note: string;
 };
 

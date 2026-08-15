@@ -17,6 +17,8 @@ export const COLORS = {
   expense: '#ff6b8f',
   balance: '#2878ff',
   portfolio: '#f4bc45',
+  portfolioGain: '#8adbb8',
+  portfolioLoss: '#f59baa',
   totalWealth: '#68778c',
   benefit: '#22b984',
   benefitNegative: '#f05268',

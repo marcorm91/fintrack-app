@@ -205,7 +205,7 @@ export function MonthView({
           </span>
         ) : null}
       </div>
-      {!isMobile ? <p className="mt-2 text-sm text-muted">{t('descriptions.monthSave')}</p> : null}
+      {!isMobile ? <p className="mt-2 text-sm text-muted">{t('investment.monthSaveDescription')}</p> : null}
       {readOnly ? (
         <div className="mt-3 rounded-xl border border-ink/5 bg-ink/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted sm:text-xs">
           {t('messages.readOnlyActive')}
@@ -214,7 +214,7 @@ export function MonthView({
       <form onSubmit={onSubmit} className={isMobile ? 'mt-3 grid gap-3' : 'mt-6 grid gap-4'}>
         <fieldset className={`border border-income/15 bg-[#f7fff9] shadow-sm ${isMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3'}`}>
           <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-            {t('labels.monthCashFlow')}
+            {t('investment.monthMovements')}
           </legend>
           <div className={`grid grid-cols-2 ${isMobile ? 'mt-2 gap-2' : 'mt-3 gap-3'}`}>
             <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
@@ -250,10 +250,27 @@ export function MonthView({
               />
             </label>
           </div>
+          <label className={`mt-2 block rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
+            <span className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-portfolio" />
+              {t('investment.portfolioContribution')}
+            </span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              placeholder={t('placeholders.amount')}
+              value={form.portfolioContribution}
+              onChange={onFormChange('portfolioContribution')}
+              disabled={readOnly || !hasInvestmentPortfolio}
+              className={`mt-2 w-full rounded-xl border border-ink/5 bg-white text-ink shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-ink/5 disabled:text-muted ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'}`}
+            />
+          </label>
         </fieldset>
         <fieldset className={`border border-balance/15 bg-[#f7fbff] shadow-sm ${isMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3'}`}>
           <legend className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs sm:tracking-[0.2em]">
-            {t('labels.wealth')}
+            {t('investment.closingWealth')}
           </legend>
           <div className={`grid ${isMobile ? 'mt-2 gap-2' : 'mt-3 gap-3'} ${hasInvestmentPortfolio ? 'grid-cols-2' : ''}`}>
             <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
@@ -276,7 +293,7 @@ export function MonthView({
               <label className={`rounded-xl border border-ink/5 bg-white/90 text-muted ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-portfolio" />
-                  {t('series.portfolio')}
+                  {t('investment.closingPortfolio')}
                 </span>
                 <input
                   type="number"

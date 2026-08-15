@@ -3,6 +3,7 @@ import Database from '@tauri-apps/plugin-sql';
 import schemaSql from './schema.sql?raw';
 import { notifyLocalDataChanged } from '../utils/localDataEvents';
 import { isMobilePlatform } from '../utils/platform';
+import { enrichInvestmentPerformance } from '../utils/investment';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
@@ -146,6 +147,7 @@ export interface MonthlySummary {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
+  portfolioContributionCents: number | null;
   totalWealthCents: number;
   benefitCents: number;
   note: string;
@@ -157,6 +159,9 @@ export interface MonthlySeriesPoint {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
+  portfolioContributionCents: number | null;
+  portfolioInvestedCents: number | null;
+  portfolioResultCents: number | null;
   totalWealthCents: number;
   benefitCents: number;
   note: string;
@@ -168,6 +173,7 @@ export interface MonthlySnapshotInput {
   expenseCents: number;
   balanceCents: number;
   portfolioCents?: number;
+  portfolioContributionCents?: number | null;
   note?: string;
 }
 
@@ -179,6 +185,7 @@ export interface SyncableMonthlySnapshot {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
+  portfolioContributionCents: number | null;
   note: string;
   version: number;
   localRevision: number;
@@ -193,6 +200,7 @@ export interface RemoteMonthlySnapshot {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
+  portfolioContributionCents: number | null;
   note: string;
   version: number;
   updatedAt: string;
@@ -234,6 +242,7 @@ SELECT
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note
 FROM monthly_snapshots
 WHERE month = ? AND deleted_at IS NULL;
@@ -246,6 +255,7 @@ SELECT
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note
 FROM monthly_snapshots
 WHERE deleted_at IS NULL
@@ -253,7 +263,7 @@ ORDER BY month;
 `;
 
 const MONTHLY_WEALTH_SQL = `
-SELECT balance_cents, portfolio_cents, note
+SELECT balance_cents, portfolio_cents, portfolio_contribution_cents, note
 FROM monthly_snapshots
 WHERE month = ?;
 `;
@@ -273,6 +283,7 @@ INSERT INTO monthly_snapshots (
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note,
   version,
   local_revision,
@@ -280,12 +291,13 @@ INSERT INTO monthly_snapshots (
   deleted_at,
   sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?, 0, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), NULL, 'pending')
+VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), NULL, 'pending')
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
   balance_cents = excluded.balance_cents,
   portfolio_cents = excluded.portfolio_cents,
+  portfolio_contribution_cents = excluded.portfolio_contribution_cents,
   note = excluded.note,
   local_revision = monthly_snapshots.local_revision + 1,
   updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
@@ -334,6 +346,7 @@ SELECT
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note,
   version,
   local_revision,
@@ -352,6 +365,7 @@ SELECT
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note,
   version,
   local_revision,
@@ -410,6 +424,7 @@ INSERT INTO monthly_snapshots (
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note,
   version,
   local_revision,
@@ -417,12 +432,13 @@ INSERT INTO monthly_snapshots (
   deleted_at,
   sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
   balance_cents = excluded.balance_cents,
   portfolio_cents = excluded.portfolio_cents,
+  portfolio_contribution_cents = excluded.portfolio_contribution_cents,
   note = excluded.note,
   version = excluded.version,
   updated_at = excluded.updated_at,
@@ -440,6 +456,7 @@ INSERT INTO monthly_snapshots (
   expense_cents,
   balance_cents,
   portfolio_cents,
+  portfolio_contribution_cents,
   note,
   version,
   local_revision,
@@ -447,12 +464,13 @@ INSERT INTO monthly_snapshots (
   deleted_at,
   sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'synced')
 ON CONFLICT(month) DO UPDATE SET
   income_cents = excluded.income_cents,
   expense_cents = excluded.expense_cents,
   balance_cents = excluded.balance_cents,
   portfolio_cents = excluded.portfolio_cents,
+  portfolio_contribution_cents = excluded.portfolio_contribution_cents,
   note = excluded.note,
   version = excluded.version,
   local_revision = 0,
@@ -522,13 +540,18 @@ function summaryFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySummary {
     ...snapshot,
     note: snapshot.note ?? '',
     portfolioCents,
+    portfolioContributionCents: snapshot.portfolioContributionCents ?? null,
     totalWealthCents: snapshot.balanceCents + portfolioCents,
     benefitCents: snapshot.incomeCents - snapshot.expenseCents
   };
 }
 
 function seriesFromSnapshot(snapshot: MonthlySnapshotInput): MonthlySeriesPoint {
-  return summaryFromSnapshot(snapshot);
+  return {
+    ...summaryFromSnapshot(snapshot),
+    portfolioInvestedCents: null,
+    portfolioResultCents: null
+  };
 }
 
 type SyncableMonthlySnapshotRow = {
@@ -537,6 +560,7 @@ type SyncableMonthlySnapshotRow = {
   expense_cents: number;
   balance_cents: number;
   portfolio_cents: number;
+  portfolio_contribution_cents: number | null;
   note: string;
   version: number;
   local_revision: number;
@@ -558,6 +582,7 @@ function syncableSnapshotFromRow(row: SyncableMonthlySnapshotRow): SyncableMonth
     expenseCents: row.expense_cents,
     balanceCents: row.balance_cents,
     portfolioCents: row.portfolio_cents,
+    portfolioContributionCents: row.portfolio_contribution_cents ?? null,
     note: row.note,
     version: row.version,
     localRevision: row.local_revision,
@@ -606,6 +631,7 @@ async function ensureDevSeeded(db: Database): Promise<void> {
           snapshot.expenseCents,
           snapshot.balanceCents,
           snapshot.portfolioCents,
+          snapshot.portfolioContributionCents ?? null,
           snapshot.note ?? ''
         ]);
       }
@@ -620,6 +646,11 @@ async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
   if (!existingColumns.has('portfolio_cents')) {
     await db.execute(
       'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0);'
+    );
+  }
+  if (!existingColumns.has('portfolio_contribution_cents')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_contribution_cents INTEGER CHECK (portfolio_contribution_cents >= 0);'
     );
   }
   if (!existingColumns.has('note')) {
@@ -828,6 +859,7 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
+    portfolio_contribution_cents?: number | null;
     note?: string;
   }>>(MONTHLY_SUMMARY_SQL, [month]);
 
@@ -848,6 +880,7 @@ export async function getMonthlySummary(month: string): Promise<MonthlySummary |
     expenseCents,
     balanceCents,
     portfolioCents,
+    portfolioContributionCents: row.portfolio_contribution_cents ?? null,
     totalWealthCents: balanceCents + portfolioCents,
     benefitCents,
     note: row.note ?? ''
@@ -889,7 +922,9 @@ export async function setInvestmentPortfolioEnabled(enabled: boolean): Promise<v
 export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
   if (shouldUseMockDatabase()) {
     const snapshots = await getMockSnapshots();
-    return [...snapshots].sort((a, b) => a.month.localeCompare(b.month)).map(seriesFromSnapshot);
+    return enrichInvestmentPerformance(
+      [...snapshots].sort((a, b) => a.month.localeCompare(b.month)).map(seriesFromSnapshot)
+    );
   }
 
   const db = await initDb();
@@ -899,10 +934,11 @@ export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
     expense_cents: number;
     balance_cents: number;
     portfolio_cents?: number;
+    portfolio_contribution_cents?: number | null;
     note?: string;
   }>>(MONTHLY_SERIES_SQL);
 
-  return rows.map((row) => {
+  const points = rows.map((row): MonthlySeriesPoint => {
     const incomeCents = row.income_cents ?? 0;
     const expenseCents = row.expense_cents ?? 0;
     const balanceCents = row.balance_cents ?? 0;
@@ -913,11 +949,15 @@ export async function getMonthlySeries(): Promise<MonthlySeriesPoint[]> {
       expenseCents,
       balanceCents,
       portfolioCents,
+      portfolioContributionCents: row.portfolio_contribution_cents ?? null,
+      portfolioInvestedCents: null,
+      portfolioResultCents: null,
       totalWealthCents: balanceCents + portfolioCents,
       benefitCents: incomeCents - expenseCents,
       note: row.note ?? ''
     };
   });
+  return enrichInvestmentPerformance(points);
 }
 
 export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<void> {
@@ -934,6 +974,8 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     const nextInput = {
       ...input,
       portfolioCents: previousPortfolioCents,
+      portfolioContributionCents:
+        input.portfolioContributionCents ?? snapshots[index]?.portfolioContributionCents ?? null,
       note: input.note ?? (index >= 0 ? snapshots[index].note : '') ?? ''
     };
     if (index >= 0) {
@@ -947,14 +989,18 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
 
   const db = await initDb();
   let portfolioCents = input.portfolioCents;
+  let portfolioContributionCents = input.portfolioContributionCents;
   let note = input.note;
-  if (portfolioCents === undefined || note === undefined) {
-    const existingRows = await db.select<Array<{ balance_cents?: number; portfolio_cents?: number; note?: string }>>(MONTHLY_WEALTH_SQL, [
+  if (portfolioCents === undefined || portfolioContributionCents === undefined || note === undefined) {
+    const existingRows = await db.select<Array<{ balance_cents?: number; portfolio_cents?: number; portfolio_contribution_cents?: number | null; note?: string }>>(MONTHLY_WEALTH_SQL, [
       input.month
     ]);
     const existingRow = existingRows[0];
     if (portfolioCents === undefined) {
       portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+    }
+    if (portfolioContributionCents === undefined) {
+      portfolioContributionCents = existingRow?.portfolio_contribution_cents ?? null;
     }
     note = note ?? existingRow?.note ?? '';
   }
@@ -970,6 +1016,7 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     input.expenseCents,
     input.balanceCents,
     portfolioCents,
+    portfolioContributionCents ?? null,
     normalizeSnapshotNote(note)
   ]);
   notifyLocalDataChanged();
@@ -1092,6 +1139,7 @@ export async function applyRemoteMonthlySnapshot(input: RemoteMonthlySnapshot): 
     input.expenseCents,
     input.balanceCents,
     input.portfolioCents,
+    input.portfolioContributionCents,
     normalizeSnapshotNote(input.note),
     input.version,
     input.updatedAt,
@@ -1125,6 +1173,7 @@ export async function forceApplyRemoteMonthlySnapshot(input: RemoteMonthlySnapsh
     input.expenseCents,
     input.balanceCents,
     input.portfolioCents,
+    input.portfolioContributionCents,
     normalizeSnapshotNote(input.note),
     input.version,
     input.updatedAt,

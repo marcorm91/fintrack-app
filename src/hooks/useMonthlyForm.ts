@@ -21,6 +21,7 @@ const emptyForm: FormState = {
   expense: '',
   balance: '',
   portfolio: '',
+  portfolioContribution: '',
   note: ''
 };
 
@@ -50,6 +51,10 @@ export function useMonthlyForm({
         expense: monthSummary.expenseCents ? formatInputCents(monthSummary.expenseCents) : '',
         balance: monthSummary.balanceCents ? formatInputCents(monthSummary.balanceCents) : '',
         portfolio: monthSummary.portfolioCents ? formatInputCents(monthSummary.portfolioCents) : '',
+        portfolioContribution:
+          monthSummary.portfolioContributionCents === null
+            ? ''
+            : formatInputCents(monthSummary.portfolioContributionCents),
         note: monthSummary.note
       });
       return;
@@ -61,6 +66,7 @@ export function useMonthlyForm({
         expense: '',
         balance: fallbackWealthSummary.balanceCents ? formatInputCents(fallbackWealthSummary.balanceCents) : '',
         portfolio: fallbackWealthSummary.portfolioCents ? formatInputCents(fallbackWealthSummary.portfolioCents) : '',
+        portfolioContribution: '',
         note: ''
       });
       return;
@@ -107,8 +113,19 @@ export function useMonthlyForm({
 
       const portfolioValue = hasInvestmentPortfolio ? parseAmount(form.portfolio) : null;
       if (hasInvestmentPortfolio && (portfolioValue === null || portfolioValue < 0)) {
-          setError(t('errors.invalidPortfolio'));
-          return;
+        setError(t('errors.invalidPortfolio'));
+        return;
+      }
+
+      const portfolioContributionValue = hasInvestmentPortfolio
+        ? parseAmount(form.portfolioContribution)
+        : 0;
+      if (
+        hasInvestmentPortfolio &&
+        (portfolioContributionValue === null || portfolioContributionValue < 0)
+      ) {
+        setError(t('investment.invalidContribution'));
+        return;
       }
 
       setSaving(true);
@@ -121,6 +138,9 @@ export function useMonthlyForm({
           portfolioCents: hasInvestmentPortfolio
             ? Math.round((portfolioValue ?? 0) * 100)
             : summary?.portfolioCents ?? fallbackWealthSummary?.portfolioCents ?? 0,
+          portfolioContributionCents: hasInvestmentPortfolio
+            ? Math.round((portfolioContributionValue ?? 0) * 100)
+            : summary?.portfolioContributionCents ?? null,
           note: form.note.replace(/\s+/g, ' ').trim().slice(0, 500)
         });
         await refreshData();
