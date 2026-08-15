@@ -5,6 +5,7 @@ import { notifyLocalDataChanged } from '../utils/localDataEvents';
 import { isMobilePlatform } from '../utils/platform';
 import { enrichInvestmentPerformance } from '../utils/investment';
 import { enrichInvestmentPerformance } from '../utils/investment';
+import { enrichInvestmentPerformance } from '../utils/investment';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
@@ -659,6 +660,11 @@ async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
       'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_contribution_cents INTEGER CHECK (portfolio_contribution_cents >= 0);'
     );
   }
+  if (!existingColumns.has('portfolio_contribution_cents')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_contribution_cents INTEGER CHECK (portfolio_contribution_cents >= 0);'
+    );
+  }
   if (!existingColumns.has('note')) {
     await db.execute("ALTER TABLE monthly_snapshots ADD COLUMN note TEXT NOT NULL DEFAULT '';");
   }
@@ -1004,6 +1010,9 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     const existingRow = existingRows[0];
     if (portfolioCents === undefined) {
       portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+    }
+    if (portfolioContributionCents === undefined) {
+      portfolioContributionCents = existingRow?.portfolio_contribution_cents ?? null;
     }
     if (portfolioContributionCents === undefined) {
       portfolioContributionCents = existingRow?.portfolio_contribution_cents ?? null;

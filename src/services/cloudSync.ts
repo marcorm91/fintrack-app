@@ -100,6 +100,11 @@ function parseRemoteMonthlySnapshot(
       value.portfolioContributionCents === null ||
       (isSafeInteger(value.portfolioContributionCents) && value.portfolioContributionCents >= 0)
     ) ||
+    !(
+      value.portfolioContributionCents === undefined ||
+      value.portfolioContributionCents === null ||
+      (isSafeInteger(value.portfolioContributionCents) && value.portfolioContributionCents >= 0)
+    ) ||
     typeof value.note !== 'string' ||
     value.note.length > MAX_NOTE_LENGTH ||
     !isSafeInteger(value.version) ||
