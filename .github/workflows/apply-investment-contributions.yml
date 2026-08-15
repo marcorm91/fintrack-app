@@ -1,4 +1,4 @@
-name: Validate investment contribution changes
+name: Fix and validate investment contribution changes
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - .github/workflows/apply-investment-contributions.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -18,6 +18,40 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: feat/investment-contributions
+
+      - name: Apply cleanup fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'pattern not found: {path}: {old[:80]!r}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace(
+              'src/db/index.ts',
+              "import { enrichInvestmentPerformance } from '../utils/investment';\nimport { enrichInvestmentPerformance } from '../utils/investment';\nimport { enrichInvestmentPerformance } from '../utils/investment';",
+              "import { enrichInvestmentPerformance } from '../utils/investment';"
+          )
+          replace(
+              'src/i18n.ts',
+              "import { investmentTranslations } from './locales/investment';\nimport { investmentTranslations } from './locales/investment';\nimport { investmentTranslations } from './locales/investment';",
+              "import { investmentTranslations } from './locales/investment';"
+          )
+          replace(
+              'src/utils/export.ts',
+              "point.portfolioContributionCents === null\n          ? ''\n          : formatCsvNumber(point.portfolioContributionCents, locale)",
+              "point.portfolioContributionCents == null\n          ? ''\n          : formatCsvNumber(point.portfolioContributionCents, locale)"
+          )
+          replace(
+              'src/utils/csv.ts',
+              "const portfolioContribution =\n      portfolioContributionIndex < 0\n        ? undefined\n        : parseLooseNumber(row[portfolioContributionIndex] ?? '');",
+              "const contributionCell =\n      portfolioContributionIndex < 0 ? '' : (row[portfolioContributionIndex] ?? '').trim();\n    const portfolioContribution =\n      portfolioContributionIndex < 0 || !contributionCell\n        ? undefined\n        : parseLooseNumber(contributionCell);"
+          )
+          PY
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -30,3 +64,15 @@ jobs:
 
       - name: Run full check
         run: npm run check
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src
+          if git diff --cached --quiet; then
+            echo "No fixes to commit"
+            exit 0
+          fi
+          git commit -m "Fix(investment): validate contribution compatibility"
+          git push origin HEAD:feat/investment-contributions
