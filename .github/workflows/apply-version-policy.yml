@@ -1,0 +1,119 @@
+name: Apply semantic version policy
+
+on:
+  push:
+    branches:
+      - feat/investment-contributions
+    paths:
+      - .github/workflows/apply-version-policy.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/investment-contributions
+          fetch-depth: 0
+
+      - name: Apply version and documentation updates
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          old = '3.2.1'
+          new = '3.3.0'
+
+          # Keep all runtime/package versions aligned.
+          package_json = Path('package.json')
+          text = package_json.read_text()
+          text = text.replace(f'"version": "{old}"', f'"version": "{new}"', 1)
+          package_json.write_text(text)
+
+          package_lock = Path('package-lock.json')
+          text = package_lock.read_text()
+          text = text.replace(f'"version": "{old}"', f'"version": "{new}"', 2)
+          package_lock.write_text(text)
+
+          tauri_conf = Path('src-tauri/tauri.conf.json')
+          text = tauri_conf.read_text()
+          text = text.replace(f'"version": "{old}"', f'"version": "{new}"', 1)
+          tauri_conf.write_text(text)
+
+          cargo_toml = Path('src-tauri/Cargo.toml')
+          text = cargo_toml.read_text()
+          text = re.sub(r'(?m)^(version = ")' + re.escape(old) + r'("$)', rf'\g<1>{new}\g<2>', text, count=1)
+          cargo_toml.write_text(text)
+
+          cargo_lock = Path('src-tauri/Cargo.lock')
+          text = cargo_lock.read_text()
+          text = re.sub(
+              r'(\[\[package\]\]\nname = "fintrack-app"\nversion = ")' + re.escape(old) + r'(")',
+              rf'\g<1>{new}\g<2>',
+              text,
+              count=1,
+          )
+          cargo_lock.write_text(text)
+
+          # README: current release target and user-facing investment features.
+          readme = Path('README.md')
+          text = readme.read_text()
+          text = text.replace(old, new)
+          text = text.replace(
+              'tracking income, expenses, cash, net worth, and monthly history.',
+              'tracking income, expenses, cash, investments, net worth, and monthly history.'
+          )
+          marker = '- Optional investment portfolio.\n'
+          additions = (
+              '- Optional investment portfolio.\n'
+              '- Separate monthly portfolio contributions from the real portfolio closing value, with automatic accumulated gain/loss tracking.\n'
+              '- Investment performance insights for monthly, yearly, and historical views.\n'
+          )
+          if marker in text and 'automatic accumulated gain/loss tracking' not in text:
+              text = text.replace(marker, additions, 1)
+          readme.write_text(text)
+
+          # AGENTS: make versioning and release documentation part of every change decision.
+          agents = Path('AGENTS.md')
+          text = agents.read_text()
+          old_releases = '''## Releases\n\n- Update the version only when the change will be published as a release.\n- For a release, keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`, and `README.md` aligned.\n- Update release links and copy in the README.\n- Create and publish the tag only after merging the PR into `main`.\n- Never modify or reuse a published tag; prepare a later version instead.\n'''
+          new_releases = '''## Releases and semantic versioning\n\n- For every user-facing improvement or correction, decide the release impact from the current version using Semantic Versioning. Use the highest impact present in the PR.\n- `PATCH` (`x.y.z` -> `x.y.(z+1)`): backward-compatible bug fixes, corrections, or small polish that does not add a new capability. Example: `3.2.1` -> `3.2.2`.\n- `MINOR` (`x.y.z` -> `x.(y+1).0`): backward-compatible functionality, a new user capability, or a meaningful product improvement. Example: `3.2.1` -> `3.3.0`.\n- `MAJOR` (`x.y.z` -> `(x+1).0.0`): breaking changes, incompatible data/API behavior, or migrations that require users or integrations to change. Example: `3.2.1` -> `4.0.0`.\n- Docs, tests, CI, refactors, and chores alone do not require a version bump unless they are part of release preparation.\n- When a change is intended for the next release, update the version in the same PR; do not wait for a separate version-only PR unless explicitly requested.\n- Keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`, and `README.md` aligned with the chosen version.\n- Update the README whenever user-facing behavior changes: feature list, compatibility/migration notes when relevant, current download links, and release copy.\n- Derive the next version from the current version in the repository; never hardcode a stale baseline.\n- Create and publish the tag only after merging the PR into `main`.\n- Never modify or reuse a published tag; prepare a later version instead.\n'''
+          if old_releases in text:
+              text = text.replace(old_releases, new_releases, 1)
+          elif '## Releases and semantic versioning' not in text:
+              raise SystemExit('Could not locate Releases section in AGENTS.md')
+          agents.write_text(text)
+
+      - name: Verify version alignment
+        run: |
+          grep -q '"version": "3.3.0"' package.json
+          grep -q '"version": "3.3.0"' package-lock.json
+          grep -q 'version = "3.3.0"' src-tauri/Cargo.toml
+          grep -A2 'name = "fintrack-app"' src-tauri/Cargo.lock | grep -q 'version = "3.3.0"'
+          grep -q '"version": "3.3.0"' src-tauri/tauri.conf.json
+          grep -q 'Fintrack 3.3.0' README.md
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate app
+        run: |
+          npm ci
+          npm run check
+
+      - name: Commit final changes and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-version-policy.yml
+          git add AGENTS.md README.md package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
+          git commit -m "Chore(release): prepare version 3.3.0"
+          git push origin HEAD:feat/investment-contributions
