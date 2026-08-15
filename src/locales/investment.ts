@@ -21,7 +21,7 @@ export const investmentTranslations = {
     resultAccumulated: 'Resultado acumulado',
     monthResult: 'Resultado de la cartera este mes',
     yearResult: 'Resultado de la cartera en {{year}}',
-    historyResult: 'Resultado de la cartera en el periodo',
+    historyResult: 'Resultado de la cartera en el período',
     monthSaveDescription: 'Introduce ingresos, gastos, la aportación a cartera y el patrimonio al cierre.',
     invalidContribution: 'Introduce una aportación a cartera válida.'
   }
