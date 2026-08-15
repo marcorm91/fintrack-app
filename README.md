@@ -8,16 +8,16 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_x64-setup.exe)
-- Windows MSI: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_amd64.AppImage)
-- Linux DEB: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_amd64.deb)
-- Linux RPM: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2-1.x86_64.rpm)
-- Android APK: [Fintrack 3.3.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.2/Fintrack_3.3.2_android.apk)
+- Windows installer: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_x64-setup.exe)
+- Windows MSI: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_amd64.AppImage)
+- Linux DEB: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_amd64.deb)
+- Linux RPM: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3-1.x86_64.rpm)
+- Android APK: [Fintrack 3.3.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.3/Fintrack_3.3.3_android.apk)
 
-The links will be available once release `v3.3.2` is published.
+The links will be available once release `v3.3.3` is published.
 
 ## Features
 
@@ -32,6 +32,7 @@ The links will be available once release `v3.3.2` is published.
 - Local emergency PIN for working without Firebase once it has been configured.
 - Optional investment portfolio.
 - Separate monthly portfolio contributions from the real portfolio closing value, with automatic accumulated gain/loss tracking.
+- Leave the monthly portfolio contribution empty to mark it as untracked; enter `0` to record an explicit zero contribution.
 - Investment performance insights for monthly, yearly, and historical views.
 - Monthly notes and a responsive interface.
 - Current-month entries stay editable and are included in insights automatically on the first day of the next month.

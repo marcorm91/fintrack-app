@@ -117,11 +117,14 @@ export function useMonthlyForm({
         return;
       }
 
-      const portfolioContributionValue = hasInvestmentPortfolio
-        ? parseAmount(form.portfolioContribution)
-        : 0;
+      const portfolioContributionInput = form.portfolioContribution.trim();
+      const portfolioContributionValue =
+        hasInvestmentPortfolio && portfolioContributionInput !== ''
+          ? parseAmount(form.portfolioContribution)
+          : null;
       if (
         hasInvestmentPortfolio &&
+        portfolioContributionInput !== '' &&
         (portfolioContributionValue === null || portfolioContributionValue < 0)
       ) {
         setError(t('investment.invalidContribution'));
@@ -139,7 +142,9 @@ export function useMonthlyForm({
             ? Math.round((portfolioValue ?? 0) * 100)
             : summary?.portfolioCents ?? fallbackWealthSummary?.portfolioCents ?? 0,
           portfolioContributionCents: hasInvestmentPortfolio
-            ? Math.round((portfolioContributionValue ?? 0) * 100)
+            ? portfolioContributionValue === null
+              ? null
+              : Math.round(portfolioContributionValue * 100)
             : summary?.portfolioContributionCents ?? null,
           note: form.note.replace(/\s+/g, ' ').trim().slice(0, 500)
         });
