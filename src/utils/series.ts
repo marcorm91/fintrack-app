@@ -8,6 +8,7 @@ export function summaryFromSeries(point: MonthlySeriesPoint): MonthlySummary {
     expenseCents: point.expenseCents,
     balanceCents: point.balanceCents,
     portfolioCents: point.portfolioCents,
+    portfolioContributionCents: point.portfolioContributionCents ?? null,
     totalWealthCents: point.totalWealthCents,
     benefitCents: point.benefitCents,
     note: point.note
@@ -21,11 +22,20 @@ export function applyInvestmentPortfolioSetting<T extends MonthlySummary | Month
   if (enabled) {
     return point;
   }
-  return {
+  const withoutPortfolio = {
     ...point,
     portfolioCents: 0,
+    portfolioContributionCents: null,
     totalWealthCents: point.balanceCents
   };
+  if ('portfolioResultCents' in point) {
+    return {
+      ...withoutPortfolio,
+      portfolioInvestedCents: null,
+      portfolioResultCents: null
+    } as T;
+  }
+  return withoutPortfolio as T;
 }
 
 export function getClosedMonthlySeries(
@@ -48,6 +58,9 @@ export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): Mon
         expenseCents: 0,
         balanceCents: 0,
         portfolioCents: 0,
+        portfolioContributionCents: null,
+        portfolioInvestedCents: null,
+        portfolioResultCents: null,
         totalWealthCents: 0,
         benefitCents: 0,
         note: ''

@@ -15,6 +15,7 @@ service cloud.firestore {
           'expenseCents',
           'balanceCents',
           'portfolioCents',
+          'portfolioContributionCents',
           'note',
           'version',
           'updatedAt',
@@ -30,6 +31,9 @@ service cloud.firestore {
         && data.balanceCents is int
         && data.portfolioCents is int
         && data.portfolioCents >= 0
+        && (!data.keys().hasAny(['portfolioContributionCents'])
+          || data.portfolioContributionCents == null
+          || (data.portfolioContributionCents is int && data.portfolioContributionCents >= 0))
         && data.note is string
         && data.note.size() <= 500
         && data.version is int

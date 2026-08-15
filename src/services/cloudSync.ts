@@ -90,6 +90,21 @@ function parseRemoteMonthlySnapshot(
     !isSafeInteger(value.balanceCents) ||
     !isSafeInteger(value.portfolioCents) ||
     value.portfolioCents < 0 ||
+    !(
+      value.portfolioContributionCents === undefined ||
+      value.portfolioContributionCents === null ||
+      (isSafeInteger(value.portfolioContributionCents) && value.portfolioContributionCents >= 0)
+    ) ||
+    !(
+      value.portfolioContributionCents === undefined ||
+      value.portfolioContributionCents === null ||
+      (isSafeInteger(value.portfolioContributionCents) && value.portfolioContributionCents >= 0)
+    ) ||
+    !(
+      value.portfolioContributionCents === undefined ||
+      value.portfolioContributionCents === null ||
+      (isSafeInteger(value.portfolioContributionCents) && value.portfolioContributionCents >= 0)
+    ) ||
     typeof value.note !== 'string' ||
     value.note.length > MAX_NOTE_LENGTH ||
     !isSafeInteger(value.version) ||
@@ -104,6 +119,7 @@ function parseRemoteMonthlySnapshot(
     expenseCents: value.expenseCents,
     balanceCents: value.balanceCents,
     portfolioCents: value.portfolioCents,
+    portfolioContributionCents: value.portfolioContributionCents ?? null,
     note: value.note,
     version: value.version,
     updatedAt: parseTimestamp(value.updatedAt, month),
@@ -121,6 +137,7 @@ function snapshotsHaveSameContent(
     local.expenseCents === remote.expenseCents &&
     local.balanceCents === remote.balanceCents &&
     local.portfolioCents === remote.portfolioCents &&
+    local.portfolioContributionCents === remote.portfolioContributionCents &&
     local.note === remote.note &&
     Boolean(local.deletedAt) === Boolean(remote.deletedAt)
   );
@@ -162,6 +179,7 @@ async function pushMonthlySnapshot(
       expenseCents: local.expenseCents,
       balanceCents: local.balanceCents,
       portfolioCents: local.portfolioCents,
+      portfolioContributionCents: local.portfolioContributionCents,
       note: local.note,
       version: remoteVersion + 1,
       updatedAt: serverTimestamp(),

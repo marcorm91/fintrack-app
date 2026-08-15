@@ -35,6 +35,7 @@ export type FintrackBackup = {
     expenseCents: number;
     balanceCents: number;
     portfolioCents: number;
+    portfolioContributionCents?: number | null;
     note: string;
   }>;
 };
@@ -83,6 +84,7 @@ export function buildJsonBackup(
       expenseCents: point.expenseCents,
       balanceCents: point.balanceCents,
       portfolioCents: point.portfolioCents,
+      portfolioContributionCents: point.portfolioContributionCents,
       note: point.note
     }))
   };
@@ -96,6 +98,7 @@ function snapshotsMatch(left: MonthlySnapshotInput, right: MonthlySnapshotInput)
     left.expenseCents === right.expenseCents &&
     left.balanceCents === right.balanceCents &&
     (left.portfolioCents ?? 0) === (right.portfolioCents ?? 0) &&
+    (left.portfolioContributionCents ?? null) === (right.portfolioContributionCents ?? null) &&
     (left.note ?? '') === (right.note ?? '')
   );
 }
@@ -153,7 +156,7 @@ export function parseJsonBackup(text: string): ParsedFintrackBackup {
     if (!isRecord(snapshot)) {
       return invalidData();
     }
-    const { month, incomeCents, expenseCents, balanceCents, portfolioCents, note } = snapshot;
+    const { month, incomeCents, expenseCents, balanceCents, portfolioCents, portfolioContributionCents, note } = snapshot;
     if (
       typeof month !== 'string' ||
       !MONTH_PATTERN.test(month) ||
@@ -165,6 +168,11 @@ export function parseJsonBackup(text: string): ParsedFintrackBackup {
       !isSafeInteger(balanceCents) ||
       !isSafeInteger(portfolioCents) ||
       portfolioCents < 0 ||
+      !(
+        portfolioContributionCents === undefined ||
+        portfolioContributionCents === null ||
+        (isSafeInteger(portfolioContributionCents) && portfolioContributionCents >= 0)
+      ) ||
       typeof note !== 'string' ||
       note.length > 500
     ) {
@@ -177,6 +185,7 @@ export function parseJsonBackup(text: string): ParsedFintrackBackup {
       expenseCents,
       balanceCents,
       portfolioCents,
+      portfolioContributionCents: portfolioContributionCents ?? null,
       note
     };
   });

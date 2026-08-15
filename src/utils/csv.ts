@@ -53,6 +53,7 @@ const IMPORT_HEADER_ALIASES = {
   expense: ['expense', 'gastos'],
   balance: ['balance', 'saldo', 'efectivo', 'acumulacion', 'saldo al cierre', 'saldo cierre'],
   portfolio: ['portfolio', 'cartera', 'inversiones', 'cartera al cierre'],
+  portfolioContribution: ['portfolio contribution', 'aportacion a cartera', 'aporte a cartera'],
   note: ['note', 'notes', 'nota', 'notas', 'comentario', 'observaciones']
 };
 
@@ -203,6 +204,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
   let expenseIndex = 2;
   let balanceIndex = 3;
   let portfolioIndex = 4;
+  let portfolioContributionIndex = -1;
   let yearIndex = -1;
   let noteIndex = 5;
 
@@ -214,6 +216,7 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     expenseIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.expense);
     balanceIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.balance);
     portfolioIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolio);
+    portfolioContributionIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.portfolioContribution);
     noteIndex = findHeaderIndex(header, IMPORT_HEADER_ALIASES.note);
     if (monthIndex < 0 || incomeIndex < 0 || expenseIndex < 0 || balanceIndex < 0) {
       throw new Error(i18n.t('errors.missingColumns'));
@@ -235,11 +238,19 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
     const expense = parseLooseNumber(row[expenseIndex] ?? '');
     const balance = parseLooseNumber(row[balanceIndex] ?? '');
     const portfolio = parsePortfolioValue(row, portfolioIndex, usePortfolioColumn);
+    const contributionCell =
+      portfolioContributionIndex < 0 ? '' : (row[portfolioContributionIndex] ?? '').trim();
+    const portfolioContribution =
+      portfolioContributionIndex < 0 || !contributionCell
+        ? undefined
+        : parseLooseNumber(contributionCell);
     if (
       income === null ||
       expense === null ||
       balance === null ||
-      portfolio === null
+      portfolio === null ||
+      (portfolioContribution !== undefined &&
+        (portfolioContribution === null || portfolioContribution < 0))
     ) {
       throw new Error(i18n.t('errors.invalidValuesLine', { line: i + 1 }));
     }
@@ -252,6 +263,10 @@ export function parseCsvSnapshots(text: string): MonthlySnapshotInput[] {
       expenseCents: Math.round(expense * 100),
       balanceCents: Math.round(balance * 100),
       portfolioCents: portfolio === undefined ? undefined : Math.round(portfolio * 100),
+      portfolioContributionCents:
+        portfolioContribution === undefined || portfolioContribution === null
+          ? undefined
+          : Math.round(portfolioContribution * 100),
       note: parseNoteValue(row, noteIndex)
     });
   }

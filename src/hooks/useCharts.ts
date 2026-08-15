@@ -88,13 +88,39 @@ export function useCharts({
           hidden: !yearSeriesVisibility.balance
         },
         {
-          label: translate('series.portfolio'),
-          data: yearSeries.map((point) => point.portfolioCents / 100),
+          label: translate('investment.investedAccumulated'),
+          data: yearSeries.map((point) => {
+            if (point.portfolioInvestedCents == null || point.portfolioResultCents == null) {
+              return point.portfolioCents / 100;
+            }
+            return (point.portfolioResultCents < 0
+              ? point.portfolioCents
+              : point.portfolioInvestedCents) / 100;
+          }),
           backgroundColor: COLORS.portfolio,
           borderColor: COLORS.portfolio,
           pointBackgroundColor: COLORS.portfolio,
           borderWidth: 0,
           borderRadius: 4,
+          stack: 'portfolio',
+          hidden: !yearSeriesVisibility.portfolio
+        },
+        {
+          label: translate('investment.resultAccumulated'),
+          data: yearSeries.map((point) =>
+            point.portfolioResultCents == null
+              ? null
+              : Math.abs(point.portfolioResultCents) / 100
+          ),
+          backgroundColor: yearSeries.map((point) =>
+            (point.portfolioResultCents ?? 0) < 0 ? COLORS.portfolioLoss : COLORS.portfolioGain
+          ),
+          borderColor: yearSeries.map((point) =>
+            (point.portfolioResultCents ?? 0) < 0 ? COLORS.portfolioLoss : COLORS.portfolioGain
+          ),
+          borderWidth: 0,
+          borderRadius: 4,
+          stack: 'portfolio',
           hidden: !yearSeriesVisibility.portfolio
         },
         {

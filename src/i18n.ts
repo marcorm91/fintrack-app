@@ -4,6 +4,7 @@ import en from './locales/en.json';
 import es from './locales/es.json';
 import { monthlyRecapTranslations } from './locales/monthlyRecap';
 import { yearRecapTranslations } from './locales/yearRecap';
+import { investmentTranslations } from './locales/investment';
 
 const STORAGE_KEY = 'fintrack-language';
 
@@ -19,8 +20,8 @@ const initialLanguage = getInitialLanguage() ?? 'es';
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: { ...en, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en } },
-    es: { translation: { ...es, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es } }
+    en: { translation: { ...en, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en, investment: investmentTranslations.en } },
+    es: { translation: { ...es, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es, investment: investmentTranslations.es } }
   },
   lng: initialLanguage,
   fallbackLng: 'es',

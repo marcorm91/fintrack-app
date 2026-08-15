@@ -23,6 +23,18 @@ type RecapMetricProps = {
 const formatAmount = (valueCents: number) => `${formatCents(valueCents)} EUR`;
 const formatAbsoluteAmount = (valueCents: number) => formatAmount(Math.abs(valueCents));
 
+function PeriodResultMetric({ label, valueCents }: { label: string; valueCents: number }) {
+  const toneClass = valueCents > 0 ? 'text-benefit' : valueCents < 0 ? 'text-benefitNegative' : 'text-muted';
+  return (
+    <div className="rounded-xl bg-ink/[0.035] px-3 py-3 text-sm">
+      <span className="text-muted">{label}</span>
+      <p className={`mt-1.5 font-semibold ${toneClass}`}>
+        {valueCents > 0 ? '+' : ''}{formatAmount(valueCents)}
+      </p>
+    </div>
+  );
+}
+
 function RecapMetric({
   label,
   currentPeriodLabel,
@@ -94,6 +106,11 @@ export function MonthlyRecap({
   const previousMonthLabel = getMonthLabel(previousMonth.month, locale, 'long');
   const currentPeriodLabel = getMonthLabel(monthValue, locale).toUpperCase();
   const previousPeriodLabel = getMonthLabel(previousMonth.month, locale).toUpperCase();
+  const investmentTracked =
+    previousMonth.portfolioResultCents != null || summary.portfolioContributionCents != null;
+  const investmentResultCents = investmentTracked
+    ? summary.portfolioCents - previousMonth.portfolioCents - (summary.portfolioContributionCents ?? 0)
+    : null;
   const headline =
     expenseDelta > 0
       ? t('monthlyRecap.expenseMore', { amount: formatAbsoluteAmount(expenseDelta), month: previousMonthLabel })
@@ -114,7 +131,7 @@ export function MonthlyRecap({
       </p>
       <p className="mt-3 text-base font-semibold leading-6 text-ink">{headline}</p>
       <p className="mt-1 text-sm leading-5 text-muted">{status}</p>
-      <div className="mt-4 grid gap-2 border-t border-ink/10 pt-3 lg:grid-cols-3">
+      <div className={`mt-4 grid gap-2 border-t border-ink/10 pt-3 ${investmentResultCents == null ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
         <RecapMetric
           label={t('monthlyRecap.expenses')}
           currentPeriodLabel={currentPeriodLabel}
@@ -139,6 +156,9 @@ export function MonthlyRecap({
           previousCents={previousMonth.totalWealthCents}
           tone={wealthDelta > 0 ? 'positive' : wealthDelta < 0 ? 'negative' : 'neutral'}
         />
+        {investmentResultCents != null ? (
+          <PeriodResultMetric label={t('investment.monthResult')} valueCents={investmentResultCents} />
+        ) : null}
       </div>
     </section>
   );

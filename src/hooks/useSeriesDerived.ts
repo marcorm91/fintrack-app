@@ -17,6 +17,7 @@ export type AllYearsPoint = {
   balanceCents: number;
   portfolioCents: number;
   totalWealthCents: number;
+  investmentResultCents?: number | null;
 };
 
 export type YearTotals = {
@@ -26,6 +27,7 @@ export type YearTotals = {
   balanceCents: number;
   portfolioCents: number;
   totalWealthCents: number;
+  investmentResultCents?: number | null;
 };
 
 const SERIES_VALUE_GETTERS: Record<SeriesKey, (point: MonthlySeriesPoint | AllYearsPoint) => number> = {
@@ -76,10 +78,13 @@ export function useSeriesDerived({
         balance: number;
         portfolio: number;
         totalWealth: number;
+        investmentResult: number;
+        hasInvestmentResult: boolean;
         latestClosingBalanceMonth: string;
       }
     >();
-    for (const point of series) {
+    let previousPortfolioResultCents: number | null = null;
+    for (const point of [...series].sort((a, b) => a.month.localeCompare(b.month))) {
       const year = point.month.slice(0, 4);
       const entry =
         map.get(year) ?? {
@@ -89,11 +94,18 @@ export function useSeriesDerived({
           balance: 0,
           portfolio: 0,
           totalWealth: 0,
+          investmentResult: 0,
+          hasInvestmentResult: false,
           latestClosingBalanceMonth: ''
         };
       entry.income += point.incomeCents;
       entry.expense += point.expenseCents;
       entry.benefit += point.benefitCents;
+      if (point.portfolioResultCents != null) {
+        entry.investmentResult += point.portfolioResultCents - (previousPortfolioResultCents ?? 0);
+        entry.hasInvestmentResult = true;
+        previousPortfolioResultCents = point.portfolioResultCents;
+      }
       if (hasClosingBalanceEntry(point) && point.month > entry.latestClosingBalanceMonth) {
         entry.latestClosingBalanceMonth = point.month;
         entry.balance = point.balanceCents;
@@ -111,7 +123,8 @@ export function useSeriesDerived({
         benefitCents: data.benefit,
         balanceCents: data.balance,
         portfolioCents: data.portfolio,
-        totalWealthCents: data.totalWealth
+        totalWealthCents: data.totalWealth,
+        investmentResultCents: data.hasInvestmentResult ? data.investmentResult : null
       }));
   }, [series]);
 
@@ -135,9 +148,10 @@ export function useSeriesDerived({
       benefitCents: totals.benefit,
       balanceCents: lastWealthSnapshot?.balanceCents ?? 0,
       portfolioCents: lastWealthSnapshot?.portfolioCents ?? 0,
-      totalWealthCents: lastWealthSnapshot?.totalWealthCents ?? 0
+      totalWealthCents: lastWealthSnapshot?.totalWealthCents ?? 0,
+      investmentResultCents: allYears.find((point) => point.year === yearValue)?.investmentResultCents ?? null
     };
-  }, [yearSeries]);
+  }, [allYears, yearSeries, yearValue]);
 
   const realPointByMonth = useMemo(
     () => new Map(series.map((point) => [point.month, point])),
