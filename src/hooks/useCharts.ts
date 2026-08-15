@@ -16,7 +16,7 @@ type UseChartsOptions = {
   allYears: AllYearsPoint[];
 };
 
-type SeriesChartData = ChartData<'bar', Array<number | [number, number] | null>, string>;
+type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar'>;
 
 export function useCharts({
@@ -89,9 +89,14 @@ export function useCharts({
         },
         {
           label: translate('investment.investedAccumulated'),
-          data: yearSeries.map((point) =>
-            (point.portfolioInvestedCents ?? point.portfolioCents) / 100
-          ),
+          data: yearSeries.map((point) => {
+            if (point.portfolioInvestedCents == null || point.portfolioResultCents == null) {
+              return point.portfolioCents / 100;
+            }
+            return (point.portfolioResultCents < 0
+              ? point.portfolioCents
+              : point.portfolioInvestedCents) / 100;
+          }),
           backgroundColor: COLORS.portfolio,
           borderColor: COLORS.portfolio,
           pointBackgroundColor: COLORS.portfolio,
@@ -102,16 +107,11 @@ export function useCharts({
         },
         {
           label: translate('investment.resultAccumulated'),
-          data: yearSeries.map((point) => {
-            if (point.portfolioInvestedCents === null || point.portfolioResultCents === null) {
-              return null;
-            }
-            const invested = point.portfolioInvestedCents / 100;
-            const portfolio = point.portfolioCents / 100;
-            return point.portfolioResultCents >= 0
-              ? [invested, portfolio]
-              : [portfolio, invested];
-          }),
+          data: yearSeries.map((point) =>
+            point.portfolioResultCents == null
+              ? null
+              : Math.abs(point.portfolioResultCents) / 100
+          ),
           backgroundColor: yearSeries.map((point) =>
             (point.portfolioResultCents ?? 0) < 0 ? COLORS.portfolioLoss : COLORS.portfolioGain
           ),

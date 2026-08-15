@@ -4,6 +4,7 @@ import schemaSql from './schema.sql?raw';
 import { notifyLocalDataChanged } from '../utils/localDataEvents';
 import { isMobilePlatform } from '../utils/platform';
 import { enrichInvestmentPerformance } from '../utils/investment';
+import { enrichInvestmentPerformance } from '../utils/investment';
 
 export const DATABASE_FILENAME = 'finanzas.db';
 export const DATABASE_PATH_CHANGED_EVENT = 'fintrack:database-path-changed';
@@ -159,9 +160,9 @@ export interface MonthlySeriesPoint {
   expenseCents: number;
   balanceCents: number;
   portfolioCents: number;
-  portfolioContributionCents: number | null;
-  portfolioInvestedCents: number | null;
-  portfolioResultCents: number | null;
+  portfolioContributionCents?: number | null;
+  portfolioInvestedCents?: number | null;
+  portfolioResultCents?: number | null;
   totalWealthCents: number;
   benefitCents: number;
   note: string;
@@ -631,7 +632,7 @@ async function ensureDevSeeded(db: Database): Promise<void> {
           snapshot.expenseCents,
           snapshot.balanceCents,
           snapshot.portfolioCents,
-          snapshot.portfolioContributionCents ?? null,
+          (snapshot as MonthlySnapshotInput).portfolioContributionCents ?? null,
           snapshot.note ?? ''
         ]);
       }
@@ -646,6 +647,11 @@ async function ensureMonthlySnapshotColumns(db: Database): Promise<void> {
   if (!existingColumns.has('portfolio_cents')) {
     await db.execute(
       'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_cents INTEGER NOT NULL DEFAULT 0 CHECK (portfolio_cents >= 0);'
+    );
+  }
+  if (!existingColumns.has('portfolio_contribution_cents')) {
+    await db.execute(
+      'ALTER TABLE monthly_snapshots ADD COLUMN portfolio_contribution_cents INTEGER CHECK (portfolio_contribution_cents >= 0);'
     );
   }
   if (!existingColumns.has('portfolio_contribution_cents')) {
@@ -998,6 +1004,9 @@ export async function saveMonthlySnapshot(input: MonthlySnapshotInput): Promise<
     const existingRow = existingRows[0];
     if (portfolioCents === undefined) {
       portfolioCents = existingRow && existingRow.balance_cents !== 0 ? existingRow.portfolio_cents : undefined;
+    }
+    if (portfolioContributionCents === undefined) {
+      portfolioContributionCents = existingRow?.portfolio_contribution_cents ?? null;
     }
     if (portfolioContributionCents === undefined) {
       portfolioContributionCents = existingRow?.portfolio_contribution_cents ?? null;

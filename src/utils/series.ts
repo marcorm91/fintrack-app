@@ -8,7 +8,7 @@ export function summaryFromSeries(point: MonthlySeriesPoint): MonthlySummary {
     expenseCents: point.expenseCents,
     balanceCents: point.balanceCents,
     portfolioCents: point.portfolioCents,
-    portfolioContributionCents: point.portfolioContributionCents,
+    portfolioContributionCents: point.portfolioContributionCents ?? null,
     totalWealthCents: point.totalWealthCents,
     benefitCents: point.benefitCents,
     note: point.note

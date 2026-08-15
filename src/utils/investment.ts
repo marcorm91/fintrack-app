@@ -2,7 +2,7 @@ export type InvestmentPerformanceInput = {
   month: string;
   balanceCents: number;
   portfolioCents: number;
-  portfolioContributionCents: number | null;
+  portfolioContributionCents?: number | null;
 };
 
 export type InvestmentPerformance = {
@@ -24,7 +24,7 @@ export function enrichInvestmentPerformance<T extends InvestmentPerformanceInput
   let previousPortfolioCents = 0;
 
   return points.map((point): T & InvestmentPerformance => {
-    const contribution = point.portfolioContributionCents;
+    const contribution = point.portfolioContributionCents ?? null;
 
     if (!started && contribution !== null) {
       investedCents = previousPortfolioCents + contribution;

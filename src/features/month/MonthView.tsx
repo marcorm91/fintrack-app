@@ -492,7 +492,7 @@ export function MonthView({
           <div className="mt-5">
             <div className="rounded-2xl border border-ink/5 bg-[#f7fff9] p-4 shadow-card">
               <p className="text-[10px] uppercase tracking-[0.14em] text-muted sm:text-xs">
-                {t('labels.monthCashFlow')}
+                {t('investment.monthMovements')}
               </p>
               <div className="mt-4 grid place-items-center">
                 <div className="relative h-[248px] w-full max-w-[360px] sm:h-[340px]">

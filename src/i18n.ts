@@ -5,6 +5,7 @@ import es from './locales/es.json';
 import { monthlyRecapTranslations } from './locales/monthlyRecap';
 import { yearRecapTranslations } from './locales/yearRecap';
 import { investmentTranslations } from './locales/investment';
+import { investmentTranslations } from './locales/investment';
 
 const STORAGE_KEY = 'fintrack-language';
 
