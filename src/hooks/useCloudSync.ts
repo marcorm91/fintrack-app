@@ -9,6 +9,17 @@ import { LOCAL_DATA_CHANGED_EVENT } from '../utils/localDataEvents';
 
 let cloudSyncModulePromise: Promise<typeof import('../services/cloudSync')> | null = null;
 
+const RETRY_DELAYS_MS = [2_000, 5_000, 15_000, 30_000, 60_000] as const;
+const RETRYABLE_ERROR_CODES = new Set([
+  'aborted',
+  'deadline-exceeded',
+  'internal',
+  'network-request-failed',
+  'resource-exhausted',
+  'unavailable',
+  'unknown'
+]);
+
 function loadCloudSyncModule() {
   if (!cloudSyncModulePromise) {
     cloudSyncModulePromise = import('../services/cloudSync');
@@ -24,18 +35,52 @@ async function getLocalCloudSyncCounts() {
   return { pendingCount: pending.length, conflictCount: conflicts.length };
 }
 
-function isCloudNetworkError(error: unknown) {
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return true;
-  }
+function getCloudErrorCode(error: unknown) {
   if (typeof error !== 'object' || error === null || !('code' in error)) {
-    return false;
+    return null;
   }
   const code = (error as { code?: unknown }).code;
+  if (typeof code !== 'string') {
+    return null;
+  }
+  const normalized = code.trim().toLowerCase();
+  const separatorIndex = normalized.lastIndexOf('/');
+  return separatorIndex >= 0 ? normalized.slice(separatorIndex + 1) : normalized;
+}
+
+function getCloudErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return null;
+}
+
+function browserIsOffline() {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
+
+function isRetryableCloudError(error: unknown) {
+  if (browserIsOffline()) {
+    return true;
+  }
+  const code = getCloudErrorCode(error);
+  if (code && RETRYABLE_ERROR_CODES.has(code)) {
+    return true;
+  }
+  const message = getCloudErrorMessage(error)?.toLowerCase() ?? '';
   return (
-    typeof code === 'string' &&
-    ['deadline-exceeded', 'network-request-failed', 'unavailable'].includes(code)
+    message.includes('failed to fetch') ||
+    message.includes('network error') ||
+    message.includes('network request failed') ||
+    message.includes('client is offline')
   );
+}
+
+function getRetryDelay(attempt: number) {
+  return RETRY_DELAYS_MS[Math.min(Math.max(attempt, 0), RETRY_DELAYS_MS.length - 1)];
 }
 
 export type CloudSyncPhase =
@@ -52,6 +97,9 @@ export type CloudSyncStatus = {
   pendingCount: number;
   conflictCount: number;
   lastSyncedAt: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  nextRetryAt: string | null;
 };
 
 type UseCloudSyncOptions = {
@@ -64,7 +112,10 @@ const DISABLED_STATUS: CloudSyncStatus = {
   phase: 'disabled',
   pendingCount: 0,
   conflictCount: 0,
-  lastSyncedAt: null
+  lastSyncedAt: null,
+  errorCode: null,
+  errorMessage: null,
+  nextRetryAt: null
 };
 
 export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOptions) {
@@ -75,10 +126,40 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
   const resolvingRef = useRef<Promise<boolean> | null>(null);
   const rerunRequestedRef = useRef(false);
   const onRemoteChangeRef = useRef(onRemoteChange);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAttemptRef = useRef(0);
+  const syncNowRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     onRemoteChangeRef.current = onRemoteChange;
   }, [onRemoteChange]);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetRetry = useCallback(() => {
+    clearRetryTimer();
+    retryAttemptRef.current = 0;
+  }, [clearRetryTimer]);
+
+  const queueRetry = useCallback(() => {
+    if (!active || !mountedRef.current || browserIsOffline()) {
+      return null;
+    }
+    clearRetryTimer();
+    const delay = getRetryDelay(retryAttemptRef.current);
+    retryAttemptRef.current += 1;
+    const nextRetryAt = new Date(Date.now() + delay).toISOString();
+    retryTimeoutRef.current = setTimeout(() => {
+      retryTimeoutRef.current = null;
+      void syncNowRef.current();
+    }, delay);
+    return nextRetryAt;
+  }, [active, clearRetryTimer]);
 
   const syncNow = useCallback(async () => {
     if (!active || !userId) {
@@ -94,17 +175,31 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
       return runningRef.current;
     }
 
+    clearRetryTimer();
     const run = (async () => {
       do {
         rerunRequestedRef.current = false;
         if (mountedRef.current) {
-          setStatus((current) => ({ ...current, phase: 'syncing' }));
+          setStatus((current) => ({
+            ...current,
+            phase: 'syncing',
+            errorCode: null,
+            errorMessage: null,
+            nextRetryAt: null
+          }));
         }
         try {
-          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          if (browserIsOffline()) {
             const counts = await getLocalCloudSyncCounts();
             if (mountedRef.current) {
-              setStatus((current) => ({ ...current, ...counts, phase: 'offline' }));
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'offline',
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              }));
             }
             break;
           }
@@ -114,27 +209,87 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
           if (result.pulledCount > 0) {
             await onRemoteChangeRef.current();
           }
-          if (mountedRef.current) {
-            setStatus({
-              phase:
-                result.conflictCount > 0
-                  ? 'conflict'
-                  : result.pendingCount > 0
-                    ? 'pending'
-                    : 'idle',
-              pendingCount: result.pendingCount,
-              conflictCount: result.conflictCount,
-              lastSyncedAt: new Date().toISOString()
-            });
+          const syncedAt = new Date().toISOString();
+          if (result.conflictCount > 0) {
+            resetRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'conflict',
+                pendingCount: result.pendingCount,
+                conflictCount: result.conflictCount,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              });
+            }
+          } else if (result.pendingCount > 0) {
+            const nextRetryAt = queueRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'pending',
+                pendingCount: result.pendingCount,
+                conflictCount: result.conflictCount,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt
+              });
+            }
+          } else {
+            resetRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'idle',
+                pendingCount: 0,
+                conflictCount: 0,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              });
+            }
           }
         } catch (error) {
           const counts = await getLocalCloudSyncCounts();
-          if (mountedRef.current) {
-            setStatus((current) => ({
-              ...current,
-              ...counts,
-              phase: isCloudNetworkError(error) ? 'offline' : 'error'
-            }));
+          const errorCode = getCloudErrorCode(error);
+          const errorMessage = getCloudErrorMessage(error);
+          if (browserIsOffline()) {
+            clearRetryTimer();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'offline',
+                errorCode,
+                errorMessage,
+                nextRetryAt: null
+              }));
+            }
+          } else if (isRetryableCloudError(error)) {
+            const nextRetryAt = queueRetry();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'pending',
+                errorCode,
+                errorMessage,
+                nextRetryAt
+              }));
+            }
+          } else {
+            clearRetryTimer();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'error',
+                errorCode,
+                errorMessage,
+                nextRetryAt: null
+              }));
+            }
           }
           break;
         }
@@ -150,10 +305,15 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
       }
       if (rerunRequestedRef.current && active && mountedRef.current) {
         rerunRequestedRef.current = false;
-        void syncNow();
+        clearRetryTimer();
+        void syncNowRef.current();
       }
     }
-  }, [active, userId]);
+  }, [active, clearRetryTimer, queueRetry, resetRetry, userId]);
+
+  useEffect(() => {
+    syncNowRef.current = syncNow;
+  }, [syncNow]);
 
   const resolveConflicts = useCallback(
     async (resolution: CloudConflictResolution) => {
@@ -168,9 +328,16 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
         await runningRef.current;
       }
 
+      clearRetryTimer();
       const run = (async () => {
         if (mountedRef.current) {
-          setStatus((current) => ({ ...current, phase: 'syncing' }));
+          setStatus((current) => ({
+            ...current,
+            phase: 'syncing',
+            errorCode: null,
+            errorMessage: null,
+            nextRetryAt: null
+          }));
         }
         try {
           const cloudSync = await loadCloudSyncModule();
@@ -183,7 +350,10 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
             setStatus((current) => ({
               ...current,
               ...counts,
-              phase: isCloudNetworkError(error) ? 'offline' : 'error'
+              phase: browserIsOffline() || isRetryableCloudError(error) ? 'offline' : 'error',
+              errorCode: getCloudErrorCode(error),
+              errorMessage: getCloudErrorMessage(error),
+              nextRetryAt: null
             }));
           }
           return false;
@@ -200,15 +370,17 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
         }
       }
       if (resolved) {
+        resetRetry();
         await syncNow();
       }
     },
-    [active, syncNow, userId]
+    [active, clearRetryTimer, resetRetry, syncNow, userId]
   );
 
   useEffect(() => {
     mountedRef.current = true;
     if (!active || !userId) {
+      resetRetry();
       setStatus(DISABLED_STATUS);
       return () => {
         mountedRef.current = false;
@@ -216,6 +388,13 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
     }
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let subscriptionRetryId: ReturnType<typeof setTimeout> | null = null;
+    let subscriptionRetryAttempt = 0;
+    let cancelled = false;
+    let subscriptionActive = false;
+    let subscriptionStarting = false;
+    let unsubscribe = () => {};
+
     const scheduleSync = (delay = 350) => {
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -225,40 +404,91 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
         void syncNow();
       }, delay);
     };
-    const handleOnline = () => scheduleSync(0);
-    const handleLocalChange = () => scheduleSync();
-    let cancelled = false;
-    let unsubscribe = () => {};
-    void loadCloudSyncModule()
-      .then((cloudSync) => {
+
+    const clearSubscriptionRetry = () => {
+      if (subscriptionRetryId) {
+        clearTimeout(subscriptionRetryId);
+        subscriptionRetryId = null;
+      }
+    };
+
+    const ensureSubscription = async () => {
+      if (
+        cancelled ||
+        subscriptionActive ||
+        subscriptionStarting ||
+        browserIsOffline()
+      ) {
+        return;
+      }
+      subscriptionStarting = true;
+      try {
+        const cloudSync = await loadCloudSyncModule();
         if (cancelled) {
           return;
         }
         unsubscribe = cloudSync.subscribeToCloudChanges(
           userId,
-          () => scheduleSync(750),
+          () => {
+            subscriptionRetryAttempt = 0;
+            scheduleSync(750);
+          },
           (error) => {
-            if (mountedRef.current) {
-              setStatus((current) => ({
-                ...current,
-                phase: isCloudNetworkError(error) ? 'offline' : 'error'
-              }));
+            subscriptionActive = false;
+            unsubscribe = () => {};
+            scheduleSync(0);
+            if (!cancelled && isRetryableCloudError(error) && !browserIsOffline()) {
+              clearSubscriptionRetry();
+              const delay = getRetryDelay(subscriptionRetryAttempt);
+              subscriptionRetryAttempt += 1;
+              subscriptionRetryId = setTimeout(() => {
+                subscriptionRetryId = null;
+                void ensureSubscription();
+              }, delay);
             }
           }
         );
+        subscriptionActive = true;
+        subscriptionRetryAttempt = 0;
+      } catch (error) {
+        subscriptionActive = false;
         scheduleSync(0);
-      })
-      .catch((error) => {
-        if (mountedRef.current) {
-          setStatus((current) => ({
-            ...current,
-            phase: isCloudNetworkError(error) ? 'offline' : 'error'
-          }));
+        if (isRetryableCloudError(error) && !browserIsOffline()) {
+          clearSubscriptionRetry();
+          const delay = getRetryDelay(subscriptionRetryAttempt);
+          subscriptionRetryAttempt += 1;
+          subscriptionRetryId = setTimeout(() => {
+            subscriptionRetryId = null;
+            void ensureSubscription();
+          }, delay);
         }
-      });
+      } finally {
+        subscriptionStarting = false;
+      }
+    };
 
+    const resumeSync = () => {
+      retryAttemptRef.current = 0;
+      clearRetryTimer();
+      clearSubscriptionRetry();
+      void ensureSubscription();
+      scheduleSync(0);
+    };
+    const handleOnline = () => resumeSync();
+    const handleFocus = () => resumeSync();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resumeSync();
+      }
+    };
+    const handleLocalChange = () => scheduleSync();
+
+    void ensureSubscription();
+    scheduleSync(0);
     window.addEventListener('online', handleOnline);
+    window.addEventListener('focus', handleFocus);
     window.addEventListener(LOCAL_DATA_CHANGED_EVENT, handleLocalChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       mountedRef.current = false;
@@ -266,11 +496,15 @@ export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOp
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
+      clearSubscriptionRetry();
+      clearRetryTimer();
       unsubscribe();
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('focus', handleFocus);
       window.removeEventListener(LOCAL_DATA_CHANGED_EVENT, handleLocalChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [active, syncNow, userId]);
+  }, [active, clearRetryTimer, resetRetry, syncNow, userId]);
 
   return { status, syncNow, resolveConflicts };
 }

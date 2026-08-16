@@ -434,7 +434,7 @@ export function DatabaseSettingsDialog({
                     className={`h-2 w-2 shrink-0 rounded-full ${
                       cloudSyncStatus.phase === 'idle'
                         ? 'bg-benefit'
-                        : cloudSyncStatus.phase === 'syncing'
+                        : cloudSyncStatus.phase === 'syncing' || cloudSyncStatus.phase === 'pending'
                           ? 'animate-pulse bg-accent'
                           : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
                             ? 'bg-red-600'
@@ -445,6 +445,14 @@ export function DatabaseSettingsDialog({
                   {cloudSyncStatus.pendingCount > 0 ? (
                     <span className="text-muted">
                       {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
+                    </span>
+                  ) : null}
+                  {cloudSyncStatus.phase === 'error' && cloudSyncStatus.errorCode ? (
+                    <span
+                      className="text-red-700"
+                      title={cloudSyncStatus.errorMessage ?? undefined}
+                    >
+                      {t('settings.syncErrorDetail', { code: cloudSyncStatus.errorCode })}
                     </span>
                   ) : null}
                 </div>
