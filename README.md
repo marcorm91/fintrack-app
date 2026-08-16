@@ -120,7 +120,16 @@ src/            UI, hooks, features, services, utilities, and translations
 src-tauri/      Tauri configuration and native code
 scripts/        Android build and mock utilities
 firestore.rules Firestore security rules
+firebase.json   Firebase CLI deployment configuration
 ```
+
+## Firestore rules deployment
+
+`firestore.rules` is the source of truth for the official Firestore security rules. When `firestore.rules`, `firebase.json`, or the deployment workflow changes on `main`, GitHub Actions runs **Deploy Firestore Rules** for project `fintrack-cloud-6ad3e`.
+
+The repository must define an Actions secret named `FIREBASE_SERVICE_ACCOUNT` containing the JSON key for a Google Cloud service account that is allowed to deploy Firestore security rules. If the secret is missing, the workflow stops with an explicit error instead of silently leaving the Firebase Console rules outdated.
+
+The workflow can also be started manually from **Actions > Deploy Firestore Rules > Run workflow**. Avoid making rule changes only in the Firebase Console: the next automated deployment uses the repository version and can overwrite console-only edits.
 
 ## Releases
 
