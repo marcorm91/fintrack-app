@@ -1,0 +1,612 @@
+from pathlib import Path
+import json
+import re
+
+HOOK = r'''import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  getConflictedMonthlySnapshots,
+  getPendingMonthlySnapshots,
+  isUsingMockDatabase
+} from '../db';
+import type { CloudConflictResolution } from '../services/cloudSync';
+import { LOCAL_DATA_CHANGED_EVENT } from '../utils/localDataEvents';
+
+let cloudSyncModulePromise: Promise<typeof import('../services/cloudSync')> | null = null;
+
+const RETRY_DELAYS_MS = [2_000, 5_000, 15_000, 30_000, 60_000] as const;
+const RETRYABLE_ERROR_CODES = new Set([
+  'aborted',
+  'deadline-exceeded',
+  'internal',
+  'network-request-failed',
+  'resource-exhausted',
+  'unavailable',
+  'unknown'
+]);
+
+function loadCloudSyncModule() {
+  if (!cloudSyncModulePromise) {
+    cloudSyncModulePromise = import('../services/cloudSync');
+  }
+  return cloudSyncModulePromise;
+}
+
+async function getLocalCloudSyncCounts() {
+  const [pending, conflicts] = await Promise.all([
+    getPendingMonthlySnapshots(),
+    getConflictedMonthlySnapshots()
+  ]);
+  return { pendingCount: pending.length, conflictCount: conflicts.length };
+}
+
+function getCloudErrorCode(error: unknown) {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return null;
+  }
+  const code = (error as { code?: unknown }).code;
+  if (typeof code !== 'string') {
+    return null;
+  }
+  const normalized = code.trim().toLowerCase();
+  const separatorIndex = normalized.lastIndexOf('/');
+  return separatorIndex >= 0 ? normalized.slice(separatorIndex + 1) : normalized;
+}
+
+function getCloudErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return null;
+}
+
+function browserIsOffline() {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
+
+function isRetryableCloudError(error: unknown) {
+  if (browserIsOffline()) {
+    return true;
+  }
+  const code = getCloudErrorCode(error);
+  if (code && RETRYABLE_ERROR_CODES.has(code)) {
+    return true;
+  }
+  const message = getCloudErrorMessage(error)?.toLowerCase() ?? '';
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('network error') ||
+    message.includes('network request failed') ||
+    message.includes('client is offline')
+  );
+}
+
+function getRetryDelay(attempt: number) {
+  return RETRY_DELAYS_MS[Math.min(Math.max(attempt, 0), RETRY_DELAYS_MS.length - 1)];
+}
+
+export type CloudSyncPhase =
+  | 'disabled'
+  | 'idle'
+  | 'pending'
+  | 'syncing'
+  | 'offline'
+  | 'conflict'
+  | 'error';
+
+export type CloudSyncStatus = {
+  phase: CloudSyncPhase;
+  pendingCount: number;
+  conflictCount: number;
+  lastSyncedAt: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  nextRetryAt: string | null;
+};
+
+type UseCloudSyncOptions = {
+  enabled: boolean;
+  userId: string | null;
+  onRemoteChange: () => Promise<void>;
+};
+
+const DISABLED_STATUS: CloudSyncStatus = {
+  phase: 'disabled',
+  pendingCount: 0,
+  conflictCount: 0,
+  lastSyncedAt: null,
+  errorCode: null,
+  errorMessage: null,
+  nextRetryAt: null
+};
+
+export function useCloudSync({ enabled, userId, onRemoteChange }: UseCloudSyncOptions) {
+  const active = enabled && Boolean(userId) && !isUsingMockDatabase();
+  const [status, setStatus] = useState<CloudSyncStatus>(DISABLED_STATUS);
+  const mountedRef = useRef(true);
+  const runningRef = useRef<Promise<void> | null>(null);
+  const resolvingRef = useRef<Promise<boolean> | null>(null);
+  const rerunRequestedRef = useRef(false);
+  const onRemoteChangeRef = useRef(onRemoteChange);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAttemptRef = useRef(0);
+  const syncNowRef = useRef<() => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    onRemoteChangeRef.current = onRemoteChange;
+  }, [onRemoteChange]);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetRetry = useCallback(() => {
+    clearRetryTimer();
+    retryAttemptRef.current = 0;
+  }, [clearRetryTimer]);
+
+  const queueRetry = useCallback(() => {
+    if (!active || !mountedRef.current || browserIsOffline()) {
+      return null;
+    }
+    clearRetryTimer();
+    const delay = getRetryDelay(retryAttemptRef.current);
+    retryAttemptRef.current += 1;
+    const nextRetryAt = new Date(Date.now() + delay).toISOString();
+    retryTimeoutRef.current = setTimeout(() => {
+      retryTimeoutRef.current = null;
+      void syncNowRef.current();
+    }, delay);
+    return nextRetryAt;
+  }, [active, clearRetryTimer]);
+
+  const syncNow = useCallback(async () => {
+    if (!active || !userId) {
+      return;
+    }
+    if (resolvingRef.current) {
+      rerunRequestedRef.current = true;
+      await resolvingRef.current;
+      return;
+    }
+    if (runningRef.current) {
+      rerunRequestedRef.current = true;
+      return runningRef.current;
+    }
+
+    clearRetryTimer();
+    const run = (async () => {
+      do {
+        rerunRequestedRef.current = false;
+        if (mountedRef.current) {
+          setStatus((current) => ({
+            ...current,
+            phase: 'syncing',
+            errorCode: null,
+            errorMessage: null,
+            nextRetryAt: null
+          }));
+        }
+        try {
+          if (browserIsOffline()) {
+            const counts = await getLocalCloudSyncCounts();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'offline',
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              }));
+            }
+            break;
+          }
+
+          const cloudSync = await loadCloudSyncModule();
+          const result = await cloudSync.synchronizeCloudData(userId);
+          if (result.pulledCount > 0) {
+            await onRemoteChangeRef.current();
+          }
+          const syncedAt = new Date().toISOString();
+          if (result.conflictCount > 0) {
+            resetRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'conflict',
+                pendingCount: result.pendingCount,
+                conflictCount: result.conflictCount,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              });
+            }
+          } else if (result.pendingCount > 0) {
+            const nextRetryAt = queueRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'pending',
+                pendingCount: result.pendingCount,
+                conflictCount: result.conflictCount,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt
+              });
+            }
+          } else {
+            resetRetry();
+            if (mountedRef.current) {
+              setStatus({
+                phase: 'idle',
+                pendingCount: 0,
+                conflictCount: 0,
+                lastSyncedAt: syncedAt,
+                errorCode: null,
+                errorMessage: null,
+                nextRetryAt: null
+              });
+            }
+          }
+        } catch (error) {
+          const counts = await getLocalCloudSyncCounts();
+          const errorCode = getCloudErrorCode(error);
+          const errorMessage = getCloudErrorMessage(error);
+          if (browserIsOffline()) {
+            clearRetryTimer();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'offline',
+                errorCode,
+                errorMessage,
+                nextRetryAt: null
+              }));
+            }
+          } else if (isRetryableCloudError(error)) {
+            const nextRetryAt = queueRetry();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'pending',
+                errorCode,
+                errorMessage,
+                nextRetryAt
+              }));
+            }
+          } else {
+            clearRetryTimer();
+            if (mountedRef.current) {
+              setStatus((current) => ({
+                ...current,
+                ...counts,
+                phase: 'error',
+                errorCode,
+                errorMessage,
+                nextRetryAt: null
+              }));
+            }
+          }
+          break;
+        }
+      } while (rerunRequestedRef.current && active);
+    })();
+
+    runningRef.current = run;
+    try {
+      await run;
+    } finally {
+      if (runningRef.current === run) {
+        runningRef.current = null;
+      }
+      if (rerunRequestedRef.current && active && mountedRef.current) {
+        rerunRequestedRef.current = false;
+        clearRetryTimer();
+        void syncNowRef.current();
+      }
+    }
+  }, [active, clearRetryTimer, queueRetry, resetRetry, userId]);
+
+  useEffect(() => {
+    syncNowRef.current = syncNow;
+  }, [syncNow]);
+
+  const resolveConflicts = useCallback(
+    async (resolution: CloudConflictResolution) => {
+      if (!active || !userId) {
+        return;
+      }
+      if (resolvingRef.current) {
+        await resolvingRef.current;
+        return;
+      }
+      if (runningRef.current) {
+        await runningRef.current;
+      }
+
+      clearRetryTimer();
+      const run = (async () => {
+        if (mountedRef.current) {
+          setStatus((current) => ({
+            ...current,
+            phase: 'syncing',
+            errorCode: null,
+            errorMessage: null,
+            nextRetryAt: null
+          }));
+        }
+        try {
+          const cloudSync = await loadCloudSyncModule();
+          await cloudSync.resolveCloudConflicts(userId, resolution);
+          await onRemoteChangeRef.current();
+          return true;
+        } catch (error) {
+          const counts = await getLocalCloudSyncCounts();
+          if (mountedRef.current) {
+            setStatus((current) => ({
+              ...current,
+              ...counts,
+              phase: browserIsOffline() || isRetryableCloudError(error) ? 'offline' : 'error',
+              errorCode: getCloudErrorCode(error),
+              errorMessage: getCloudErrorMessage(error),
+              nextRetryAt: null
+            }));
+          }
+          return false;
+        }
+      })();
+
+      resolvingRef.current = run;
+      let resolved = false;
+      try {
+        resolved = await run;
+      } finally {
+        if (resolvingRef.current === run) {
+          resolvingRef.current = null;
+        }
+      }
+      if (resolved) {
+        resetRetry();
+        await syncNow();
+      }
+    },
+    [active, clearRetryTimer, resetRetry, syncNow, userId]
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+    if (!active || !userId) {
+      resetRetry();
+      setStatus(DISABLED_STATUS);
+      return () => {
+        mountedRef.current = false;
+      };
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let subscriptionRetryId: ReturnType<typeof setTimeout> | null = null;
+    let subscriptionRetryAttempt = 0;
+    let cancelled = false;
+    let subscriptionActive = false;
+    let subscriptionStarting = false;
+    let unsubscribe = () => {};
+
+    const scheduleSync = (delay = 350) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+        void syncNow();
+      }, delay);
+    };
+
+    const clearSubscriptionRetry = () => {
+      if (subscriptionRetryId) {
+        clearTimeout(subscriptionRetryId);
+        subscriptionRetryId = null;
+      }
+    };
+
+    const ensureSubscription = async () => {
+      if (
+        cancelled ||
+        subscriptionActive ||
+        subscriptionStarting ||
+        browserIsOffline()
+      ) {
+        return;
+      }
+      subscriptionStarting = true;
+      try {
+        const cloudSync = await loadCloudSyncModule();
+        if (cancelled) {
+          return;
+        }
+        unsubscribe = cloudSync.subscribeToCloudChanges(
+          userId,
+          () => {
+            subscriptionRetryAttempt = 0;
+            scheduleSync(750);
+          },
+          (error) => {
+            subscriptionActive = false;
+            unsubscribe = () => {};
+            scheduleSync(0);
+            if (!cancelled && isRetryableCloudError(error) && !browserIsOffline()) {
+              clearSubscriptionRetry();
+              const delay = getRetryDelay(subscriptionRetryAttempt);
+              subscriptionRetryAttempt += 1;
+              subscriptionRetryId = setTimeout(() => {
+                subscriptionRetryId = null;
+                void ensureSubscription();
+              }, delay);
+            }
+          }
+        );
+        subscriptionActive = true;
+        subscriptionRetryAttempt = 0;
+      } catch (error) {
+        subscriptionActive = false;
+        scheduleSync(0);
+        if (isRetryableCloudError(error) && !browserIsOffline()) {
+          clearSubscriptionRetry();
+          const delay = getRetryDelay(subscriptionRetryAttempt);
+          subscriptionRetryAttempt += 1;
+          subscriptionRetryId = setTimeout(() => {
+            subscriptionRetryId = null;
+            void ensureSubscription();
+          }, delay);
+        }
+      } finally {
+        subscriptionStarting = false;
+      }
+    };
+
+    const resumeSync = () => {
+      retryAttemptRef.current = 0;
+      clearRetryTimer();
+      clearSubscriptionRetry();
+      void ensureSubscription();
+      scheduleSync(0);
+    };
+    const handleOnline = () => resumeSync();
+    const handleFocus = () => resumeSync();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resumeSync();
+      }
+    };
+    const handleLocalChange = () => scheduleSync();
+
+    void ensureSubscription();
+    scheduleSync(0);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener(LOCAL_DATA_CHANGED_EVENT, handleLocalChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      mountedRef.current = false;
+      cancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      clearSubscriptionRetry();
+      clearRetryTimer();
+      unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener(LOCAL_DATA_CHANGED_EVENT, handleLocalChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [active, clearRetryTimer, resetRetry, syncNow, userId]);
+
+  return { status, syncNow, resolveConflicts };
+}
+'''
+
+Path('src/hooks/useCloudSync.ts').write_text(HOOK)
+
+dialogs = Path('src/components/Dialogs.tsx')
+text = dialogs.read_text()
+old = """                      cloudSyncStatus.phase === 'idle'
+                        ? 'bg-benefit'
+                        : cloudSyncStatus.phase === 'syncing'
+                          ? 'animate-pulse bg-accent'
+                          : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
+"""
+new = """                      cloudSyncStatus.phase === 'idle'
+                        ? 'bg-benefit'
+                        : cloudSyncStatus.phase === 'syncing' || cloudSyncStatus.phase === 'pending'
+                          ? 'animate-pulse bg-accent'
+                          : cloudSyncStatus.phase === 'conflict' || cloudSyncStatus.phase === 'error'
+"""
+if old not in text:
+    raise SystemExit('Sync status color block not found')
+text = text.replace(old, new, 1)
+old = """                  {cloudSyncStatus.pendingCount > 0 ? (
+                    <span className=\"text-muted\">
+                      {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
+                    </span>
+                  ) : null}
+"""
+new = """                  {cloudSyncStatus.pendingCount > 0 ? (
+                    <span className=\"text-muted\">
+                      {t('settings.syncPendingCount', { count: cloudSyncStatus.pendingCount })}
+                    </span>
+                  ) : null}
+                  {cloudSyncStatus.phase === 'error' && cloudSyncStatus.errorCode ? (
+                    <span
+                      className=\"text-red-700\"
+                      title={cloudSyncStatus.errorMessage ?? undefined}
+                    >
+                      {t('settings.syncErrorDetail', { code: cloudSyncStatus.errorCode })}
+                    </span>
+                  ) : null}
+"""
+if old not in text:
+    raise SystemExit('Sync pending status block not found')
+dialogs.write_text(text.replace(old, new, 1))
+
+for locale_path, pending_text, detail_text in [
+    ('src/locales/es.json', 'Sincronización pendiente; reintentando automáticamente', 'Detalle: {{code}}'),
+    ('src/locales/en.json', 'Sync pending; retrying automatically', 'Detail: {{code}}'),
+]:
+    path = Path(locale_path)
+    data = json.loads(path.read_text())
+    data['settings']['syncStatus']['pending'] = pending_text
+    data['settings']['syncErrorDetail'] = detail_text
+    path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')) + '\n')
+
+package = Path('package.json')
+package_data = json.loads(package.read_text())
+package_data['version'] = '3.3.4'
+package.write_text(json.dumps(package_data, ensure_ascii=False, indent=2) + '\n')
+
+package_lock = Path('package-lock.json')
+lock_data = json.loads(package_lock.read_text())
+lock_data['version'] = '3.3.4'
+if isinstance(lock_data.get('packages'), dict) and '' in lock_data['packages']:
+    lock_data['packages']['']['version'] = '3.3.4'
+package_lock.write_text(json.dumps(lock_data, ensure_ascii=False, indent=2) + '\n')
+
+cargo_toml = Path('src-tauri/Cargo.toml')
+text = cargo_toml.read_text()
+text, count = re.subn(r'version = "3\.3\.3"', 'version = "3.3.4"', text, count=1)
+if count != 1:
+    raise SystemExit('Cargo.toml version not found')
+cargo_toml.write_text(text)
+
+cargo_lock = Path('src-tauri/Cargo.lock')
+text = cargo_lock.read_text()
+text, count = re.subn(
+    r'(\[\[package\]\]\nname = "fintrack-app"\nversion = ")3\.3\.3(")',
+    r'\g<1>3.3.4\2',
+    text,
+    count=1,
+)
+if count != 1:
+    raise SystemExit('Cargo.lock fintrack version not found')
+cargo_lock.write_text(text)
+
+tauri_path = Path('src-tauri/tauri.conf.json')
+tauri = json.loads(tauri_path.read_text())
+tauri['version'] = '3.3.4'
+tauri_path.write_text(json.dumps(tauri, ensure_ascii=False, indent=2) + '\n')
+
+readme = Path('README.md')
+text = readme.read_text().replace('3.3.3', '3.3.4')
+marker = '- Automatic sync and explicit conflict resolution.\n'
+addition = marker + '- Cloud sync automatically retries temporary failures and resumes when the app returns to the foreground.\n'
+if marker not in text:
+    raise SystemExit('README sync marker not found')
+readme.write_text(text.replace(marker, addition, 1))
