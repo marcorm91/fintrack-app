@@ -36,7 +36,7 @@ The links will be available once release `v3.3.4` is published.
 - Leave the monthly portfolio contribution empty to mark it as untracked; enter `0` to record an explicit zero contribution.
 - Investment performance insights for monthly, yearly, and historical views.
 - Monthly notes and a responsive interface.
-- Current-month entries stay editable and are included in insights automatically on the first day of the next month.
+- Current-month entries are reflected in insights immediately; unrecorded months stay absent instead of being treated as zero-valued periods.
 
 ## Usage modes
 
