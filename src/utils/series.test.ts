@@ -20,14 +20,23 @@ const point = (month: string, balanceCents: number): MonthlySeriesPoint => ({
 });
 
 describe('series utilities', () => {
-  it('builds a full year with zero-filled missing months', () => {
-    const result = buildYearSeries('2026', [point('2026-03', 1000)]);
+  it('keeps only recorded months for the selected year', () => {
+    const result = buildYearSeries('2026', [
+      point('2026-03', 1000),
+      point('2025-12', 800),
+      point('2026-01', 900)
+    ]);
 
-    expect(result).toHaveLength(12);
-    expect(result[0].month).toBe('2026-01');
-    expect(result[0].balanceCents).toBe(0);
-    expect(result[2].month).toBe('2026-03');
-    expect(result[2].balanceCents).toBe(1000);
+    expect(result.map((item) => item.month)).toEqual(['2026-01', '2026-03']);
+    expect(result.some((item) => item.month === '2026-02')).toBe(false);
+  });
+
+  it('does not turn an unrecorded month into a zero-valued period', () => {
+    const result = buildYearSeries('2026', [point('2026-08', 1000)]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].month).toBe('2026-08');
+    expect(result.some((item) => item.month === '2026-09')).toBe(false);
   });
 
   it('removes portfolio values when the setting is disabled', () => {
@@ -46,13 +55,13 @@ describe('series utilities', () => {
     expect(result?.month).toBe('2026-02');
   });
 
-  it('keeps the current and future months out of closed insights', () => {
+  it('includes the current month in insights and keeps future months out', () => {
     expect(
       getClosedMonthlySeries(
         [point('2026-07', 700), point('2026-08', 800), point('2026-09', 900)],
         '2026-08'
       ).map((item) => item.month)
-    ).toEqual(['2026-07']);
+    ).toEqual(['2026-07', '2026-08']);
   });
 
   it('calculates balance trends', () => {
