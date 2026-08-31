@@ -1,0 +1,54 @@
+name: Prepare version 3.3.5
+
+on:
+  push:
+    branches:
+      - chore/version-3.3.5
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ !contains(github.event.head_commit.message, '[version-sync]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: chore/version-3.3.5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Update npm version metadata
+        run: npm version 3.3.5 --no-git-tag-version --allow-same-version
+
+      - name: Update release version metadata
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for filename in ('src-tauri/Cargo.toml', 'src-tauri/tauri.conf.json', 'README.md'):
+              path = Path(filename)
+              path.write_text(path.read_text().replace('3.3.4', '3.3.5'))
+          PY
+
+      - name: Refresh Cargo lockfile
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Remove temporary workflow
+        run: rm .github/workflows/prepare-version-3.3.5.yml
+
+      - name: Commit synchronized version files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json README.md .github/workflows/prepare-version-3.3.5.yml
+          git commit -m "Chore(release): prepare version 3.3.5 [version-sync]"
+          git push origin HEAD:chore/version-3.3.5
