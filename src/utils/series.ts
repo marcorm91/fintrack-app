@@ -42,31 +42,13 @@ export function getClosedMonthlySeries(
   series: MonthlySeriesPoint[],
   currentMonthValue: string
 ): MonthlySeriesPoint[] {
-  return series.filter((point) => point.month < currentMonthValue);
+  return series.filter((point) => point.month <= currentMonthValue);
 }
 
 export function buildYearSeries(year: string, series: MonthlySeriesPoint[]): MonthlySeriesPoint[] {
-  const map = new Map(series.filter((point) => point.month.startsWith(`${year}-`)).map((point) => [point.month, point]));
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = String(index + 1).padStart(2, '0');
-    const key = `${year}-${month}`;
-    const point = map.get(key);
-    return (
-      point ?? {
-        month: key,
-        incomeCents: 0,
-        expenseCents: 0,
-        balanceCents: 0,
-        portfolioCents: 0,
-        portfolioContributionCents: null,
-        portfolioInvestedCents: null,
-        portfolioResultCents: null,
-        totalWealthCents: 0,
-        benefitCents: 0,
-        note: ''
-      }
-    );
-  });
+  return series
+    .filter((point) => point.month.startsWith(`${year}-`))
+    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
 export function hasClosingBalanceEntry(point: Pick<MonthlySeriesPoint, 'balanceCents'>) {
