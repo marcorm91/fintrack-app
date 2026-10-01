@@ -42,6 +42,32 @@ service cloud.firestore {
         && (data.deletedAt == null || data.deletedAt == request.time);
     }
 
+    function isValidWealthGoal() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['schemaVersion', 'goal', 'version', 'updatedAt'])
+        && data.schemaVersion == 1
+        && data.version is int && data.version >= 1
+        && data.updatedAt == request.time
+        && (data.goal == null || (
+          data.goal is map
+          && data.goal.keys().hasOnly(['targetAmountCents', 'targetMonth'])
+          && data.goal.targetAmountCents is int
+          && data.goal.targetAmountCents > 0
+          && data.goal.targetAmountCents <= 9007199254740991
+          && data.goal.targetMonth is string
+          && data.goal.targetMonth.matches('^[1-9][0-9]{3}-(0[1-9]|1[0-2])$')
+        ));
+    }
+
+    match /users/{userId}/settings/wealthGoal {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidWealthGoal()
+        && request.resource.data.version == 1;
+      allow update: if isOwner(userId) && isValidWealthGoal()
+        && request.resource.data.version == resource.data.version + 1;
+      allow delete: if false;
+    }
+
     match /users/{userId}/monthlySnapshots/{month} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId)

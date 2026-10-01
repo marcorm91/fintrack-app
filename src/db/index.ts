@@ -1248,3 +1248,24 @@ export async function deleteAllMonthlySnapshots(): Promise<void> {
   await db.execute(DELETE_ALL_SQL);
   notifyLocalDataChanged();
 }
+
+// Shared settings access; compare-and-set prevents sync from overwriting newer local edits.
+export async function getAppSetting(key: string): Promise<string | null> {
+  if (shouldUseMockDatabase()) return window.localStorage.getItem(`fintrack.mock.${key}`);
+  const db = await initDb();
+  const rows = await db.select<Array<{ value: string }>>(GET_APP_SETTING_SQL, [key]);
+  return rows[0]?.value ?? null;
+}
+
+export async function compareAndSetAppSetting(key: string, expected: string | null, value: string): Promise<boolean> {
+  if (shouldUseMockDatabase()) {
+    if (await getAppSetting(key) !== expected) return false;
+    window.localStorage.setItem(`fintrack.mock.${key}`, value);
+    return true;
+  }
+  const db = await initDb();
+  const result = expected === null
+    ? await db.execute('INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)', [key, value])
+    : await db.execute('UPDATE app_settings SET value = ? WHERE key = ? AND value = ?', [value, key, expected]);
+  return result.rowsAffected > 0;
+}

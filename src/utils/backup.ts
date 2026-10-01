@@ -1,3 +1,4 @@
+import { isWealthGoal, type WealthGoal } from './wealthGoal';
 import type { MonthlySeriesPoint, MonthlySnapshotInput } from '../db';
 
 const BACKUP_FORMAT = 'fintrack-backup';
@@ -28,6 +29,7 @@ export type FintrackBackup = {
   createdAt: string;
   settings: {
     investmentPortfolioEnabled: boolean;
+    wealthGoal?: WealthGoal | null;
   };
   snapshots: Array<{
     month: string;
@@ -44,6 +46,7 @@ export type ParsedFintrackBackup = {
   appVersion: string;
   createdAt: string;
   investmentPortfolioEnabled: boolean;
+  wealthGoal: WealthGoal | null;
   snapshots: MonthlySnapshotInput[];
 };
 
@@ -68,7 +71,8 @@ function invalidData(): never {
 export function buildJsonBackup(
   series: MonthlySeriesPoint[],
   investmentPortfolioEnabled: boolean,
-  appVersion: string
+  appVersion: string,
+  wealthGoal: WealthGoal | null = null
 ) {
   const backup: FintrackBackup = {
     format: BACKUP_FORMAT,
@@ -76,7 +80,8 @@ export function buildJsonBackup(
     appVersion,
     createdAt: new Date().toISOString(),
     settings: {
-      investmentPortfolioEnabled
+      investmentPortfolioEnabled,
+      wealthGoal
     },
     snapshots: series.map((point) => ({
       month: point.month,
@@ -151,6 +156,9 @@ export function parseJsonBackup(text: string): ParsedFintrackBackup {
     invalidData();
   }
 
+  const wealthGoal = value.settings.wealthGoal ?? null;
+  if (wealthGoal !== null && !isWealthGoal(wealthGoal)) invalidData();
+
   const months = new Set<string>();
   const snapshots = value.snapshots.map((snapshot) => {
     if (!isRecord(snapshot)) {
@@ -194,6 +202,7 @@ export function parseJsonBackup(text: string): ParsedFintrackBackup {
     appVersion: value.appVersion,
     createdAt: value.createdAt,
     investmentPortfolioEnabled: value.settings.investmentPortfolioEnabled,
+    wealthGoal,
     snapshots
   };
 }

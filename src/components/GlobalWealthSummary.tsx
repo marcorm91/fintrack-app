@@ -1,3 +1,5 @@
+import type { WealthGoal } from '../utils/wealthGoal';
+import { WealthGoalProgress } from './WealthGoalProgress';
 import { useTranslation } from 'react-i18next';
 import { formatCents } from '../utils/format';
 import { getMonthLabel } from '../utils/date';
@@ -8,6 +10,10 @@ type GlobalWealthSummaryProps = {
   portfolioCents: number;
   hasInvestmentPortfolio: boolean;
   asOfMonth: string | null;
+  goal: WealthGoal | null;
+  goalLoading: boolean;
+  readOnly: boolean;
+  onSaveGoal: (goal: WealthGoal | null) => Promise<void>;
 };
 
 export function GlobalWealthSummary({
@@ -15,7 +21,7 @@ export function GlobalWealthSummary({
   balanceCents,
   portfolioCents,
   hasInvestmentPortfolio,
-  asOfMonth
+  asOfMonth, goal, goalLoading, readOnly, onSaveGoal
 }: GlobalWealthSummaryProps) {
   const { t, i18n } = useTranslation();
   const dateLabel = asOfMonth ? `${getMonthLabel(asOfMonth, i18n.language, 'long')} ${asOfMonth.slice(0, 4)}` : '—';
@@ -52,6 +58,7 @@ export function GlobalWealthSummary({
           ) : null}
         </div>
       </div>
+      <WealthGoalProgress goal={goal} loading={goalLoading} readOnly={readOnly} onSave={onSaveGoal} currentCents={totalWealthCents} asOfMonth={asOfMonth} />
     </section>
   );
 }

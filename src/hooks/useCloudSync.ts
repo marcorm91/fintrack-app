@@ -1,3 +1,4 @@
+import { getWealthGoalSetting } from '../db/wealthGoal';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getConflictedMonthlySnapshots,
@@ -28,11 +29,12 @@ function loadCloudSyncModule() {
 }
 
 async function getLocalCloudSyncCounts() {
-  const [pending, conflicts] = await Promise.all([
+  const [pending, conflicts, goal] = await Promise.all([
     getPendingMonthlySnapshots(),
-    getConflictedMonthlySnapshots()
+    getConflictedMonthlySnapshots(),
+    getWealthGoalSetting()
   ]);
-  return { pendingCount: pending.length, conflictCount: conflicts.length };
+  return { pendingCount: pending.length + Number(goal.syncStatus === 'pending'), conflictCount: conflicts.length + Number(goal.syncStatus === 'conflict') };
 }
 
 function getCloudErrorCode(error: unknown) {

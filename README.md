@@ -8,16 +8,16 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_x64-setup.exe)
-- Windows MSI: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_amd64.AppImage)
-- Linux DEB: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_amd64.deb)
-- Linux RPM: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5-1.x86_64.rpm)
-- Android APK: [Fintrack 3.3.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.3.5/Fintrack_3.3.5_android.apk)
+- Windows installer: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_x64-setup.exe)
+- Windows MSI: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_amd64.AppImage)
+- Linux DEB: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_amd64.deb)
+- Linux RPM: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0-1.x86_64.rpm)
+- Android APK: [Fintrack 3.4.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.0/Fintrack_3.4.0_android.apk)
 
-The links will be available once release `v3.3.5` is published.
+The links will be available once release `v3.4.0` is published.
 
 ## Features
 
@@ -32,6 +32,8 @@ The links will be available once release `v3.3.5` is published.
 - Cloud sync automatically retries temporary failures and resumes when the app returns to the foreground.
 - Local emergency PIN for working without Firebase once it has been configured.
 - Optional investment portfolio.
+- One global wealth goal with a target amount and end month, integrated into the wealth summary. It follows cash plus the enabled portfolio, or cash alone when the portfolio is disabled.
+- Goal progress, remaining amount, and monthly amount needed from the displayed closing month; a solid green progress bar and an accessible dialog capped at 560 px.
 - Separate monthly portfolio contributions from the real portfolio closing value, with automatic accumulated gain/loss tracking.
 - Leave the monthly portfolio contribution empty to mark it as untracked; enter `0` to record an explicit zero contribution.
 - Investment performance insights for monthly, yearly, and historical views.
@@ -138,3 +140,25 @@ When a `v*` tag is published, for example `v3.2.0`, GitHub Actions builds the Wi
 ## License
 
 MIT. See `LICENSE`.
+
+## Wealth goal storage and sync
+
+The goal is stored in the existing SQLite `app_settings` table under `wealthGoal`. Only
+`targetAmountCents` and `targetMonth` describe the goal; version, local revision and sync
+status support the existing offline-first workflow. Deletion retains a null tombstone
+until it can sync. No monthly snapshot or financial calculation is changed.
+
+JSON backups keep the optional `settings.wealthGoal` object (or null) with format version
+1. Importing an older backup without the field removes the goal. Existing expired goals
+remain valid for display and backup; the editor requires the end month to be at least
+the later of the current calendar month and the displayed wealth month. With no closing
+snapshot, calculations use the current calendar month. Derived values are not persisted.
+
+Cloud sync uses `users/{uid}/settings/wealthGoal`, since earlier versions only synced
+monthly snapshots and had no remote global-settings document. The existing sync loop,
+retry status and explicit local/cloud conflict choice cover this document too. Upload
+acknowledgement retains newer local edits made during a request. **Deploy the updated
+`firestore.rules` before enabling this feature in a cloud distribution.** These rules
+restrict access to the owning user and validate the goal and monotonically increasing
+version. The existing Deploy Firestore Rules workflow publishes them when this change
+reaches `main`; pushing a feature branch does not deploy production rules.

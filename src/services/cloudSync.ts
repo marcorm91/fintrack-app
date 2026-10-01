@@ -1,3 +1,5 @@
+import { getWealthGoalSetting } from '../db/wealthGoal';
+import { synchronizeWealthGoal, resolveWealthGoalConflict, subscribeToWealthGoal } from './wealthGoalSync';
 import {
   Timestamp,
   collection,
@@ -279,15 +281,17 @@ export async function synchronizeCloudData(userId: string): Promise<CloudSyncRes
   const remoteSnapshots = await getRemoteMonthlySnapshots(userId);
   const pulledCount = await applyRemoteSnapshots(remoteSnapshots);
   const pushedCount = await pushPendingSnapshots(userId);
+  const goalResult = await synchronizeWealthGoal(userId);
   const [pending, conflicts] = await Promise.all([
     getPendingMonthlySnapshots(),
     getConflictedMonthlySnapshots()
   ]);
+  const goalSetting = await getWealthGoalSetting();
   return {
-    pulledCount,
-    pushedCount,
-    pendingCount: pending.length,
-    conflictCount: conflicts.length
+    pulledCount: pulledCount + goalResult.pulledCount,
+    pushedCount: pushedCount + goalResult.pushedCount,
+    pendingCount: pending.length + Number(goalSetting.syncStatus === 'pending'),
+    conflictCount: conflicts.length + Number(goalSetting.syncStatus === 'conflict')
   };
 }
 
@@ -295,6 +299,7 @@ export async function resolveCloudConflicts(
   userId: string,
   resolution: CloudConflictResolution
 ) {
+  await resolveWealthGoalConflict(userId, resolution);
   const [remoteSnapshots, conflicts] = await Promise.all([
     getRemoteMonthlySnapshots(userId),
     getConflictedMonthlySnapshots()
@@ -319,5 +324,10 @@ export function subscribeToCloudChanges(
   onChange: () => void,
   onError: (error: Error) => void
 ): Unsubscribe {
-  return onSnapshot(monthlySnapshotsCollection(userId), onChange, onError);
+  let stopMonths = () => {};
+  let stopGoal = () => {};
+  const handleError = (error: Error) => { stopMonths(); stopGoal(); onError(error); };
+  stopMonths = onSnapshot(monthlySnapshotsCollection(userId), onChange, handleError);
+  stopGoal = subscribeToWealthGoal(userId, onChange, handleError);
+  return () => { stopMonths(); stopGoal(); };
 }
