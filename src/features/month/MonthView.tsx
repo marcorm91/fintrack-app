@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { FormState, SeriesKey } from '../../types';
 import type { MonthlySummary } from '../../db';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -71,6 +72,7 @@ function getDonutItemPercent(items: MonthlyInputMixItem[], cents: number) {
 }
 
 type MonthViewProps = {
+  deleteAction: ReactNode;
   monthValue: string;
   setMonthValue: (value: string | ((prev: string) => string)) => void;
   currentMonthValue: string;
@@ -90,6 +92,7 @@ type MonthViewProps = {
 };
 
 export function MonthView({
+  deleteAction,
   monthValue,
   setMonthValue,
   currentMonthValue,
@@ -197,8 +200,9 @@ export function MonthView({
   };
   const formContent = (
     <>
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-ink sm:text-2xl">{t('labels.saveMonth')}</h2>
+        {!isMobile && deleteAction}
         {isMobile ? (
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
             {monthValue.slice(5, 7)}/{monthValue.slice(0, 4)}
@@ -398,13 +402,16 @@ export function MonthView({
       <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <section className="order-1 min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:p-6 lg:order-1">
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
-          <div>
+          <div className={`flex items-start justify-between gap-3 ${isMobile ? 'w-full' : ''}`}>
+            <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
               {t('labels.monthSummary')}
             </p>
             <h2 className="text-xl font-semibold text-ink sm:text-2xl mt-2">
               {getMonthLabel(monthValue, locale, 'long')} {monthValue.slice(0, 4)}
             </h2>
+            </div>
+            {isMobile && deleteAction}
           </div>
           {isMobile ? (
             <div className="grid w-full gap-2">

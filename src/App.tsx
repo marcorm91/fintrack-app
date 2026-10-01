@@ -36,7 +36,7 @@ import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { MonthlyRecap } from './components/MonthlyRecap';
 import { AppNavigation } from './components/AppNavigation';
-import { TabActions } from './components/TabActions';
+import { DeletePeriodButton } from './components/DeletePeriodButton';
 import { SummaryView } from './features/summary/SummaryView';
 import { TABS } from './constants';
 import { ConfirmDialog, DatabaseSettingsDialog, TextImportDialog } from './components/Dialogs';
@@ -654,12 +654,6 @@ function FintrackApp({
       onFileChange={onFileChange}
       title={t(TABS.find(tab => tab.key === activeTab)!.labelKey)}
       navigation={<AppNavigation activeTab={activeTab} onNavigate={navigate} t={t} />}
-      tabs={activeTab !== 'summary' ? <div className="mb-3 flex justify-end"><TabActions
-          activeTab={activeTab} monthValue={monthValue} yearValue={yearValue}
-          openDeleteMonth={openDeleteMonth} openDeleteYear={openDeleteYear} openDeleteAll={openDeleteAll}
-          deletingMonth={deletingMonth} deletingYear={deletingYear} deletingAll={deletingAll}
-          readOnly={readOnly} t={t}
-        /></div> : null}
       dialogs={
         <>
           <input
@@ -782,6 +776,7 @@ function FintrackApp({
           {...monthSwipeHandlers}
         >
           <MonthView
+            deleteAction={<DeletePeriodButton label={t(deletingMonth ? 'actions.deleting' : 'actions.deleteMonth')} disabled={readOnly || deletingMonth} onClick={() => openDeleteMonth(monthValue)} />}
             monthValue={monthValue}
             setMonthValue={setMonthValue}
             currentMonthValue={currentMonthValue}
@@ -809,6 +804,7 @@ function FintrackApp({
       ) : null}
       {activeTab === 'year' ? (
         <YearView
+            deleteAction={<DeletePeriodButton label={t(deletingYear ? 'actions.deleting' : 'actions.deleteYear')} disabled={readOnly || deletingYear} onClick={() => openDeleteYear(yearValue)} />}
           yearValue={yearValue}
           setYearValue={setYearValue}
           currentYearValue={currentYearValue}
@@ -836,6 +832,7 @@ function FintrackApp({
       ) : null}
       {activeTab === 'all' ? (
         <HistoryView
+            deleteAction={<DeletePeriodButton label={t(deletingAll ? 'actions.deleting' : 'actions.deleteHistory')} disabled={readOnly || deletingAll} onClick={openDeleteAll} />}
           allYearsSeriesVisibility={effectiveAllYearsSeriesVisibility}
           toggleAllYearsSeries={toggleAllYearsSeries}
           showOnlyAllYearsSeries={showOnlyAllYearsSeries}

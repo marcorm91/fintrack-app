@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import type { SeriesKey, SeriesTrendMap, SortDirection, YearTableSortKey } from '../../types';
 import type { MonthlySeriesPoint } from '../../db';
@@ -36,6 +37,7 @@ type SeriesChartData = ChartData<'bar', Array<number | null>, string>;
 type SeriesChartOptions = ChartOptions<'bar'>;
 
 type YearViewProps = {
+  deleteAction: ReactNode;
   yearValue: string;
   setYearValue: (value: string | ((prev: string) => string)) => void;
   currentYearValue: string;
@@ -62,6 +64,7 @@ type YearViewProps = {
 };
 
 export function YearView({
+  deleteAction,
   yearValue,
   setYearValue,
   currentYearValue,
@@ -163,13 +166,14 @@ export function YearView({
       <div
         className={`grid min-w-0 gap-4 overflow-x-hidden transition duration-150 ease-out sm:gap-6 ${motionClassName}`}
       >
-        <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
-          <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
+        <details className="relative group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
+          <summary className="min-h-11 pr-14 flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
             <span>{t('labels.yearChart')}</span>
             <span className="text-muted transition group-open:rotate-90">
               <ChevronIcon direction="right" />
             </span>
           </summary>
+          <div className="absolute right-4 top-4 sm:right-6 sm:top-6">{deleteAction}</div>
           <div className="mt-2">
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
             <div>
@@ -478,7 +482,7 @@ export function YearView({
           t={t}
         />
 
-        <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+        <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
             <span>{t('labels.monthDetail')} · {yearValue}</span>
             <span className="text-muted transition group-open:rotate-90">
