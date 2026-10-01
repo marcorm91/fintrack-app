@@ -8,18 +8,23 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_x64-setup.exe)
-- Windows MSI: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_amd64.AppImage)
-- Linux DEB: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_amd64.deb)
-- Linux RPM: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2-1.x86_64.rpm)
-- Android APK: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_android.apk)
+- Windows installer: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_x64-setup.exe)
+- Windows MSI: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_amd64.AppImage)
+- Linux DEB: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_amd64.deb)
+- Linux RPM: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0-1.x86_64.rpm)
+- Android APK: [Fintrack 3.5.0](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.0/Fintrack_3.5.0_android.apk)
 
-The links will be available once release `v3.4.2` is published.
+The links will be available once release `v3.5.0` is published.
 
 ## Features
+
+- Overview opens by default, with current wealth, the goal, the latest recorded month, current-year cash flow, and historical wealth. Each preview opens its detailed view.
+- Fixed desktop navigation and four-item mobile bottom navigation: Overview, Month, Annual, and History. Wealth and the goal appear only in Overview, freeing space in detailed views.
+- The wealth heading shows the current calendar month; the monthly preview uses the latest stored record up to that month, including zero-valued records. Annual totals always use the current calendar year. Empty periods are shown explicitly instead of fabricated records.
+- Responsive charts and custom SVG navigation icons, with keyboard focus, accessible chart data, and Spanish/English labels. Existing financial calculations, database storage, backups, and cloud sync are unchanged; no database migration is required.
 
 - Monthly, yearly, and history views.
 - Import from CSV files or pasted text.
@@ -34,7 +39,7 @@ The links will be available once release `v3.4.2` is published.
 - Optional investment portfolio.
 - One global wealth goal with a target amount and end month, integrated into the wealth summary. It follows cash plus the enabled portfolio, or cash alone when the portfolio is disabled.
 - Goal progress, remaining amount, and monthly amount needed from the displayed closing month; a solid green progress bar and an accessible dialog capped at 560 px.
-- Compact goal section with SVG icons, a target amount smaller than the main wealth total, closely grouped desktop figures, and a compact empty state. Only the pencil button opens goal editing; the empty state uses its dedicated set-goal button. A subtle divider separates the goal from the wealth summary. The dialog aligns the shared red delete button with Cancel and Save. The upper wealth summary and financial behavior are unchanged.
+- Compact goal section with SVG icons, a target amount smaller than the main wealth total, closely grouped desktop figures, and a compact empty state. Only the pencil button opens goal editing; the empty state uses its dedicated set-goal button. Separate cards distinguish the goal from current wealth, with a horizontal goal layout on desktop. The dialog aligns the shared red delete button with Cancel and Save. The goal calculation continues to use the recorded wealth month, independently of the current-month heading.
 - Separate monthly portfolio contributions from the real portfolio closing value, with automatic accumulated gain/loss tracking.
 - Leave the monthly portfolio contribution empty to mark it as untracked; enter `0` to record an explicit zero contribution.
 - Investment performance insights for monthly, yearly, and historical views.

@@ -23,9 +23,9 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
   const percent = progress ? new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 1 }).format(progress.visualPercent) : '';
   return (
     <>
-      <div className="mt-3 border-t border-ink/10 bg-white px-1 pb-1 pt-3" aria-busy={loading}>
-        <div id={`${id}-details`}>
-          <div className={`flex gap-3 ${goal ? 'items-start' : 'flex-wrap items-center'}`}>
+      <div className="dashboard-card goal-overview" aria-busy={loading}>
+        <div id={`${id}-details`} className={goal ? "goal-layout" : ""}>
+          <div className={`flex gap-3 ${goal ? 'goal-heading items-start' : 'flex-wrap items-center'}`}>
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-benefit/10 text-benefit sm:h-11 sm:w-11" aria-hidden="true">
               <TargetIcon />
             </span>
@@ -46,7 +46,7 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
             {!readOnly && (goal ? (
               <button type="button" onClick={() => setOpen(true)} disabled={loading}
                 aria-label={t('wealthGoal.edit')} aria-describedby={`${id}-summary`} aria-haspopup="dialog"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-ink/10 text-ink hover:bg-ink/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
+                className="goal-edit flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-ink/10 text-ink hover:bg-ink/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
                 <PencilIcon />
               </button>
             ) : (
@@ -57,8 +57,8 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
               </button>
             ))}
           </div>
-          {progress && <>
-            <div className="mt-3">
+          {progress && <div className="goal-progress">
+            <div>
               <div className="mb-1.5 flex items-center justify-between gap-3">
                 <span className="text-xs text-muted">{t('wealthGoal.yourProgress')}</span>
                 <span className="text-sm font-semibold text-[#08745c]">{percent} %</span>
@@ -69,7 +69,7 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
                 <div className="h-full rounded-full bg-benefit" style={{ width: `${progress.visualPercent}%` }} />
               </div>
             </div>
-            <div className="mt-2.5 grid grid-cols-2 gap-3 rounded-xl bg-[#f1faf6] px-3 py-2 text-xs sm:inline-grid sm:max-w-full sm:grid-cols-[auto_auto] sm:gap-5">
+            <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:inline-grid sm:max-w-full sm:grid-cols-[auto_auto] sm:gap-6">
               <p className="min-w-0 text-muted">{t('wealthGoal.remaining')}
                 <span className="mt-0.5 block break-words font-semibold text-ink sm:text-sm">{formatCents(progress.remainingCents)} EUR</span>
               </p>
@@ -78,7 +78,7 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
               </p>
             </div>
             {progress.reached && <p className="mt-2 text-sm font-semibold text-ink">{t('wealthGoal.reached')}</p>}
-          </>}
+          </div>}
         </div>
       </div>
       {open && <WealthGoalDialog goal={goal} minimumMonth={referenceMonth > currentMonth ? referenceMonth : currentMonth}

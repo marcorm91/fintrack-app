@@ -35,7 +35,10 @@ import {
 import { AppLayout } from './components/AppLayout';
 import { GlobalWealthSummary } from './components/GlobalWealthSummary';
 import { MonthlyRecap } from './components/MonthlyRecap';
-import { TabsBar } from './components/TabsBar';
+import { AppNavigation } from './components/AppNavigation';
+import { TabActions } from './components/TabActions';
+import { SummaryView } from './features/summary/SummaryView';
+import { TABS } from './constants';
 import { ConfirmDialog, DatabaseSettingsDialog, TextImportDialog } from './components/Dialogs';
 import { Toast } from './components/Toast';
 import { AuthScreen } from './components/AuthScreen';
@@ -292,7 +295,11 @@ function FintrackApp({
   onSignOut: () => Promise<void>;
   onChangeAppMode: (mode: AppMode) => Promise<void>;
 }) {
-  const [activeTab, setActiveTab] = useState<TabKey>('month');
+  const [activeTab, setActiveTab] = useState<TabKey>('summary');
+  const navigate = useCallback((tab: TabKey) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
   const [appReady, setAppReady] = useState(false);
   const [monthSwipeBlocked, setMonthSwipeBlocked] = useState(false);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
@@ -395,16 +402,16 @@ function FintrackApp({
   const openMonthFromYear = useCallback(
     (targetMonth: string) => {
       setMonthValue(targetMonth);
-      setActiveTab('month');
+      navigate('month');
     },
-    [setMonthValue]
+    [setMonthValue, navigate]
   );
   const openYearFromHistory = useCallback(
     (targetYear: string) => {
       setYearValue(targetYear);
-      setActiveTab('year');
+      navigate('year');
     },
-    [setYearValue]
+    [setYearValue, navigate]
   );
   const { motionClassName: monthMotionClassName, swipeHandlers: monthSwipeHandlers } =
     useSwipeNavigation({
@@ -645,35 +652,14 @@ function FintrackApp({
       t={t}
       importInputRef={importInputRef}
       onFileChange={onFileChange}
-      overview={
-        <GlobalWealthSummary
-          totalWealthCents={globalWealthSummary.totalWealthCents}
-          balanceCents={globalWealthSummary.balanceCents}
-          portfolioCents={globalWealthSummary.portfolioCents}
-          hasInvestmentPortfolio={hasInvestmentPortfolio}
-          asOfMonth={latestClosedPoint?.month ?? null}
-          goal={goal}
-          goalLoading={goalLoading}
-          readOnly={readOnly}
-          onSaveGoal={saveGoal}
-        />
-      }
-      tabs={
-        <TabsBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          monthValue={monthValue}
-          yearValue={yearValue}
-          openDeleteMonth={openDeleteMonth}
-          openDeleteYear={openDeleteYear}
-          openDeleteAll={openDeleteAll}
-          deletingMonth={deletingMonth}
-          deletingYear={deletingYear}
-          deletingAll={deletingAll}
-          readOnly={readOnly}
-          t={t}
-        />
-      }
+      title={t(TABS.find(tab => tab.key === activeTab)!.labelKey)}
+      navigation={<AppNavigation activeTab={activeTab} onNavigate={navigate} t={t} />}
+      tabs={activeTab !== 'summary' ? <div className="mb-3 flex justify-end"><TabActions
+          activeTab={activeTab} monthValue={monthValue} yearValue={yearValue}
+          openDeleteMonth={openDeleteMonth} openDeleteYear={openDeleteYear} openDeleteAll={openDeleteAll}
+          deletingMonth={deletingMonth} deletingYear={deletingYear} deletingAll={deletingAll}
+          readOnly={readOnly} t={t}
+        /></div> : null}
       dialogs={
         <>
           <input
@@ -776,6 +762,19 @@ function FintrackApp({
       }
       toast={toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
     >
+      {activeTab === 'summary' && <>
+        {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        <div className="dashboard-overview">
+          <GlobalWealthSummary totalWealthCents={globalWealthSummary.totalWealthCents}
+            balanceCents={globalWealthSummary.balanceCents} portfolioCents={globalWealthSummary.portfolioCents}
+            hasInvestmentPortfolio={hasInvestmentPortfolio} displayMonth={currentMonthValue}
+            asOfMonth={latestClosedPoint?.month ?? null} goal={goal} goalLoading={goalLoading}
+            readOnly={readOnly} onSaveGoal={saveGoal} />
+          <SummaryView series={closedSeries} allYears={allYears} currentYear={currentYearValue}
+            onOpenMonth={openMonthFromYear} onOpenYear={openYearFromHistory}
+            onOpenHistory={() => navigate('all')} onCreateMonth={() => openMonthFromYear(currentMonthValue)} />
+        </div>
+      </>}
       <Suspense fallback={<div className="min-h-[40vh]" aria-busy="true" />}>
       {activeTab === 'month' ? (
         <div

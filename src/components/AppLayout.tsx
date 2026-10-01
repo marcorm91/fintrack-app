@@ -10,7 +10,8 @@ type AppLayoutProps = {
   t: (key: string, options?: Record<string, unknown>) => string;
   importInputRef: RefObject<HTMLInputElement>;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  overview?: ReactNode;
+  title: string;
+  navigation: ReactNode;
   tabs: ReactNode;
   children: ReactNode;
   dialogs?: ReactNode;
@@ -25,16 +26,19 @@ export function AppLayout({
   t,
   importInputRef,
   onFileChange,
-  overview,
+  title,
+  navigation,
   tabs,
   children,
   dialogs,
   toast
 }: AppLayoutProps) {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[linear-gradient(180deg,#f9fffb_0%,#f4fbf8_46%,#fff7fa_100%)]">
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 py-3 pb-[calc(6rem+var(--app-safe-bottom))] sm:px-5 sm:py-6 sm:pb-8 md:px-8">
+    <div className="app-shell">
+      {navigation}
+      <div className="app-workspace">
         <AppHeader
+          title={title}
           onOpenSettings={onOpenSettings}
           showSignOut={showSignOut}
           signOutLabel={signOutLabel}
@@ -42,10 +46,12 @@ export function AppLayout({
           t={t}
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />
-        {overview}
-        {tabs}
-        <main className="mt-3 gap-4 sm:mt-6 sm:gap-6 flex flex-col flex-1">{children}</main>
-        <AppFooter />
+        <main id="main-content" className="app-content">
+          <h1 className="mb-3 text-xl font-semibold lg:hidden">{title}</h1>
+          {tabs}
+          {children}
+          <AppFooter />
+        </main>
         {dialogs}
         {toast}
       </div>
