@@ -73,12 +73,12 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
       </div>
       {latestMonth ? <>
         <FlowMetrics totals={latestMonth} />
-        <div className="monthly-flow-summary" aria-hidden="true">
-          <div className="monthly-flow-labels">
-            <span><i className="metric-dot bg-benefit" />{t('series.income')} <small>{Math.round(incomeShare)}%</small></span>
-            <span><i className="metric-dot bg-expense" />{t('series.expense')} <small>{Math.round(expenseShare)}%</small></span>
+        <div className="pb-[6px] pt-[22px]" aria-hidden="true">
+          <div className="mb-2 flex items-center justify-between gap-4 text-[11px] text-muted">
+            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-benefit" />{t('series.income')} <small className="text-[10px]">{Math.round(incomeShare)}%</small></span>
+            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-expense" />{t('series.expense')} <small className="text-[10px]">{Math.round(expenseShare)}%</small></span>
           </div>
-          <div className="flow-track flow-track-stacked">
+          <div className="flow-track flex">
             <span className="bg-benefit" style={{ width: `${incomeShare}%` }} />
             <span className="bg-expense" style={{ width: `${expenseShare}%` }} />
           </div>
