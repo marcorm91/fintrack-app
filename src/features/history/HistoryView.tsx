@@ -311,21 +311,15 @@ export function HistoryView({
   const activeChartTitle =
     activeChartPanel === 'summary' ? t('labels.cashFlowChart') : t('labels.wealthChart');
   return (
-    <>
-      <details className="relative group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
-        <summary className="min-h-11 pr-14 flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
-          <span>{t('labels.historyChart')}</span>
-          <span className="text-muted transition group-open:rotate-90">
-            <ChevronIcon direction="right" />
-          </span>
-        </summary>
-          <div className="absolute right-4 top-4 sm:right-6 sm:top-6">{deleteAction}</div>
-        <div className="mt-2">
-          <div className={isMobile ? 'flex flex-col gap-4' : 'grid grid-cols-[1fr_auto_1fr] items-start gap-4'}>
+    <div className="grid min-w-0 gap-4 sm:gap-6">
+      <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">{t('labels.historyChart')}</p>
+          <div className="mt-2">
+          <div className="period-panel-header">
             <div>
               <h2 className="text-xl font-semibold text-ink sm:text-2xl">{historyRangeLabel}</h2>
             </div>
-            <div className={`${isMobile ? 'w-full' : 'justify-self-center flex items-center gap-2'} text-[10px] text-muted sm:text-xs`}>
+            <div className={`period-panel-controls ${isMobile ? 'w-full' : 'justify-self-center flex items-center gap-2'} text-[10px] text-muted sm:text-xs`}>
               <span className="text-[10px] uppercase tracking-[0.16em] sm:text-[11px] sm:tracking-[0.18em]">
                 {t('labels.yearRange')}
               </span>
@@ -363,7 +357,7 @@ export function HistoryView({
                 </select>
               </div>
             </div>
-            {!isMobile ? <div aria-hidden="true"></div> : null}
+            <div className="period-panel-delete">{deleteAction}</div>
           </div>
           <div className="mt-5 grid gap-5 sm:mt-6">
             <div>
@@ -568,8 +562,8 @@ export function HistoryView({
             </div>
           </div>
         </div>
-      </details>
-      <details className="group rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
+      </section>
+      <details className="group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
         <summary className="flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.16em] text-muted list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.2em]">
           <span>{t('labels.yearDetail')}</span>
           <span className="text-muted transition group-open:rotate-90">
@@ -959,6 +953,6 @@ export function HistoryView({
           </div>
         </div>
       </ChartModal>
-    </>
+    </div>
   );
 }

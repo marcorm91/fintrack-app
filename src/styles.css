@@ -175,3 +175,13 @@
   .annual-chart { height: 112px; }
   .history-chart { height: 125px; }
 }
+
+/* Keep the destructive action with the period, not with the panel label. */
+.period-panel-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.period-panel-controls { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+.period-panel-delete { grid-column: 2; grid-row: 1; justify-self: end; }
+@media (min-width: 1024px) {
+  .period-panel-header { grid-template-columns: minmax(0, 1fr) auto minmax(44px, 1fr); gap: 16px; }
+  .period-panel-controls { grid-column: 2; grid-row: 1; }
+  .period-panel-delete { grid-column: 3; }
+}

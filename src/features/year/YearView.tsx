@@ -166,21 +166,15 @@ export function YearView({
       <div
         className={`grid min-w-0 gap-4 overflow-x-hidden transition duration-150 ease-out sm:gap-6 ${motionClassName}`}
       >
-        <details className="relative group min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6" open>
-          <summary className="min-h-11 pr-14 flex cursor-pointer items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-accent2 list-none [&::-webkit-details-marker]:hidden sm:text-xs sm:tracking-[0.28em]">
-            <span>{t('labels.yearChart')}</span>
-            <span className="text-muted transition group-open:rotate-90">
-              <ChevronIcon direction="right" />
-            </span>
-          </summary>
-          <div className="absolute right-4 top-4 sm:right-6 sm:top-6">{deleteAction}</div>
+        <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">{t('labels.yearChart')}</p>
           <div className="mt-2">
-          <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
+          <div className="period-panel-header">
             <div>
               <h2 className="text-xl font-semibold text-ink sm:text-2xl">{yearValue}</h2>
             </div>
             {isMobile ? (
-              <div className="grid w-full gap-2">
+              <div className="period-panel-controls grid w-full gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -228,7 +222,7 @@ export function YearView({
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3">
+                <div className="period-panel-controls flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -276,9 +270,9 @@ export function YearView({
                     {t('actions.gotoCurrentYear')}
                   </button>
                 </div>
-                <div aria-hidden="true"></div>
               </>
             )}
+            <div className="period-panel-delete">{deleteAction}</div>
           </div>
           <div className="mt-5 grid gap-5 sm:mt-6">
             <div>
@@ -469,7 +463,7 @@ export function YearView({
             </div>
           </div>
           </div>
-        </details>
+        </section>
 
         <YearRecap
           yearValue={yearValue}
