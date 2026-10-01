@@ -37,7 +37,10 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
 }) {
   const { t, i18n } = useTranslation();
   const { latestMonth, yearSeries, yearTotals } = useMemo(() => getDashboardPeriods(series, currentYear), [series, currentYear]);
-  const maxFlow = latestMonth ? Math.max(Math.abs(latestMonth.incomeCents), Math.abs(latestMonth.expenseCents), 1) : 1;
+  const latestMonthFlowTotal = latestMonth ? Math.abs(latestMonth.incomeCents) + Math.abs(latestMonth.expenseCents) : 0;
+  const incomeShare = latestMonthFlowTotal > 0 && latestMonth ? Math.abs(latestMonth.incomeCents) / latestMonthFlowTotal * 100 : 0;
+  const expenseShare = latestMonthFlowTotal > 0 && latestMonth ? Math.abs(latestMonth.expenseCents) / latestMonthFlowTotal * 100 : 0;
+  const historyTickStep = allYears.length <= 8 ? 1 : Math.ceil((allYears.length - 1) / 7);
   const chartOptions: ChartOptions<'bar'> = {
     responsive: true, maintainAspectRatio: false, animation: false,
     plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatEuro(context.parsed.y ?? 0)} EUR` } } },
@@ -50,7 +53,15 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
     responsive: true, maintainAspectRatio: false, animation: false,
     plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => `${formatEuro(context.parsed.y ?? 0)} EUR` } } },
     scales: {
-      x: { grid: { display: false }, ticks: { color: COLORS.tick, maxRotation: 0, maxTicksLimit: 8 } },
+      x: {
+        grid: { display: false },
+        ticks: {
+          color: COLORS.tick,
+          maxRotation: 0,
+          autoSkip: false,
+          callback: (_value, index) => index % historyTickStep === 0 || index === allYears.length - 1 ? allYears[index]?.year ?? '' : ''
+        }
+      },
       y: { beginAtZero: true, border: { display: false }, grid: { color: COLORS.grid }, ticks: { maxTicksLimit: 4, color: COLORS.tick, callback: value => formatEuro(Number(value)) } }
     }
   };
@@ -62,10 +73,15 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
       </div>
       {latestMonth ? <>
         <FlowMetrics totals={latestMonth} />
-        <div className="monthly-flow-bars" aria-hidden="true">
-          {(['income', 'expense'] as const).map(key => <div key={key}>
-            <span>{t(`series.${key}`)}</span><div className="flow-track"><span className={key === 'income' ? 'bg-benefit' : 'bg-expense'} style={{ width: `${Math.abs(latestMonth[`${key}Cents`]) / maxFlow * 100}%` }} /></div><span>{formatCents(latestMonth[`${key}Cents`])} EUR</span>
-          </div>)}
+        <div className="pb-[6px] pt-[22px]" aria-hidden="true">
+          <div className="mb-2 flex items-center justify-between gap-4 text-[11px] text-muted">
+            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-benefit" />{t('series.income')} <small className="text-[10px]">{Math.round(incomeShare)}%</small></span>
+            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-expense" />{t('series.expense')} <small className="text-[10px]">{Math.round(expenseShare)}%</small></span>
+          </div>
+          <div className="flow-track flex">
+            <span className="bg-benefit" style={{ width: `${incomeShare}%` }} />
+            <span className="bg-expense" style={{ width: `${expenseShare}%` }} />
+          </div>
         </div>
       </> : <div className="dashboard-empty"><p>{t('dashboard.emptyMonth')}</p><DetailLink onClick={onCreateMonth}>{t('dashboard.createMonth')}</DetailLink></div>}
     </section>
@@ -88,7 +104,6 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
     <section className="dashboard-card history-overview">
       <div className="dashboard-card-heading"><div><h2>{t('tabs.all')}</h2><p>{t('dashboard.evolution')}{allYears.length > 0 && ` · ${allYears[0].year}–${allYears[allYears.length - 1].year}`}</p></div><DetailLink onClick={onOpenHistory}>{t('dashboard.viewHistory')}</DetailLink></div>
       {allYears.length ? <>
-        <div className="history-endpoint">{formatCents(allYears[allYears.length - 1].totalWealthCents)} EUR</div>
         <div className="dashboard-chart history-chart"><Line role="img" aria-label={t('dashboard.historyChart')} options={historyOptions} data={{
           labels: allYears.map(p => p.year),
           datasets: [{ label: t('series.totalWealth'), data: allYears.map(p => p.totalWealthCents / 100), borderColor: COLORS.benefit, backgroundColor: 'rgba(34,185,132,0.12)', fill: true, borderWidth: 2, pointRadius: 3, pointBackgroundColor: COLORS.benefit, tension: 0.15 }]
