@@ -74,11 +74,11 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
       {latestMonth ? <>
         <FlowMetrics totals={latestMonth} />
         <div className="pb-[6px] pt-[22px]" aria-hidden="true">
-          <div className="mb-2 flex items-center justify-between gap-4 text-[11px] text-muted">
-            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-benefit" />{t('series.income')} <small className="text-[10px]">{Math.round(incomeShare)}%</small></span>
-            <span className="inline-flex items-center gap-1.5"><i className="metric-dot inline-block bg-expense" />{t('series.expense')} <small className="text-[10px]">{Math.round(expenseShare)}%</small></span>
+          <div className="mb-2 flex items-center justify-between gap-4 text-[10px] text-muted">
+            <span>{Math.round(incomeShare)}%</span>
+            <span>{Math.round(expenseShare)}%</span>
           </div>
-          <div className="flow-track flex">
+          <div className="flow-track flow-track-stacked flex">
             <span className="bg-benefit" style={{ width: `${incomeShare}%` }} />
             <span className="bg-expense" style={{ width: `${expenseShare}%` }} />
           </div>
@@ -102,7 +102,7 @@ export function SummaryView({ series, allYears, currentYear, onOpenMonth, onOpen
       </> : <p className="dashboard-empty">{t('dashboard.emptyYear')}</p>}
     </section>
     <section className="dashboard-card history-overview">
-      <div className="dashboard-card-heading"><div><h2>{t('tabs.all')}</h2><p>{t('dashboard.evolution')}{allYears.length > 0 && ` · ${allYears[0].year}–${allYears[allYears.length - 1].year}`}</p></div><DetailLink onClick={onOpenHistory}>{t('dashboard.viewHistory')}</DetailLink></div>
+      <div className="dashboard-card-heading"><div><h2>{t('tabs.all')}</h2>{allYears.length > 0 && <p>{allYears[0].year}–{allYears[allYears.length - 1].year}</p>}</div><DetailLink onClick={onOpenHistory}>{t('dashboard.viewHistory')}</DetailLink></div>
       {allYears.length ? <>
         <div className="dashboard-chart history-chart"><Line role="img" aria-label={t('dashboard.historyChart')} options={historyOptions} data={{
           labels: allYears.map(p => p.year),
