@@ -8,18 +8,20 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_x64-setup.exe)
-- Windows MSI: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_amd64.AppImage)
-- Linux DEB: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_amd64.deb)
-- Linux RPM: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2-1.x86_64.rpm)
-- Android APK: [Fintrack 3.5.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.2/Fintrack_3.5.2_android.apk)
+- Windows installer: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_x64-setup.exe)
+- Windows MSI: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_amd64.AppImage)
+- Linux DEB: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_amd64.deb)
+- Linux RPM: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3-1.x86_64.rpm)
+- Android APK: [Fintrack 3.5.3](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.3/Fintrack_3.5.3_android.apk)
 
-The links will be available once release `v3.5.2` is published.
+The links will be available once release `v3.5.3` is published.
 
 ## Features
+
+- Period panels start directly with the month, year, or year range, without redundant chart/summary labels.
 
 - Compact icon-only delete controls inside each period panel, with the existing confirmation and read-only protection. Mobile views omit the redundant page title; overview links no longer underline on hover. Annual and History chart panels are always visible, with delete controls aligned to the year/range row. Remaining disclosure panels start expanded and can still be collapsed. History cards use consistent responsive spacing.
 

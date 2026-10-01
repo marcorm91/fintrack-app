@@ -404,10 +404,7 @@ export function MonthView({
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
           <div className={`flex items-start justify-between gap-3 ${isMobile ? 'w-full' : ''}`}>
             <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">
-              {t('labels.monthSummary')}
-            </p>
-            <h2 className="text-xl font-semibold text-ink sm:text-2xl mt-2">
+            <h2 className="text-xl font-semibold text-ink sm:text-2xl">
               {getMonthLabel(monthValue, locale, 'long')} {monthValue.slice(0, 4)}
             </h2>
             </div>
