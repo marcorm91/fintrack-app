@@ -1,3 +1,4 @@
+import { getWealthGoalSetting, setWealthGoal } from '../db/wealthGoal';
 import { useCallback, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -148,7 +149,7 @@ export function useExportData({
     setExportingJson(true);
     try {
       const series = await getMonthlySeries();
-      const json = buildJsonBackup(series, hasInvestmentPortfolio, currentVersion ?? 'unknown');
+      const json = buildJsonBackup(series, hasInvestmentPortfolio, currentVersion ?? 'unknown', (await getWealthGoalSetting()).goal);
       const defaultPath = await resolveDefaultExportPath(currentPath, getExportFileName('json'));
       const path = await save({
         title: t('settings.exportJsonTitle'),
@@ -173,7 +174,7 @@ export function useExportData({
     setSharingJson(true);
     try {
       const series = await getMonthlySeries();
-      const json = buildJsonBackup(series, hasInvestmentPortfolio, currentVersion ?? 'unknown');
+      const json = buildJsonBackup(series, hasInvestmentPortfolio, currentVersion ?? 'unknown', (await getWealthGoalSetting()).goal);
       const fileName = getExportFileName('json');
       const file = new File([json], fileName, { type: 'application/json' });
       const shareData = {
@@ -244,6 +245,7 @@ export function useExportData({
           await saveSnapshot(snapshot);
         }
         await setInvestmentPortfolioEnabled(backup.investmentPortfolioEnabled);
+        await setWealthGoal(backup.wealthGoal);
         await refreshData();
         setBackupStatus({
           tone: 'success',

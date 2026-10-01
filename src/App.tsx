@@ -7,6 +7,7 @@ import { useImportFlow } from './hooks/useImportFlow';
 import { useMonthlyData } from './hooks/useMonthlyData';
 import { useMonthlyForm } from './hooks/useMonthlyForm';
 import { usePeriodSelection } from './hooks/usePeriodSelection';
+import { useWealthGoal } from './hooks/useWealthGoal';
 import { useInvestmentPortfolioSetting } from './hooks/useInvestmentPortfolioSetting';
 import { useSeriesDerived } from './hooks/useSeriesDerived';
 import { useSeriesVisibility } from './hooks/useSeriesVisibility';
@@ -347,6 +348,7 @@ function FintrackApp({
     enabled: hasInvestmentPortfolio,
     setEnabled: setHasInvestmentPortfolio
   } = useInvestmentPortfolioSetting({ onError: portfolioSettingError });
+  const { goal, loading: goalLoading, save: saveGoal } = useWealthGoal(portfolioSettingError);
   const effectiveSeries = useMemo(
     () => series.map((point) => applyInvestmentPortfolioSetting(point, hasInvestmentPortfolio)),
     [hasInvestmentPortfolio, series]
@@ -650,6 +652,10 @@ function FintrackApp({
           portfolioCents={globalWealthSummary.portfolioCents}
           hasInvestmentPortfolio={hasInvestmentPortfolio}
           asOfMonth={latestClosedPoint?.month ?? null}
+          goal={goal}
+          goalLoading={goalLoading}
+          readOnly={readOnly}
+          onSaveGoal={saveGoal}
         />
       }
       tabs={

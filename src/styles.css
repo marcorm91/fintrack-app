@@ -96,3 +96,14 @@
     transform: translateY(0) scale(1);
   }
 }
+
+.wealth-goal-dialog {
+  width: calc(100% - 32px);
+  max-width: 560px;
+  max-height: 90dvh;
+  margin: auto;
+  overflow-y: auto;
+}
+.wealth-goal-dialog::backdrop {
+  background: rgb(33 48 71 / 40%);
+}

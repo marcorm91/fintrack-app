@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { wealthGoalTranslations, wealthGoalSyncTranslations } from './locales/wealthGoal';
 import en from './locales/en.json';
 import es from './locales/es.json';
 import { monthlyRecapTranslations } from './locales/monthlyRecap';
@@ -20,8 +21,8 @@ const initialLanguage = getInitialLanguage() ?? 'es';
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: { ...en, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en, investment: investmentTranslations.en } },
-    es: { translation: { ...es, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es, investment: investmentTranslations.es } }
+    en: { translation: { ...en, settings: { ...en.settings, ...wealthGoalSyncTranslations.en }, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en, wealthGoal: wealthGoalTranslations.en, investment: investmentTranslations.en } },
+    es: { translation: { ...es, settings: { ...es.settings, ...wealthGoalSyncTranslations.es }, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es, wealthGoal: wealthGoalTranslations.es, investment: investmentTranslations.es } }
   },
   lng: initialLanguage,
   fallbackLng: 'es',
