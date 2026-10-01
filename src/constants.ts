@@ -29,6 +29,7 @@ export const COLORS = {
 export const X_TICK_FONT_SIZE = 12;
 
 export const TABS: { key: TabKey; labelKey: string }[] = [
+  { key: 'summary', labelKey: 'dashboard.title' },
   { key: 'month', labelKey: 'labels.month' },
   { key: 'year', labelKey: 'tabs.year' },
   { key: 'all', labelKey: 'tabs.all' }

@@ -7,7 +7,7 @@ export type FormState = {
   note: string;
 };
 
-export type TabKey = 'month' | 'year' | 'all';
+export type TabKey = 'summary' | 'month' | 'year' | 'all';
 export type BalanceTrend = 'up' | 'down' | 'flat';
 export type SeriesKey =
   | 'income'

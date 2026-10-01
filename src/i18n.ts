@@ -1,3 +1,4 @@
+import { dashboardTranslations } from './locales/dashboard';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { wealthGoalTranslations, wealthGoalSyncTranslations } from './locales/wealthGoal';
@@ -21,8 +22,8 @@ const initialLanguage = getInitialLanguage() ?? 'es';
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: { ...en, settings: { ...en.settings, ...wealthGoalSyncTranslations.en }, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en, wealthGoal: wealthGoalTranslations.en, investment: investmentTranslations.en } },
-    es: { translation: { ...es, settings: { ...es.settings, ...wealthGoalSyncTranslations.es }, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es, wealthGoal: wealthGoalTranslations.es, investment: investmentTranslations.es } }
+    en: { translation: { ...en, dashboard: dashboardTranslations.en, settings: { ...en.settings, ...wealthGoalSyncTranslations.en }, monthlyRecap: monthlyRecapTranslations.en, yearRecap: yearRecapTranslations.en, wealthGoal: wealthGoalTranslations.en, investment: investmentTranslations.en } },
+    es: { translation: { ...es, dashboard: dashboardTranslations.es, settings: { ...es.settings, ...wealthGoalSyncTranslations.es }, monthlyRecap: monthlyRecapTranslations.es, yearRecap: yearRecapTranslations.es, wealthGoal: wealthGoalTranslations.es, investment: investmentTranslations.es } }
   },
   lng: initialLanguage,
   fallbackLng: 'es',

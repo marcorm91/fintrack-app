@@ -107,3 +107,71 @@
 .wealth-goal-dialog::backdrop {
   background: rgb(33 48 71 / 40%);
 }
+
+/* Application shell: desktop sidebar and mobile bottom navigation share one landmark. */
+.app-shell { min-height: 100vh; background: #f5fbf8; }
+.app-workspace { min-width: 0; }
+.app-header { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid #e5eaf0; }
+.app-header > div { min-height: 64px; }
+.app-content { max-width: 1600px; margin: 0 auto; padding: 16px 12px calc(104px + var(--app-safe-bottom)); }
+.app-navigation { position: fixed; bottom: 0; inset-inline: 0; z-index: 45; border-top: 1px solid #e5eaf0; background: #fff; padding: 6px 8px calc(6px + var(--app-safe-bottom)); }
+.sidebar-brand { display: none; }
+.app-navigation nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.navigation-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 62px; border-radius: 10px; font-size: 12px; color: #213047; }
+.navigation-item.is-active { background: #213047; color: #fff; }
+.navigation-item:not(.is-active):hover { background: #f1f5f4; }
+.app-shell button:focus-visible { outline: 2px solid #08745c; outline-offset: 3px; }
+.dashboard-overview, .dashboard-periods { display: grid; gap: 16px; }
+.dashboard-card { min-width: 0; padding: 16px; background: #fff; border: 1px solid #e3e9ee; border-radius: 12px; }
+.wealth-value { font-size: 28px; line-height: 1.2; overflow-wrap: anywhere; }
+.goal-layout { position: relative; display: grid; gap: 16px; }
+.goal-heading { padding-right: 48px; }
+.goal-edit { position: absolute; right: 0; top: 0; }
+.goal-progress { min-width: 0; }
+.dashboard-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.dashboard-card-heading h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+.dashboard-card-heading p { margin-top: 3px; font-size: 13px; color: #65748a; }
+.dashboard-link { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 44px; flex-shrink: 0; font-size: 12px; color: #08745c; }
+.dashboard-link:hover { text-decoration: underline; }
+.dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dashboard-metrics > div { min-width: 0; border: 1px solid #e5eaf0; border-radius: 6px; padding: 10px 8px; }
+.dashboard-metrics dt { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #65748a; }
+.dashboard-metrics dd { margin-top: 5px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.dashboard-metrics dd span { display: inline-block; }
+.metric-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.monthly-flow-bars { display: grid; gap: 12px; padding: 22px 0 6px; }
+.monthly-flow-bars > div { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 11px; }
+.flow-track { height: 10px; border-radius: 20px; overflow: hidden; background: #eef1f4; }
+.flow-track > span { display: block; height: 100%; border-radius: inherit; }
+.dashboard-chart { position: relative; min-width: 0; margin-top: 12px; }
+.annual-chart { height: 145px; }
+.history-chart { height: 145px; margin-top: 0; }
+.history-endpoint { text-align: right; font-size: 12px; font-weight: 600; }
+.dashboard-empty { padding: 20px 0; font-size: 14px; color: #65748a; }
+@media (min-width: 640px) {
+  .app-content { padding-inline: 24px; }
+  .dashboard-card { padding: 20px; }
+  .wealth-value { font-size: 34px; }
+  .dashboard-metrics dt { font-size: 12px; }
+  .dashboard-metrics dd { font-size: 17px; }
+  .dashboard-link { font-size: 14px; }
+}
+@media (min-width: 1024px) {
+  .app-workspace { margin-left: 210px; }
+  .app-navigation { top: 0; bottom: 0; right: auto; width: 210px; border-top: 0; border-right: 1px solid #e5eaf0; padding: 0 12px; }
+  .sidebar-brand { display: flex; align-items: center; gap: 10px; height: 76px; font-size: 25px; font-weight: 600; padding: 0 8px; }
+  .sidebar-brand img { width: 38px; height: 38px; }
+  .app-navigation nav { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .navigation-item { flex-direction: row; justify-content: flex-start; gap: 16px; padding: 0 16px; min-height: 48px; font-size: 15px; }
+  .app-content { padding: 24px; }
+  .dashboard-periods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .history-overview { grid-column: 1 / -1; }
+  .goal-layout { grid-template-columns: minmax(240px, 0.9fr) minmax(0, 2fr); gap: 24px; padding-right: 60px; align-items: center; }
+  .goal-heading { padding-right: 0; }
+  .goal-progress { border-left: 1px solid #e5eaf0; padding-left: 24px; }
+  .dashboard-card-heading h2 { font-size: 18px; }
+  .monthly-flow-bars { padding-top: 30px; }
+  .monthly-flow-bars > div { font-size: 12px; }
+  .annual-chart { height: 112px; }
+  .history-chart { height: 125px; }
+}
