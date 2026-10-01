@@ -12,7 +12,6 @@ type AppLayoutProps = {
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   title: string;
   navigation: ReactNode;
-  tabs: ReactNode;
   children: ReactNode;
   dialogs?: ReactNode;
   toast?: ReactNode;
@@ -28,7 +27,6 @@ export function AppLayout({
   onFileChange,
   title,
   navigation,
-  tabs,
   children,
   dialogs,
   toast
@@ -47,8 +45,7 @@ export function AppLayout({
         />
         <input ref={importInputRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />
         <main id="main-content" className="app-content">
-          <h1 className="mb-3 text-xl font-semibold lg:hidden">{title}</h1>
-          {tabs}
+          <h1 className="sr-only lg:hidden">{title}</h1>
           {children}
           <AppFooter />
         </main>

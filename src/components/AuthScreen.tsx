@@ -220,7 +220,7 @@ export function AuthScreen({
             {t('auth.privateAccess')}
           </p>
           {offlinePinConfigured ? (
-            <details className="group mt-4 rounded-xl border border-ink/10 bg-ink/5">
+            <details className="group mt-4 rounded-xl border border-ink/10 bg-ink/5" open>
               <summary className="cursor-pointer list-none px-4 py-3 text-center text-xs font-semibold text-ink">
                 {t('auth.offlineAccessAction')}
               </summary>
