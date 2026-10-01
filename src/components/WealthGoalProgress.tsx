@@ -23,57 +23,58 @@ export function WealthGoalProgress({ goal, currentCents, asOfMonth, loading, rea
   const percent = progress ? new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 1 }).format(progress.visualPercent) : '';
   return (
     <>
-      <div className="relative mt-4 rounded-xl bg-white px-1 py-3" aria-busy={loading}>
-        <button type="button" onClick={() => setOpen(true)} disabled={loading || readOnly}
-          aria-label={t(goal ? 'wealthGoal.edit' : 'wealthGoal.defineLabel')} aria-describedby={`${id}-details`}
-          className="absolute inset-0 z-10 w-full rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default" />
+      <div className="mt-3 border-t border-ink/10 bg-white px-1 pb-1 pt-3" aria-busy={loading}>
         <div id={`${id}-details`}>
-          <div className={`flex gap-3 sm:gap-[22px] ${goal ? 'items-start' : 'flex-wrap items-center'}`}>
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-benefit/10 text-benefit sm:h-[68px] sm:w-[68px]" aria-hidden="true">
+          <div className={`flex gap-3 ${goal ? 'items-start' : 'flex-wrap items-center'}`}>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-benefit/10 text-benefit sm:h-11 sm:w-11" aria-hidden="true">
               <TargetIcon />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold leading-snug text-ink sm:text-xl">{t('wealthGoal.title')}</p>
+            <div id={`${id}-summary`} className="min-w-0 flex-1">
+              <p className="text-sm font-semibold leading-snug text-ink">{t('wealthGoal.title')}</p>
               {goal ? (
                 <>
-                  <p className="mt-1 break-words text-xl font-semibold leading-tight text-ink sm:text-[26px]">{formatCents(goal.targetAmountCents)} EUR</p>
-                  <p className="mt-1.5 flex items-center gap-2 text-xs text-muted sm:text-base">
+                  <p className="mt-0.5 break-words text-lg font-semibold leading-tight text-ink sm:text-xl">{formatCents(goal.targetAmountCents)} EUR</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
                     <GoalCalendarIcon />
                     <span className="capitalize">{getMonthLabel(goal.targetMonth, i18n.language, 'long')} {goal.targetMonth.slice(0, 4)}</span>
                   </p>
                 </>
               ) : (
-                <p className="mt-1 text-xs leading-relaxed text-muted sm:text-sm">{t('wealthGoal.empty')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted">{t('wealthGoal.empty')}</p>
               )}
             </div>
             {!readOnly && (goal ? (
-              <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-ink/10 text-ink">
+              <button type="button" onClick={() => setOpen(true)} disabled={loading}
+                aria-label={t('wealthGoal.edit')} aria-describedby={`${id}-summary`} aria-haspopup="dialog"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-ink/10 text-ink hover:bg-ink/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
                 <PencilIcon />
-              </span>
+              </button>
             ) : (
-              <span aria-hidden="true" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-ink px-4 py-2 text-sm font-semibold text-ink sm:ml-4 sm:w-auto">
+              <button type="button" onClick={() => setOpen(true)} disabled={loading}
+                aria-label={t('wealthGoal.defineLabel')} aria-haspopup="dialog"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-ink px-3 py-2 text-xs font-semibold text-ink hover:bg-ink/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 sm:ml-3 sm:w-auto">
                 <PlusIcon />{t('wealthGoal.define')}
-              </span>
+              </button>
             ))}
           </div>
           {progress && <>
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="text-xs text-muted sm:text-base">{t('wealthGoal.yourProgress')}</span>
-                <span className="text-base font-semibold text-[#08745c] sm:text-xl">{percent} %</span>
+            <div className="mt-3">
+              <div className="mb-1.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-muted">{t('wealthGoal.yourProgress')}</span>
+                <span className="text-sm font-semibold text-[#08745c]">{percent} %</span>
               </div>
               <div role="progressbar" aria-label={t('wealthGoal.progress')} aria-valuemin={0} aria-valuemax={100}
                 aria-valuenow={progress.visualPercent} aria-valuetext={`${percent} %`}
-                className="h-3 sm:h-4 overflow-hidden rounded-full bg-ink/10">
+                className="h-2.5 overflow-hidden rounded-full bg-ink/10">
                 <div className="h-full rounded-full bg-benefit" style={{ width: `${progress.visualPercent}%` }} />
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#f1faf6] p-3 text-xs sm:inline-grid sm:min-w-[490px] sm:max-w-full sm:grid-cols-[auto_auto] sm:gap-8 sm:px-5 sm:py-4 sm:text-base">
+            <div className="mt-2.5 grid grid-cols-2 gap-3 rounded-xl bg-[#f1faf6] px-3 py-2 text-xs sm:inline-grid sm:max-w-full sm:grid-cols-[auto_auto] sm:gap-5">
               <p className="min-w-0 text-muted">{t('wealthGoal.remaining')}
-                <span className="mt-1 block break-words font-semibold text-ink sm:text-xl">{formatCents(progress.remainingCents)} EUR</span>
+                <span className="mt-0.5 block break-words font-semibold text-ink sm:text-sm">{formatCents(progress.remainingCents)} EUR</span>
               </p>
-              <p className="min-w-0 border-l border-ink/10 pl-3 text-muted sm:max-w-sm sm:pl-8">{t('wealthGoal.needed')}
-                <span className="mt-1 block break-words font-semibold text-ink sm:text-xl">{progress.monthlyCents === null ? t('wealthGoal.due') : t('wealthGoal.perMonth', { amount: formatCents(progress.monthlyCents) })}</span>
+              <p className="min-w-0 border-l border-ink/10 pl-3 text-muted sm:max-w-sm sm:pl-5">{t('wealthGoal.needed')}
+                <span className="mt-0.5 block break-words font-semibold text-ink sm:text-sm">{progress.monthlyCents === null ? t('wealthGoal.due') : t('wealthGoal.perMonth', { amount: formatCents(progress.monthlyCents) })}</span>
               </p>
             </div>
             {progress.reached && <p className="mt-2 text-sm font-semibold text-ink">{t('wealthGoal.reached')}</p>}

@@ -79,12 +79,14 @@ export function WealthGoalDialog({ goal, minimumMonth, readOnly, onSave, onClose
           </label>
         </div>
         {error && <p id={`${id}-error`} role="alert" className="mt-3 text-sm text-red-700">{t(`wealthGoal.error.${error}`)}</p>}
-        <div className="mt-6 flex flex-wrap justify-end gap-2">
-          <button type="button" disabled={saving} onClick={onClose} className="btn btn-neutral min-h-11 text-xs">{t('actions.cancel')}</button>
-          <button type="submit" disabled={saving || readOnly} className="btn btn-primary min-h-11 text-xs">{t('wealthGoal.save')}</button>
+        <div className={`mt-5 grid gap-1.5 sm:flex sm:justify-end sm:gap-2 ${goal ? 'grid-cols-[1.4fr_1fr_1fr]' : 'grid-cols-2'}`}>
+          {goal && <button type="button" disabled={saving || readOnly} onClick={() => void save(null)}
+            className="btn btn-danger min-h-11 px-2 text-[10px] tracking-[0.08em] sm:px-4 sm:text-xs">{t('wealthGoal.delete')}</button>}
+          <button type="button" disabled={saving} onClick={onClose}
+            className="btn btn-neutral min-h-11 px-2 text-[10px] tracking-[0.08em] sm:px-4 sm:text-xs">{t('actions.cancel')}</button>
+          <button type="submit" disabled={saving || readOnly}
+            className="btn btn-primary min-h-11 px-2 text-[10px] tracking-[0.08em] sm:px-4 sm:text-xs">{t('wealthGoal.save')}</button>
         </div>
-        {goal && <button type="button" disabled={saving || readOnly} onClick={() => void save(null)}
-          className="mt-3 min-h-11 rounded-lg px-2 text-sm text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">{t('wealthGoal.delete')}</button>}
       </form>
     </dialog>
   );

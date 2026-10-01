@@ -113,7 +113,7 @@ export function NoteIcon() {
 
 export function TargetIcon() {
   return (
-    <svg className="h-8 w-8 sm:h-10 sm:w-10" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+    <svg className="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
       <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M25.5 13A12 12 0 1 1 19 6.5M20.5 16A7 7 0 1 1 16 11.5" />
         <circle cx="14" cy="18" r="2.3" />
