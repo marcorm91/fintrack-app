@@ -402,7 +402,7 @@ export function MonthView({
       <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <section className="order-1 min-w-0 rounded-2xl border border-ink/5 bg-white/95 p-4 shadow-card sm:p-6 lg:order-1">
           <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-wrap items-start justify-between'}`}>
-          <div className={`flex items-start justify-between gap-3 ${isMobile ? 'w-full' : ''}`}>
+          <div className={`flex items-center justify-between gap-3 ${isMobile ? 'w-full' : ''}`}>
             <div>
             <h2 className="text-xl font-semibold text-ink sm:text-2xl">
               {getMonthLabel(monthValue, locale, 'long')} {monthValue.slice(0, 4)}
