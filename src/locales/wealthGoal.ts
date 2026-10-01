@@ -1,6 +1,9 @@
 export const wealthGoalTranslations = {
   "en": {
     "title": "Wealth goal",
+    "define": "Set a goal",
+    "defineLabel": "Set a goal for your wealth",
+    "yourProgress": "Your progress",
     "create": "New wealth goal",
     "edit": "Edit wealth goal",
     "empty": "Set an amount and a date to track your progress.",
@@ -22,6 +25,9 @@ export const wealthGoalTranslations = {
   },
   "es": {
     "title": "Objetivo de patrimonio",
+    "define": "Definir objetivo",
+    "defineLabel": "Definir objetivo de patrimonio",
+    "yourProgress": "Tu progreso",
     "create": "Nuevo objetivo de patrimonio",
     "edit": "Editar objetivo de patrimonio",
     "empty": "Define una cantidad y una fecha para seguir tu progreso.",

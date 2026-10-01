@@ -110,3 +110,36 @@ export function NoteIcon() {
     </svg>
   );
 }
+
+export function TargetIcon() {
+  return (
+    <svg className="h-8 w-8 sm:h-10 sm:w-10" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M25.5 13A12 12 0 1 1 19 6.5M20.5 16A7 7 0 1 1 16 11.5" />
+        <circle cx="14" cy="18" r="2.3" />
+        <path d="m14 18 11-11m0-5v5h5l-5 5h-5V7l5-5Z" />
+      </g>
+    </svg>
+  );
+}
+
+export function GoalCalendarIcon() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="5" width="16" height="16" rx="2" />
+        <path d="M8 3v4m8-4v4M4 10h16m-12 4h1m6 0h1m-8 3h1m6 0h1" />
+      </g>
+    </svg>
+  );
+}
+
+export function PencilIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m15 5 4 4M4 20l1-5L16 4a2.8 2.8 0 0 1 4 4L9 19l-5 1Z" />
+      </g>
+    </svg>
+  );
+}
