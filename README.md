@@ -8,16 +8,16 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_x64-setup.exe)
-- Windows MSI: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_amd64.AppImage)
-- Linux DEB: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_amd64.deb)
-- Linux RPM: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1-1.x86_64.rpm)
-- Android APK: [Fintrack 3.4.1](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.1/Fintrack_3.4.1_android.apk)
+- Windows installer: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_x64-setup.exe)
+- Windows MSI: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_amd64.AppImage)
+- Linux DEB: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_amd64.deb)
+- Linux RPM: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2-1.x86_64.rpm)
+- Android APK: [Fintrack 3.4.2](https://github.com/marcorm91/fintrack-app/releases/download/v3.4.2/Fintrack_3.4.2_android.apk)
 
-The links will be available once release `v3.4.1` is published.
+The links will be available once release `v3.4.2` is published.
 
 ## Features
 
@@ -34,7 +34,7 @@ The links will be available once release `v3.4.1` is published.
 - Optional investment portfolio.
 - One global wealth goal with a target amount and end month, integrated into the wealth summary. It follows cash plus the enabled portfolio, or cash alone when the portfolio is disabled.
 - Goal progress, remaining amount, and monthly amount needed from the displayed closing month; a solid green progress bar and an accessible dialog capped at 560 px.
-- Refined goal section with SVG icons, a target amount smaller than the main wealth total, closely grouped desktop figures, and a compact empty state. The upper wealth summary and financial behavior are unchanged.
+- Compact goal section with SVG icons, a target amount smaller than the main wealth total, closely grouped desktop figures, and a compact empty state. Only the pencil button opens goal editing; the empty state uses its dedicated set-goal button. A subtle divider separates the goal from the wealth summary. The dialog aligns the shared red delete button with Cancel and Save. The upper wealth summary and financial behavior are unchanged.
 - Separate monthly portfolio contributions from the real portfolio closing value, with automatic accumulated gain/loss tracking.
 - Leave the monthly portfolio contribution empty to mark it as untracked; enter `0` to record an explicit zero contribution.
 - Investment performance insights for monthly, yearly, and historical views.
