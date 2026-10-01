@@ -313,8 +313,7 @@ export function HistoryView({
   return (
     <div className="grid min-w-0 gap-4 sm:gap-6">
       <section className="min-w-0 rounded-2xl border border-ink/10 bg-white/80 p-4 shadow-card sm:p-6">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-accent2 sm:text-xs sm:tracking-[0.28em]">{t('labels.historyChart')}</p>
-          <div className="mt-2">
+          <div>
           <div className="period-panel-header">
             <div>
               <h2 className="text-xl font-semibold text-ink sm:text-2xl">{historyRangeLabel}</h2>
