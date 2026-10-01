@@ -8,18 +8,20 @@ Fintrack is an *offline-first* app for tracking income, expenses, cash, investme
 
 ## Downloads
 
-- Windows installer: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_x64-setup.exe)
-- Windows MSI: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_x64_en-US.msi)
-- Windows portable ZIP: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_portable_windows.zip)
-- macOS Apple Silicon: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_aarch64.dmg)
-- Linux AppImage: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_amd64.AppImage)
-- Linux DEB: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_amd64.deb)
-- Linux RPM: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5-1.x86_64.rpm)
-- Android APK: [Fintrack 3.5.5](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.5/Fintrack_3.5.5_android.apk)
+- Windows installer: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_x64-setup.exe)
+- Windows MSI: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_x64_en-US.msi)
+- Windows portable ZIP: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_portable_windows.zip)
+- macOS Apple Silicon: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_aarch64.dmg)
+- Linux AppImage: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_amd64.AppImage)
+- Linux DEB: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_amd64.deb)
+- Linux RPM: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6-1.x86_64.rpm)
+- Android APK: [Fintrack 3.5.6](https://github.com/marcorm91/fintrack-app/releases/download/v3.5.6/Fintrack_3.5.6_android.apk)
 
-The links will be available once release `v3.5.5` is published.
+The links will be available once release `v3.5.6` is published.
 
 ## Features
+
+- Month view header aligns the selected month vertically with its delete action, matching the Annual and History period headers.
 
 - Overview polish: the monthly income/expense split keeps only the percentages, uses a square center seam, and the history preview subtitle shows only the year range.
 
